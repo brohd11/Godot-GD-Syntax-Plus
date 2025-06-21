@@ -2,6 +2,7 @@ extends EditorContextMenuPlugin
 
 const slot = CONTEXT_SLOT_SCRIPT_EDITOR_CODE
 
+const Utils = preload("res://addons/syntax_tags/gdscript/class/utils.gd")
 const GDHelper = preload("uid://es6q2q0qg7pj") #import gdscript_helper.gd
 
 const JSON_PATH = "res://addons/syntax_tags/tags.json"
@@ -11,19 +12,23 @@ func _popup_menu(paths: PackedStringArray) -> void:
 	
 	var current_line_text = se.get_line(se.get_caret_line())
 	
-	var editor_tags = GDHelper.read_from_json(JSON_PATH)
+	var editor_tags = Utils.read_from_json(JSON_PATH)
 	var popup:= PopupMenu.new()
 	popup.submenu_popup_delay = 0
 	popup.id_pressed.connect(_tag_pressed.bind(popup, se))
 	for tag in editor_tags.keys():
+		var data = editor_tags.get(tag)
+		var menu = data.get("menu", "Submenu")
+		if menu == "None":
+			continue
 		var full_tag = "#" + tag
 		if current_line_text.find(full_tag) > -1:
 			popup.queue_free()
 			return
-		var data = editor_tags.get(tag)
+		
 		var keyword:String = data.get("keyword", "")
 		if keyword == "any":
-			keyword = GDHelper.ANY_STRING
+			keyword = Utils.ANY_STRING
 		
 		var keywords:= []
 		if keyword.find("|") > -1:
@@ -47,7 +52,10 @@ func _popup_menu(paths: PackedStringArray) -> void:
 		var img = Image.create(16,16,false, Image.FORMAT_RGBA8)
 		img.fill(color_obj)
 		var texture = ImageTexture.create_from_image(img)
-		popup.add_icon_item(texture, tag)
+		if menu == "Submenu":
+			popup.add_icon_item(texture, tag)
+		elif menu == "Main Menu":
+			add_context_menu_item(tag, _on_context_pressed.bind(tag), texture)
 	
 	if popup.item_count == 0:
 		popup.queue_free()
@@ -55,8 +63,14 @@ func _popup_menu(paths: PackedStringArray) -> void:
 	
 	add_context_submenu_item("SyntaxTag", popup)
 
+func _on_context_pressed(se, tag):
+	_write_tag(se, tag)
+
 func _tag_pressed(id:int, popup:PopupMenu, script_editor:CodeEdit):
 	var tag = popup.get_item_text(id)
+	_write_tag(script_editor, tag)
+
+func _write_tag(script_editor, tag):
 	var current_line = script_editor.get_caret_line()
 	var line_text = script_editor.get_line(current_line)
 	

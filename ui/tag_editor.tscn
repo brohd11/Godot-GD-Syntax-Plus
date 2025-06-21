@@ -1,0 +1,135 @@
+[gd_scene load_steps=4 format=3 uid="uid://cgmh6d384m4qe"]
+
+[ext_resource type="Script" uid="uid://blrucbrwhq0e7" path="res://addons/syntax_tags/ui/tag_editor.gd" id="1_5u3oj"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ilbj5"]
+content_margin_left = 10.0
+content_margin_top = 10.0
+content_margin_right = 10.0
+content_margin_bottom = 10.0
+bg_color = Color(0.148989, 0.148989, 0.148989, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_5u3oj"]
+bg_color = Color(0, 0, 0, 0.219608)
+
+[node name="TagEditor" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("1_5u3oj")
+
+[node name="ColorRect" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.0901961)
+
+[node name="V" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Spacer3" type="Control" parent="V"]
+custom_minimum_size = Vector2(0, 15)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="V"]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxFlat_ilbj5")
+text = "Syntax Tags Editor"
+
+[node name="Spacer4" type="Control" parent="V"]
+custom_minimum_size = Vector2(0, 15)
+layout_mode = 2
+
+[node name="MainH" type="HBoxContainer" parent="V"]
+custom_minimum_size = Vector2(800, 500)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Spacer" type="Control" parent="V/MainH"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label2" type="Label" parent="V/MainH"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Tag will be declared as \"#tag\".
+
+Keywords can be \"any\" or a list:
+Valid Keywords: const|var|@onready var|@export var|enum|class|func
+If just \"var\" ,will apply to @onready and @export as well.
+
+Replace will cause occurences of word that are already highlighted to
+change color too, like function calling."
+
+[node name="PanelContainer" type="PanelContainer" parent="V/MainH"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_5u3oj")
+
+[node name="MarginContainer" type="MarginContainer" parent="V/MainH/PanelContainer"]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+
+[node name="EntriesScroll" type="ScrollContainer" parent="V/MainH/PanelContainer/MarginContainer"]
+custom_minimum_size = Vector2(600, 600)
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="MarginContainer" type="MarginContainer" parent="V/MainH/PanelContainer/MarginContainer/EntriesScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="EntriesTarget" type="VBoxContainer" parent="V/MainH/PanelContainer/MarginContainer/EntriesScroll/MarginContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Spacer2" type="Control" parent="V/MainH"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Spacer" type="Control" parent="V"]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+
+[node name="ButtonsH" type="HBoxContainer" parent="V"]
+layout_mode = 2
+size_flags_horizontal = 4
+
+[node name="CancelButton" type="Button" parent="V/ButtonsH"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Cancel"
+
+[node name="SaveButton" type="Button" parent="V/ButtonsH"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Save"
+
+[node name="Spacer2" type="Control" parent="V"]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2

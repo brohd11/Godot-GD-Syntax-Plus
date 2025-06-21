@@ -1,23 +1,32 @@
 {
-	"import":{
-		"keyword":"const",
-		"color": "35cc9b"
+	"class": {
+		"color": "94ee81",
+		"keyword": "class",
+		"menu": "Submenu",
+		"overwrite": false
 	},
-	"tag":{
-		"keyword":"any",
-		"color":"bf7a34"
+	"debug": {
+		"color": "f1cb47",
+		"keyword": "any",
+		"menu": "Submenu",
+		"overwrite": false
 	},
-	"debug":{
-		"keyword":"any",
-		"color":"f1cb47"
+	"func": {
+		"color": "e32f49",
+		"keyword": "func",
+		"menu": "None",
+		"overwrite": true
 	},
-	"func":{
-		"keyword":"func",
-		"color":"e32f49",
-		"overwrite":true
+	"import": {
+		"color": "2e9679",
+		"keyword": "const",
+		"menu": "Main Menu",
+		"overwrite": false
 	},
-	"class":{
-		"keyword":"class",
-		"color":"248d6a"
-	},
+	"tag": {
+		"color": "b734bf",
+		"keyword": "any",
+		"menu": "Submenu",
+		"overwrite": false
+	}
 }

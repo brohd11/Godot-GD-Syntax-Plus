@@ -1,0 +1,128 @@
+[gd_scene load_steps=3 format=3 uid="uid://d3g8fsl5famtx"]
+
+[ext_resource type="Script" uid="uid://4l0cocqsubq8" path="res://addons/syntax_tags/ui/tag_entry.gd" id="1_8l2i2"]
+[ext_resource type="Texture2D" uid="uid://bgnpe8dky6yl8" path="res://addons/syntax_tags/ui/Close.svg" id="2_s84vm"]
+
+[node name="TagEntry" type="VBoxContainer"]
+custom_minimum_size = Vector2(400, 0)
+offset_right = 400.0
+offset_bottom = 160.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("1_8l2i2")
+
+[node name="Spacer" type="Control" parent="."]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+layout_mode = 2
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="HBoxContainer"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label3" type="Label" parent="HBoxContainer/HBoxContainer2"]
+custom_minimum_size = Vector2(40, 0)
+layout_mode = 2
+text = "Keywords"
+
+[node name="Spacer" type="Control" parent="HBoxContainer/HBoxContainer2"]
+visible = false
+layout_mode = 2
+
+[node name="KeyLine" type="LineEdit" parent="HBoxContainer/HBoxContainer2"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="HBoxContainer" type="HBoxContainer" parent="HBoxContainer"]
+layout_mode = 2
+
+[node name="Label3" type="Label" parent="HBoxContainer/HBoxContainer"]
+layout_mode = 2
+text = "Tag"
+
+[node name="spacer" type="Control" parent="HBoxContainer/HBoxContainer"]
+visible = false
+layout_mode = 2
+
+[node name="TagLine" type="LineEdit" parent="HBoxContainer/HBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+
+[node name="OverwriteButton" type="Button" parent="HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 12
+toggle_mode = true
+text = "Replace"
+
+[node name="MenuOption" type="OptionButton" parent="HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 12
+selected = 0
+item_count = 3
+popup/item_0/text = "Submenu"
+popup/item_0/id = 0
+popup/item_1/text = "Main Menu"
+popup/item_1/id = 1
+popup/item_2/text = "None"
+popup/item_2/id = 2
+
+[node name="HBoxContainer3" type="HBoxContainer" parent="HBoxContainer"]
+layout_mode = 2
+
+[node name="ColorPickerButton" type="ColorPickerButton" parent="HBoxContainer/HBoxContainer3"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(32, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+focus_mode = 0
+edit_alpha = false
+
+[node name="DeleteButton" type="Button" parent="HBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(32, 0)
+layout_mode = 2
+focus_mode = 0
+icon = ExtResource("2_s84vm")
+icon_alignment = 1
+
+[node name="HBoxContainer3" type="HBoxContainer" parent="."]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="CodeEdit" type="CodeEdit" parent="HBoxContainer3"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 225)
+layout_mode = 2
+size_flags_horizontal = 3
+focus_mode = 0
+text = "const Class = preload(\"path\") #tag
+class InnerClass: #tag
+	enum Enum{STATE1, STATE2} #tag
+var some_var:String = \"string\" #tag
+@onready var button = %Button #tag
+button.pressed.connect(_on_button_pressed)
+func _on_button_pressed(): #tag
+	button.text = some_var"
+draw_tabs = true
+
+[node name="VBoxContainer" type="VBoxContainer" parent="HBoxContainer3"]
+visible = false
+layout_mode = 2
+
+[node name="ReloadButton" type="Button" parent="HBoxContainer3/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Reload"
+
+[node name="Spacer2" type="Control" parent="."]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2

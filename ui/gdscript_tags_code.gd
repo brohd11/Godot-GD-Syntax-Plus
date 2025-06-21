@@ -1,54 +1,35 @@
 @tool
-extends EditorSyntaxHighlighter
+extends CodeHighlighter
 
-const Utils = preload("res://addons/syntax_tags/gdscript/class/utils.gd") #import
-const GDHelper = preload("uid://es6q2q0qg7pj") 
-const HighlightHelper = preload("uid://raeyegdbxrem")
+const Utils = preload("uid://bvmvgtxctmgl") #import utils.gd
+const GDHelper = preload("uid://qaydfc8u03fq") #import gdscript_helper_code.gd
+const HighlightHelper = preload("uid://raeyegdbxrem") #import gdscript_highlight_helper.gd
 
 const JSON_PATH = "res://addons/syntax_tags/tags.json"
 
 var gd_helper: GDHelper
 var highlight_helpers:Array[HighlightHelper] = []
 
-static var editor_tags:Dictionary = {}
+var editor_tags:Dictionary = {}
 var tagged_data:Dictionary = {}
 
 var current_line_last_state = ""
 var last_line_count = 0
 
-func _get_name() -> String:
-	return "GDSynTags"
 
-func _init() -> void:
+func _init(data_overide=null) -> void:
 	gd_helper = GDHelper.new()
 	
-	read_editor_tags()
+	if not data_overide:
+		editor_tags = Utils.read_from_json(JSON_PATH)
+	else:
+		editor_tags = data_overide
+	
 	for tag in editor_tags:
 		var data = editor_tags.get(tag)
 		var highlighter = HighlightHelper.new(tag, data)
 		highlight_helpers.append(highlighter)
 	
-	EditorInterface.get_script_editor().editor_script_changed.connect(_on_editor_script_changed)
-	
-
-static func read_editor_tags():
-	editor_tags = Utils.read_from_json(JSON_PATH)
-
-
-func _on_editor_script_changed(new_script:Script):
-	var syntax_highlighter = EditorInterface.get_script_editor().get_current_editor().get_base_editor().syntax_highlighter
-	if syntax_highlighter == self:
-		GDHelper.set_code_edit()
-		set_colors()
-		syntax_highlighter.clear_highlighting_cache()
-
-func set_colors():
-	for highlight_helper in highlight_helpers:
-		if highlight_helper.highlight_tag in editor_tags.keys():
-			var data = editor_tags.get(highlight_helper.highlight_tag)
-			var color = data.get("color")
-			var color_obj = Color.html(color)
-			highlight_helper.highlight_color = color_obj
 
 func _on_caret_changed():
 	var text_edit = get_text_edit()
@@ -57,12 +38,15 @@ func _on_caret_changed():
 
 func _get_line_syntax_highlighting(line_idx: int) -> Dictionary:
 	var text_edit = get_text_edit()
+	if not is_instance_valid(GDHelper.dummy_code_edit):
+		GDHelper.set_code_edit()
 	if not GDHelper.dummy_code_edit.text == text_edit.text:
 		_first_line_update()
 	
+	var current_line_text: String = text_edit.get_line(line_idx)
+	
 	var hl_info = gd_helper.get_base_highlight(self, line_idx)
 	
-	var current_line_text: String = text_edit.get_line(line_idx)
 	var needs_sort = false
 	for highlight_helper in highlight_helpers:
 		var check = highlight_helper.check_line(hl_info, current_line_text)
@@ -84,6 +68,7 @@ func _first_line_update() -> void:
 		return
 	if not GDHelper.dummy_code_edit.text == real_text_edit.text:
 		GDHelper.dummy_code_edit.text = real_text_edit.text
+		#gd_helper.base_gdscript_highlighter.clear_highlighting_cache()
 		GDHelper.default_text_color = EditorInterface.get_editor_settings().get("text_editor/theme/highlighting/text_color")
 		var t = Time.get_ticks_usec()
 		update_tagged_name_list()
@@ -91,7 +76,7 @@ func _first_line_update() -> void:
 		print(t2 - t, " usec")
 
 
-func update_tagged_name_list(force_build=false) -> void:
+func update_tagged_name_list() -> void:
 	var text_edit_node: CodeEdit = get_text_edit()
 	
 	var current_line_index = text_edit_node.get_caret_line()
@@ -101,8 +86,7 @@ func update_tagged_name_list(force_build=false) -> void:
 	var full_rebuild = false
 	if abs(current_line_count - last_line_count) > 1:
 		full_rebuild = true
-	if force_build:
-		full_rebuild = true
+	
 	var new_tagged_data: Dictionary = {}
 	for highlight_helper in highlight_helpers:
 		var old_data = tagged_data.get(highlight_helper, [])
