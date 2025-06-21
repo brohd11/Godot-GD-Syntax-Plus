@@ -1,0 +1,23 @@
+{
+	"import":{
+		"keyword":"const",
+		"color": "35cc9b"
+	},
+	"tag":{
+		"keyword":"any",
+		"color":"bf7a34"
+	},
+	"debug":{
+		"keyword":"any",
+		"color":"f1cb47"
+	},
+	"func":{
+		"keyword":"func",
+		"color":"e32f49",
+		"overwrite":true
+	},
+	"class":{
+		"keyword":"class",
+		"color":"248d6a"
+	},
+}
