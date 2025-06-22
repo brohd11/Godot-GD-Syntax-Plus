@@ -2,16 +2,18 @@ extends EditorContextMenuPlugin
 
 const slot = CONTEXT_SLOT_SCRIPT_EDITOR_CODE
 
-const Utils = preload("res://addons/syntax_tags/gdscript/class/utils.gd")
+const Utils = preload("uid://bvmvgtxctmgl") #import utils.gd
 const GDHelper = preload("uid://es6q2q0qg7pj") #import gdscript_helper.gd
 
 const JSON_PATH = "res://addons/syntax_tags/tags.json"
 
+var tags = []
+
 func _popup_menu(paths: PackedStringArray) -> void:
 	var se:CodeEdit = Engine.get_main_loop().root.get_node(paths[0]);
-	
 	var current_line_text = se.get_line(se.get_caret_line())
 	
+	tags.clear()
 	var editor_tags = Utils.read_from_json(JSON_PATH)
 	var popup:= PopupMenu.new()
 	popup.submenu_popup_delay = 0
@@ -22,9 +24,9 @@ func _popup_menu(paths: PackedStringArray) -> void:
 		if menu == "None":
 			continue
 		var full_tag = "#" + tag
+		tags.append(full_tag)
 		if current_line_text.find(full_tag) > -1:
-			popup.queue_free()
-			return
+			continue
 		
 		var keyword:String = data.get("keyword", "")
 		if keyword == "any":
@@ -35,6 +37,7 @@ func _popup_menu(paths: PackedStringArray) -> void:
 			keywords = keyword.split("|", false)
 		else:
 			keywords = [keyword]
+		
 		var valid := false
 		for word:String in keywords:
 			if current_line_text.strip_edges().begins_with(word):
@@ -63,102 +66,55 @@ func _popup_menu(paths: PackedStringArray) -> void:
 	
 	add_context_submenu_item("SyntaxTag", popup)
 
+
 func _on_context_pressed(se, tag):
 	_write_tag(se, tag)
-
 func _tag_pressed(id:int, popup:PopupMenu, script_editor:CodeEdit):
 	var tag = popup.get_item_text(id)
 	_write_tag(script_editor, tag)
 
-func _write_tag(script_editor, tag):
+
+func _write_tag(script_editor:CodeEdit, tag):
 	var current_line = script_editor.get_caret_line()
 	var line_text = script_editor.get_line(current_line)
+	var full_tag = "#" + tag
 	
 	var path = ""
 	if tag == "import":
 		path = _check_for_path(script_editor)
 		if path != "":
-			_path_to_uid(script_editor)
-	print(path)
-	line_text = script_editor.get_line(current_line)
-	var full_tag = " #" + tag
+			line_text = line_text.replace(path, path_to_uid(path))
+			#line_text = line_text.erase()
 	
-	var text_index = line_text.length()
-	script_editor.insert_text(full_tag, current_line, text_index)
-	var follow_up = " "
+	var full_tag_set = false
+	for _tag in tags:
+		if _tag == full_tag:
+			continue
+		if line_text.find(_tag) > -1:
+			line_text = line_text.replace(_tag, full_tag)
+			full_tag_set = true
+			break
+	
+	if not full_tag_set:
+		var com_index = line_text.find("#")
+		if com_index > -1:
+			line_text = line_text.erase(com_index, line_text.length() - com_index)
+		else:
+			full_tag = " " + full_tag
+		line_text = line_text + full_tag
+	
+	script_editor.set_line(current_line, line_text)
+	
+	var follow_up = ""
 	if path != "":
 		path = uid_to_path(path)
-		follow_up = " " + path.get_file()
-	script_editor.insert_text(follow_up, current_line, text_index + full_tag.length())
-
-func _path_to_uid(se, comment=false):
-	var is_sel = _ensure_path_selected(se)
-	var t = se.get_selected_text()
-	var uid = path_to_uid(t)
+		var file_nm = path.get_file()
+		if not line_text.find(file_nm) > -1:
+			follow_up = " " + file_nm
 	
-	se.insert_text_at_caret(uid)
-	if comment:
-		_add_comment(se, uid, t)
-	if is_sel:
-		_select_text(se, uid)
+	line_text = line_text + follow_up
+	script_editor.set_line(current_line, line_text)
 
-func _uid_to_path(se):
-	var is_sel = _ensure_path_selected(se)
-	var t = se.get_selected_text()
-	var path = uid_to_path(t)
-	
-	se.insert_text_at_caret(path)
-	if is_sel:
-		_select_text(se, path)
-
-func _uid_add_comment(se):
-	var is_sel = _ensure_path_selected(se)
-	var t = se.get_selected_text()
-	var path = uid_to_path(t)
-	
-	_add_comment(se, t, path)
-	if is_sel:
-		_select_text(se, t)
-
-
-func _add_comment(se:CodeEdit, text, path_comment):
-	var c_l = se.get_caret_line()
-	var line_text = se.get_line(c_l)
-	var end_ind = 1
-	var ind = -1
-	if line_text.find('"),') > -1:
-		ind = line_text.find('"),')
-		end_ind = 3
-	elif line_text.find('")') > -1 or line_text.find('",') > -1:
-		ind = line_text.find('")')
-		end_ind = 2
-	elif line_text.find('",') > -1:
-		ind = line_text.find('",')
-		end_ind = 2
-	else:
-		ind = line_text.rfind('"')
-		end_ind = 1
-	if ind > -1:
-		se.select(c_l,  ind + end_ind, c_l, line_text.length())
-		se.insert_text_at_caret(" # " + path_comment)
-
-func _select_text(se:CodeEdit, text):
-	var c_l = se.get_caret_line()
-	var l = se.get_line(c_l)
-	var first_ind = l.find(text)
-	se.select(c_l, first_ind, c_l, first_ind + text.length())
-
-func _ensure_path_selected(se:CodeEdit):
-	var to_replace = _check_for_path(se)
-	var t:String = se.get_selected_text()
-	if t == to_replace:
-		return true
-	var c_l = se.get_caret_line()
-	var l = se.get_line(c_l)
-	
-	var start_ind = l.find(to_replace)
-	se.select(c_l, start_ind, c_l, start_ind + to_replace.length())
-	return false
 
 func _check_for_path(se:CodeEdit):
 	var path = ""

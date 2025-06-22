@@ -5,8 +5,6 @@ const Utils = preload("res://addons/syntax_tags/gdscript/class/utils.gd") #impor
 const GDHelper = preload("uid://es6q2q0qg7pj") 
 const HighlightHelper = preload("uid://raeyegdbxrem")
 
-const JSON_PATH = "res://addons/syntax_tags/tags.json"
-
 var gd_helper: GDHelper
 var highlight_helpers:Array[HighlightHelper] = []
 
@@ -32,7 +30,7 @@ func _init() -> void:
 	
 
 static func read_editor_tags():
-	editor_tags = Utils.read_from_json(JSON_PATH)
+	editor_tags = Utils.read_from_json(Utils.JSON_PATH)
 
 
 func _on_editor_script_changed(new_script:Script):
@@ -85,10 +83,7 @@ func _first_line_update() -> void:
 	if not GDHelper.dummy_code_edit.text == real_text_edit.text:
 		GDHelper.dummy_code_edit.text = real_text_edit.text
 		GDHelper.default_text_color = EditorInterface.get_editor_settings().get("text_editor/theme/highlighting/text_color")
-		var t = Time.get_ticks_usec()
 		update_tagged_name_list()
-		var t2 = Time.get_ticks_usec()
-		print(t2 - t, " usec")
 
 
 func update_tagged_name_list(force_build=false) -> void:

@@ -70,10 +70,8 @@ func _first_line_update() -> void:
 		GDHelper.dummy_code_edit.text = real_text_edit.text
 		#gd_helper.base_gdscript_highlighter.clear_highlighting_cache()
 		GDHelper.default_text_color = EditorInterface.get_editor_settings().get("text_editor/theme/highlighting/text_color")
-		var t = Time.get_ticks_usec()
 		update_tagged_name_list()
-		var t2 = Time.get_ticks_usec()
-		print(t2 - t, " usec")
+
 
 
 func update_tagged_name_list() -> void:

@@ -1,17 +1,15 @@
 @tool
 extends RefCounted
 
-const Utils = preload("res://addons/syntax_tags/gdscript/class/utils.gd")
-const GDHelper = preload("uid://es6q2q0qg7pj") #import
-
-var highlight_color:Color
-
-var highlight_tag:String = ""
+const Utils = preload("uid://bvmvgtxctmgl") #import utils.gd
+const GDHelper = preload("uid://es6q2q0qg7pj")  #import gdscript_helper.gd
 
 var tagged_names: Array = [] # Stores the names of consts marked for special highlighting
 var _tagged_name_regex: RegEx # Dynamically built regex for these names
 var declaration_regex: RegEx # To find "const NAME = xxx #import"
 
+var highlight_color:Color
+var highlight_tag:String = ""
 var overwrite_color:bool = false
 
 func _init(tag, tag_data) -> void:
@@ -92,7 +90,6 @@ func rebuild_tagged_name_regex():
 	
 	var pattern_parts = []
 	for name in tagged_names:
-		#print(name)
 		pattern_parts.append(Utils.escape_regex_meta_characters(str(name))) # Escape the name
 	
 	if not is_instance_valid(_tagged_name_regex):
