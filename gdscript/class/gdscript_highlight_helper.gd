@@ -1,8 +1,8 @@
 @tool
 extends RefCounted
 
-const Utils = preload("uid://bvmvgtxctmgl") #import utils.gd
-const GDHelper = preload("uid://es6q2q0qg7pj")  #import gdscript_helper.gd
+const Utils = preload("uid://bvmvgtxctmgl") #>import utils.gd
+const GDHelper = preload("uid://es6q2q0qg7pj")  #>import gdscript_helper.gd
 
 var tagged_names: Array = [] # Stores the names of consts marked for special highlighting
 var _tagged_name_regex: RegEx # Dynamically built regex for these names
@@ -16,11 +16,8 @@ func _init(tag, tag_data) -> void:
 	highlight_tag = tag
 	var keywords:String = tag_data.get("keyword", "any")
 	
-	var color = tag_data.get("color", "#35cc9b")
-	if not color.begins_with("#"):
-		color = "#" + color
-	var color_obj = Color(color)
-	highlight_color = color_obj
+	var color = tag_data.get("color", Utils.DEFAULT_COLOR_STRING)
+	highlight_color = Color.html(color)
 	
 	var overwrite = tag_data.get("overwrite", false)
 	if overwrite is String:
@@ -41,41 +38,41 @@ func _init(tag, tag_data) -> void:
 	rebuild_tagged_name_regex() # Initialize with an empty regex
 
 
-func check_line(hl_info, current_line_text):
+func check_line(hl_info, current_line_text): 
 	var needs_sort = false
-	
+	#var tag_idx = current_line_text.find(">"+highlight_tag)
+	#if tag_idx > -1:
+		#hl_info[tag_idx] = {"color":highlight_color}
+		#hl_info[tag_idx + highlight_tag.length()+1] = hl_info[tag_idx-1]
+		#needs_sort = true
 	if not tagged_names.is_empty() and is_instance_valid(_tagged_name_regex):
-		var const_matches = _tagged_name_regex.search_all(current_line_text)
-		for const_match in const_matches:
-			var start_col = const_match.get_start(1)
-			var end_col = const_match.get_end(1)
-			var can_highlight = true
-			if not start_col in hl_info and not overwrite_color:
-				var index = start_col - 1
-				while index > 0:
-					if hl_info.has(index):
-						var existing_color:Color = hl_info[index].get("color", Color.BLACK)
-						if existing_color != GDHelper.default_text_color:
-							
-							can_highlight = false
-							break
-					index -= 1
-				if not can_highlight:
+		var _matches = _tagged_name_regex.search_all(current_line_text)
+		for _match in _matches:
+			var start_idx = _match.get_start(1)
+			if not overwrite_color:
+				var index_data = hl_info.get(start_idx)
+				if index_data == null:
 					continue
-				#else:
-					#needs_sort = true
-					#hl_info[start_col] = {"color": highlight_color}
+				var existing_color = hl_info.get(start_idx, {}).get("color")
+				if existing_color != GDHelper.default_text_color:
+					continue
+			else:
+				
+				if not start_idx in hl_info:
+					var end_idx = _match.get_end(1)
+					if end_idx != current_line_text.length():
+						var idx = start_idx + 1
+						while idx >= 0:
+							var index_data = hl_info.get(idx)
+							if index_data:
+								var existing_color = index_data.get("color")
+								hl_info[end_idx] = {"color": existing_color}
+								break
+							
+							idx -= 1
 			
-			for i in range(start_col, end_col):
-				if hl_info.has(i) and not overwrite_color:
-					var existing_color:Color = hl_info[i].get("color", Color.BLACK)
-					if existing_color != GDHelper.default_text_color:
-						can_highlight = false
-						break
-			if can_highlight:
-				needs_sort = true
-				for i in range(start_col, end_col):
-					hl_info[i] = {"color": highlight_color}
+			needs_sort = true
+			hl_info[start_idx] = {"color": highlight_color}
 	
 	return [hl_info, needs_sort]
 

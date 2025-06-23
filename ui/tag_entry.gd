@@ -1,7 +1,10 @@
 @tool
 extends VBoxContainer
 
-const GDSynTags = preload("uid://vfj0wuk56rq7") #import gdscript_tags_code.gd
+const GDSynTags = preload("uid://vfj0wuk56rq7") #>import gdscript_tags_code.gd
+const GDHelper = preload("uid://qaydfc8u03fq") #>import gdscript_helper_code.gd
+const Utils = GDSynTags.Utils #>import
+
 
 @onready var code_edit: CodeEdit = %CodeEdit
 
@@ -35,9 +38,10 @@ func set_data(tag, data):
 	var keywords = data.get("keyword", "")
 	key_line.text = keywords
 	overwrite_button.button_pressed = data.get("overwrite", false)
-	var color = data.get("color")
+	var color = data.get("color", "ffffff")
 	var color_obj = Color.html(color)
 	color_picker_button.color = color_obj
+	
 	var _menu_option = data.get("menu", "submenu")
 	if _menu_option == "Main Menu":
 		menu_option.select(1)
@@ -51,40 +55,46 @@ func _set_tags(new_tag):
 		var text = code_edit.get_line(line)
 		if text.strip_edges() == "":
 			continue
-		var comment_index = text.find("#")
-		if comment_index == -1:
+		var delim_index = text.find(Utils.TAG_CHAR)
+		if delim_index == -1:
 			continue
 		var text_length = text.length()
-		text = text.erase(comment_index + 1, text_length - comment_index + 1)
+		var tag_char_len = Utils.TAG_CHAR.length()
+		text = text.erase(delim_index + tag_char_len, text_length - tag_char_len + 1)
 		text = text + new_tag
 		code_edit.set_line(line, text)
+	#code_edit.syntax_highlighter.clear_highlighting_cache()
 
 func get_data():
 	var tag = tag_line.text
-	var keys = key_line.text
-	var color = color_picker_button.color
-	var overwrite = overwrite_button.button_pressed
-	var menu_option = menu_option.get_item_text(menu_option.selected)
+	var key = key_line.text
+	if key == "":
+		key = "NONEZZZ"
 	var data = {
 		tag:{
-			"keyword":keys, 
-			"color": color.to_html(false),
-			"overwrite": overwrite,
-			"menu":menu_option
+			"keyword":key, 
+			"color": color_picker_button.color.to_html(false),
+			"overwrite": overwrite_button.button_pressed,
+			"menu" :menu_option.get_item_text(menu_option.selected)
 			}
 	}
 	return data
+
+
 
 func set_highlighter():
 	var data = get_data()
 	var new_hl = GDSynTags.new(data)
 	code_edit.syntax_highlighter = new_hl
 
+func update_highlighter():
+	pass
+
 func _on_key_changed(new_text:String):
-	
 	debounce.start()
 
 func _on_tag_changed(new_text:String):
+	new_text = _line_strip_edges(tag_line, new_text)
 	_set_tags(new_text)
 	debounce.start()
 
@@ -102,4 +112,19 @@ func _on_reload_pressed():
 
 func _on_delete_pressed():
 	queue_free()
-	
+
+func _line_strip_edges(line_edit:LineEdit, new_text:String):
+	var current_caret_idx = line_edit.caret_column
+	var white_space_front = false
+	if new_text.begins_with(" "):
+		white_space_front = true
+	if white_space_front or new_text.ends_with(" "):
+		new_text = new_text.strip_edges()
+		line_edit.text = new_text
+		if white_space_front and current_caret_idx == 1:
+			line_edit.caret_column = 0
+		elif current_caret_idx < new_text.length():
+			line_edit.caret_column = current_caret_idx
+		else:
+			line_edit.caret_column = line_edit.text.length()
+	return new_text

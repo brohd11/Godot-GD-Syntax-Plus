@@ -18,6 +18,33 @@ layout_mode = 2
 [node name="HBoxContainer" type="HBoxContainer" parent="."]
 layout_mode = 2
 
+[node name="HBoxContainer" type="HBoxContainer" parent="HBoxContainer"]
+layout_mode = 2
+
+[node name="Label3" type="Label" parent="HBoxContainer/HBoxContainer"]
+layout_mode = 2
+text = "Tag"
+
+[node name="spacer" type="Control" parent="HBoxContainer/HBoxContainer"]
+visible = false
+layout_mode = 2
+
+[node name="TagLine" type="LineEdit" parent="HBoxContainer/HBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+
+[node name="HBoxContainer3" type="HBoxContainer" parent="HBoxContainer/HBoxContainer"]
+layout_mode = 2
+
+[node name="ColorPickerButton" type="ColorPickerButton" parent="HBoxContainer/HBoxContainer/HBoxContainer3"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(32, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+focus_mode = 0
+edit_alpha = false
+
 [node name="HBoxContainer2" type="HBoxContainer" parent="HBoxContainer"]
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
@@ -36,22 +63,6 @@ layout_mode = 2
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-
-[node name="HBoxContainer" type="HBoxContainer" parent="HBoxContainer"]
-layout_mode = 2
-
-[node name="Label3" type="Label" parent="HBoxContainer/HBoxContainer"]
-layout_mode = 2
-text = "Tag"
-
-[node name="spacer" type="Control" parent="HBoxContainer/HBoxContainer"]
-visible = false
-layout_mode = 2
-
-[node name="TagLine" type="LineEdit" parent="HBoxContainer/HBoxContainer"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(100, 0)
-layout_mode = 2
 
 [node name="OverwriteButton" type="Button" parent="HBoxContainer"]
 unique_name_in_owner = true
@@ -75,17 +86,6 @@ popup/item_1/id = 1
 popup/item_2/text = "None"
 popup/item_2/id = 2
 
-[node name="HBoxContainer3" type="HBoxContainer" parent="HBoxContainer"]
-layout_mode = 2
-
-[node name="ColorPickerButton" type="ColorPickerButton" parent="HBoxContainer/HBoxContainer3"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(32, 0)
-layout_mode = 2
-size_flags_horizontal = 3
-focus_mode = 0
-edit_alpha = false
-
 [node name="DeleteButton" type="Button" parent="HBoxContainer"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(32, 0)
@@ -100,18 +100,19 @@ size_flags_vertical = 3
 
 [node name="CodeEdit" type="CodeEdit" parent="HBoxContainer3"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(300, 225)
+custom_minimum_size = Vector2(300, 245)
 layout_mode = 2
 size_flags_horizontal = 3
 focus_mode = 0
-text = "const Class = preload(\"path\") #tag
-class InnerClass: #tag
-	enum Enum{STATE1, STATE2} #tag
-var some_var:String = \"string\" #tag
-@onready var button = %Button #tag
-button.pressed.connect(_on_button_pressed)
-func _on_button_pressed(): #tag
-	button.text = some_var"
+text = "const Class = preload(\"path\") #>tag
+class InnerClass: #>tag
+	enum Enum{STATE1, STATE2} #>tag
+var some_var:String = \"some_var\" #>tag
+@export var life:int = 42 #>tag
+@onready var button = %Button #>tag
+static var static_var :String= \"static\" #>tag
+func _on_button_pressed(): #>tag
+	button.text = some_var; callable = _on_button_pressed"
 draw_tabs = true
 
 [node name="VBoxContainer" type="VBoxContainer" parent="HBoxContainer3"]

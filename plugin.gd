@@ -3,26 +3,27 @@ extends EditorPlugin
 
 static var syntax_highlighters:Dictionary = {}
 
-const TAG_EDITOR = preload("res://addons/syntax_tags/ui/tag_editor.tscn")
+const MODULAR_BROWSER_PATH = "res://addons/modular_browser"
+
+const TAG_EDITOR = preload("uid://cgmh6d384m4qe") # res://addons/syntax_tags/ui/tag_editor.tscn
 var window:Window
 
-const CONTEXT_MENU = preload("uid://ovp2xnagu2ta")
+const CONTEXT_MENU = preload("uid://ovp2xnagu2ta") # res://addons/syntax_tags/plugin/syntax_tag_context_menu.gd
 var context_menu:CONTEXT_MENU
 
 func _enter_tree() -> void:
 	add_highlighters()
-	
 	context_menu = CONTEXT_MENU.new()
 	add_context_menu_plugin(context_menu.slot, context_menu)
 	
-	add_tool_menu_item("GDSyntaxTags", _on_tool_menu_pressed)
+	if not DirAccess.dir_exists_absolute(MODULAR_BROWSER_PATH): # If path present, use plugin layout
+		add_tool_menu_item("GDSyntaxTags", _on_tool_menu_pressed)
 
 func _exit_tree() -> void:
 	remove_highlighters()
-	
 	remove_context_menu_plugin(context_menu)
 	
-	remove_tool_menu_item("GDSyntaxTags")
+	remove_tool_menu_item("GDSyntaxTags") # won't cause error if it doesn't exist
 
 
 func _on_tool_menu_pressed():
@@ -38,12 +39,16 @@ func _on_tool_menu_pressed():
 	window.add_child(editor)
 	editor.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	editor.close_requested.connect(_on_close_requested)
-	
-	
+
 
 func _on_close_requested():
 	window.queue_free()
 	window = null
+
+
+const HIGHLIGHTERS = {
+	"GDSynTags": preload("uid://c4om4mori5lad") # res://addons/syntax_tags/gdscript/editor/gdscript_tags.gd
+}
 
 #region Add/Remove Logic
 
@@ -60,8 +65,3 @@ static func remove_highlighters():
 		EditorInterface.get_script_editor().unregister_syntax_highlighter(highlighter)
 
 #endregion
-
-# Add inspector plugins here.
-const HIGHLIGHTERS = {
-	"GDSynTags": preload("uid://c4om4mori5lad") # res://addons/syntax_tags/gdscript/class/gdscript_tags.gd
-}

@@ -4,6 +4,21 @@ const JSON_PATH = "res://addons/syntax_tags/tags.json"
 
 const ANY_STRING = "const|var|@onready var|@export var|enum|class|func"
 
+const TAG_CHAR = "#>"
+const DEFAULT_COLOR_STRING = "35cc9b"
+const DEFAULT_COLOR = Color(DEFAULT_COLOR_STRING)
+
+class Config:
+	const global_tag_color = "global_tag_color"
+	const global_tag_mode = "global_tag_mode"
+	
+
+enum TagColorMode{
+	GLOBAL,
+	TAG,
+	NONE
+}
+
 enum RegExTarget{
 	CONST_VAR,
 	CLASS,
@@ -37,6 +52,32 @@ static func sort_keys(hl_info:Dictionary):
 	
 	return hl_info
 
+static func get_tags_data():
+	var data = read_from_json(JSON_PATH)
+	var tags = data.get("tags", {})
+	return tags
+
+static func get_config():
+	var data = read_from_json(JSON_PATH)
+	var config = data.get("config", {})
+	return config
+
+static func get_global_tag_mode(selected):
+	if selected is String:
+		if selected == "Global":
+			return 0
+		elif selected == "Tag":
+			return 1
+		elif selected == "None":
+			return 2
+	elif selected is int:
+		if selected == 0:
+			return "Global"
+		elif selected == 1:
+			return "Tag"
+		elif selected == 2:
+			return "None"
+
 static func read_from_json(path:String,access=FileAccess.READ) -> Dictionary:
 	var json_read = JSON.new()
 	var json_load = FileAccess.open(path, access)
@@ -56,27 +97,29 @@ static func write_to_json(data:Variant,path:String,access=FileAccess.WRITE_READ)
 	var json_file = FileAccess.open(path, access)
 	json_file.store_string(data_string)
 
-static func get_regex_pattern(keywords:String, tag):
+static func get_regex_pattern(keywords:String, tag): 
 	var regex_target = RegExTarget.CONST_VAR
 	keywords = keywords.to_lower()
 	if keywords == "any":
 		regex_target = RegExTarget.ANY
 		keywords = ANY_STRING
 	if regex_target != RegExTarget.ANY:
+		var keywords_array: PackedStringArray = keywords.split("|")
 		var has_const_or_var = false
 		var has_class = false
 		var has_func = false
 		var has_enum = false
-		if keywords.find("func") > -1:
-			has_func = true
-		if keywords.find("class") > -1:
-			has_class = true
-		if keywords.find("enum") > -1:
-			has_enum = true
-		if keywords.find("const") > -1 or keywords.find("var") > -1:
-			has_const_or_var = true
-		if keywords.count("var") == 1 and keywords.find("@onready") == -1 and keywords.find("@export") == -1:
-			keywords = keywords.replace("var", "var|@onready var|@export var")
+		for keyword in keywords_array:
+			if keyword == "func":
+				has_func = true
+			if keyword == "class":
+				has_class = true
+			if keyword == "enum":
+				has_enum = true
+			if keyword == "const" or keyword == "var":
+				has_const_or_var = true
+		if keywords.count("vars") == 1 and keywords.find("@onready") == -1 and keywords.find("@export") == -1:
+			keywords = keywords.replace("vars", "var|@onready var|@export var")
 		if int(has_func) + int(has_class) + int(has_enum) > 1:
 			regex_target = RegExTarget.ANY
 		elif has_func:
@@ -105,20 +148,21 @@ static func get_regex_pattern(keywords:String, tag):
 	else:
 		combined_keywords_pattern = "(?:" + "|".join(escaped_keywords_parts) + ")"
 	
+	var escaped_tag_char = escape_regex_meta_characters(TAG_CHAR)
 	var escaped_tag = escape_regex_meta_characters(tag)
 	
 	var pattern = "(?!)"
 	if regex_target == RegExTarget.CONST_VAR:
-		pattern = "^\\s*" + combined_keywords_pattern + "\\s+([a-zA-Z_][a-zA-Z0-9_]*)(?:\\s*:\\s*\\S+)?(?:\\s*(?:=|:=)\\s*.*?)?\\s*#\\s*" + escaped_tag + "(?:\\s|$)"
+		pattern = "^\\s*(?:static\\s+)?" + combined_keywords_pattern + "\\s+([a-zA-Z_][a-zA-Z0-9_]*)(?:\\s*:\\s*\\S+)?(?:\\s*(?:=|:=)\\s*.*?)?\\s*" + escaped_tag_char + "\\s*" + escaped_tag + "(?:\\s|$)"
 	elif regex_target == RegExTarget.CLASS:
-		pattern = "^\\s*class\\s+([A-Za-z_][A-Za-z0-9_]*)(?:\\s+extends\\s+(?:[A-Za-z_][A-Za-z0-9_]*|\"[^\"]*\"))?\\s*:\\s*.*?" + escaped_tag
+		pattern = "^\\s*class\\s+([A-Za-z_][A-Za-z0-9_]*)(?:\\s+extends\\s+(?:[A-Za-z_][A-Za-z0-9_]*|\"[^\"]*\"))?\\s*:\\s*.*?" + escaped_tag_char + "\\s*" + escaped_tag
 	elif regex_target == RegExTarget.FUNC:
-		pattern = "^\\s*func\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s*\\(.*?\\)(?:\\s*->\\s*\\S+)?\\s*:.*?#\\s*(" + escaped_tag + ")(?:\\s|$)"
+		pattern = "^\\s*(?:static\\s+)?func\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s*\\(.*?\\)(?:\\s*->\\s*\\S+)?\\s*:.*?" + escaped_tag_char + "\\s*(" + escaped_tag + ")(?:\\s|$)"
 	elif regex_target == RegExTarget.ENUM:
-		pattern = "^\\s*enum\\s+([a-zA-Z_][a-zA-Z0-9_]*)(?:\\s*\\{.*?\\}|\\s*\\{|\\s*:)\\s*#\\s*(" + escaped_tag + ")(?:\\s|$)"
+		pattern = "^\\s*enum\\s+([a-zA-Z_][a-zA-Z0-9_]*)(?:\\s*\\{.*?\\}|\\s*\\{|\\s*:)\\s*" + escaped_tag_char + "\\s*(" + escaped_tag + ")(?:\\s|$)"
 	elif regex_target == RegExTarget.ANY: #CHONKER
 		pattern = (
-			"^\\s*" +                                  # Start of line, optional leading whitespace
+			"^\\s*(?:static\\s+)?" +                                  # Start of line, optional leading whitespace
 			combined_keywords_pattern +                # Your combined keywords
 			"\\s+" +                                   # One or more spaces after the keyword
 			"([a-zA-Z_][a-zA-Z0-9_]*)" +               # CAPTURE GROUP 1: The name
@@ -147,7 +191,7 @@ static func get_regex_pattern(keywords:String, tag):
 				"(?:(?:\\s*:\\s*\\S+)?(?:\\s*(?:=|:=)\\s*.*?)?)" +
 			")" +
 			
-			"\\s*#\\s*" +                              # Whitespace, '#', whitespace (for the comment start)
+			"\\s*" + escaped_tag_char + "\\s*" +                              # Whitespace, '#', whitespace (for the comment start)
 			"(" + escaped_tag + ")" +      # CAPTURE GROUP 2: The tag itself
 			"(?:\\s|$)"                                # Trailing whitespace or end of line
 			)

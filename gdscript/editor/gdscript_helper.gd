@@ -1,13 +1,18 @@
 @tool
 extends RefCounted
 
+static var _instances:Array[WeakRef] = []
+
 static var dummy_code_edit: CodeEdit
 static var base_gdscript_highlighter: GDScriptSyntaxHighlighter
 
 static var default_text_color:Color
 
+static var config = {}
+
 
 func _init() -> void:
+	_instances.append(weakref(self))
 	set_code_edit()
 
 static func set_code_edit():
@@ -28,7 +33,13 @@ func get_base_highlight(syntax_highlighter, line_idx):
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_PREDELETE:
-		if is_instance_valid(dummy_code_edit):
-			dummy_code_edit.queue_free()
-			dummy_code_edit = null
-		base_gdscript_highlighter = null
+		for ref in _instances:
+			if ref.get_ref() == self:
+				_instances.erase(ref)
+				break
+		
+		if _instances.is_empty():
+			if is_instance_valid(dummy_code_edit):
+				dummy_code_edit.queue_free()
+				dummy_code_edit = null
+			base_gdscript_highlighter = null
