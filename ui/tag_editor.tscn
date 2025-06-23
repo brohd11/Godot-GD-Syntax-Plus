@@ -145,7 +145,7 @@ layout_mode = 2
 [node name="Label2" type="Label" parent="V/MainH/Panel/MarginContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Tag will be declared as \"#tag\".
+text = "Tag will be declared as \"#>tag\".
 
 Keywords can be \"any\" or a list seperated by \"|\".
 Valid Keywords: const|var|@onready var|@export var|enum|class|func
