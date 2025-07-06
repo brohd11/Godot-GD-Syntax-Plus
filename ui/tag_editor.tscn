@@ -46,39 +46,48 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Spacer3" type="Control" parent="V"]
-custom_minimum_size = Vector2(0, 15)
+[node name="TopSpacer" type="Control" parent="V"]
+custom_minimum_size = Vector2(0, 3)
 layout_mode = 2
 
-[node name="HBoxContainer" type="HBoxContainer" parent="V"]
+[node name="H" type="HBoxContainer" parent="V"]
 layout_mode = 2
 
-[node name="Spacer" type="Control" parent="V/HBoxContainer"]
-custom_minimum_size = Vector2(5, 0)
-layout_mode = 2
-
-[node name="MBOptionsTarget" type="HBoxContainer" parent="V/HBoxContainer"]
+[node name="MBOptionsTarget" type="HBoxContainer" parent="V/H"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(24, 0)
 layout_mode = 2
 size_flags_vertical = 4
+theme_override_constants/separation = 0
 
-[node name="Spacer2" type="Control" parent="V/HBoxContainer"]
+[node name="Spacer" type="Control" parent="V/H"]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="Label" type="Label" parent="V/HBoxContainer"]
+[node name="MBHideSpacer" type="Control" parent="V"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 12)
+layout_mode = 2
+
+[node name="H2" type="HBoxContainer" parent="V"]
+layout_mode = 2
+
+[node name="Spacer2" type="Control" parent="V/H2"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="V/H2"]
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 20
 theme_override_styles/normal = SubResource("StyleBoxFlat_ilbj5")
 text = "Syntax Tags Editor"
 
-[node name="Spacer3" type="Control" parent="V/HBoxContainer"]
+[node name="Spacer3" type="Control" parent="V/H2"]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="Spacer4" type="Control" parent="V/HBoxContainer"]
+[node name="Spacer4" type="Control" parent="V/H2"]
 custom_minimum_size = Vector2(29, 0)
 layout_mode = 2
 

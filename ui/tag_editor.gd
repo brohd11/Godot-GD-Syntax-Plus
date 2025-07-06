@@ -11,6 +11,7 @@ signal close_requested
 
 @onready var bg: ColorRect = %BG
 @onready var mb_options_target: HBoxContainer = %MBOptionsTarget
+@onready var mb_hide_spacer: Control = %MBHideSpacer
 
 @onready var entries_target: VBoxContainer = %EntriesTarget
 @onready var new_entry_button: Button = %NewEntryButton
@@ -46,10 +47,11 @@ func is_mb_panel(): # for Modular Browser
 	is_mb_panel_flag = true
 	cancel_button.hide()
 	button_spacer.hide()
+	mb_hide_spacer.hide()
 	bg.hide()
 
 func _read_json():
-	var tag_data = Utils.read_from_json(Utils.JSON_PATH)
+	var tag_data = Utils.UFile.read_from_json(Utils.JSON_PATH)
 	var config = tag_data.get("config", {})
 	
 	var tag_color = config.get(Utils.Config.global_tag_color, Utils.DEFAULT_COLOR_STRING)
@@ -106,7 +108,7 @@ func _on_save_button_pressed():
 		"config": _get_config_data()
 	}
 	
-	Utils.write_to_json(tag_file_data, Utils.JSON_PATH)
+	Utils.UFile.write_to_json(tag_file_data, Utils.JSON_PATH)
 	
 	GDHelper.config = Utils.get_config()
 	EditorGDTags.read_editor_tags()

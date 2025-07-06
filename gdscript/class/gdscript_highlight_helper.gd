@@ -87,7 +87,7 @@ func rebuild_tagged_name_regex():
 	
 	var pattern_parts = []
 	for name in tagged_names:
-		pattern_parts.append(Utils.escape_regex_meta_characters(str(name))) # Escape the name
+		pattern_parts.append(Utils.URegex.escape_regex_meta_characters(str(name))) # Escape the name
 	
 	if not is_instance_valid(_tagged_name_regex):
 		_tagged_name_regex = RegEx.new()

@@ -1,5 +1,8 @@
 extends RefCounted
 
+const UFile = preload("res://addons/syntax_tags/src/remote/u_file.gd") #>remote
+const URegex = preload("uid://dwdlbfkfvn6i3") #>remote u_regex.gd
+
 const JSON_PATH = "res://addons/syntax_tags/tags.json"
 
 const ANY_STRING = "const|var|@onready var|@export var|enum|class|func"
@@ -27,20 +30,20 @@ enum RegExTarget{
 	ANY
 }
 
-static func escape_regex_meta_characters(text: String, strip_symbols=false) -> String:
-	if strip_symbols:
-		if text.find("(") > -1:
-			text = text.replace("(", "")
-		if text.find(")") > -1:
-			text = text.replace(")", "")
-	var output: PackedStringArray = []
-	for char_str in text:
-		match char_str:
-			".", "+", "*", "?", "^", "$", "(", ")", "[", "]", "{", "}", "|", "\\":
-				output.append("\\" + char_str)
-			_:
-				output.append(char_str)
-	return "".join(output)
+#static func escape_regex_meta_characters(text: String, strip_symbols=false) -> String:
+	#if strip_symbols:
+		#if text.find("(") > -1:
+			#text = text.replace("(", "")
+		#if text.find(")") > -1:
+			#text = text.replace(")", "")
+	#var output: PackedStringArray = []
+	#for char_str in text:
+		#match char_str:
+			#".", "+", "*", "?", "^", "$", "(", ")", "[", "]", "{", "}", "|", "\\":
+				#output.append("\\" + char_str)
+			#_:
+				#output.append(char_str)
+	#return "".join(output)
 
 static func sort_keys(hl_info:Dictionary):
 	var sorted_keys = hl_info.keys()
@@ -53,12 +56,12 @@ static func sort_keys(hl_info:Dictionary):
 	return hl_info
 
 static func get_tags_data():
-	var data = read_from_json(JSON_PATH)
+	var data = UFile.read_from_json(JSON_PATH)
 	var tags = data.get("tags", {})
 	return tags
 
 static func get_config():
-	var data = read_from_json(JSON_PATH)
+	var data = UFile.read_from_json(JSON_PATH)
 	var config = data.get("config", {})
 	return config
 
@@ -77,25 +80,6 @@ static func get_global_tag_mode(selected):
 			return "Tag"
 		elif selected == 2:
 			return "None"
-
-static func read_from_json(path:String,access=FileAccess.READ) -> Dictionary:
-	var json_read = JSON.new()
-	var json_load = FileAccess.open(path, access)
-	if json_load == null:
-		print("Couldn't load JSON: ", path)
-		return {}
-	var json_string = json_load.get_as_text()
-	var err = json_read.parse(json_string)
-	if err != OK:
-		print("Couldn't load JSON, error: ", err)
-		return {}
-	
-	return json_read.data
-
-static func write_to_json(data:Variant,path:String,access=FileAccess.WRITE_READ) -> void:
-	var data_string = JSON.stringify(data,"\t")
-	var json_file = FileAccess.open(path, access)
-	json_file.store_string(data_string)
 
 static func get_regex_pattern(keywords:String, tag): 
 	var regex_target = RegExTarget.CONST_VAR
@@ -138,7 +122,7 @@ static func get_regex_pattern(keywords:String, tag):
 	var escaped_keywords_parts: Array = []
 	for keyword_part in keywords_array:
 		if not keyword_part.is_empty(): # Avoid issues with empty strings if input is like "var||const"
-			escaped_keywords_parts.append(escape_regex_meta_characters(keyword_part))
+			escaped_keywords_parts.append(URegex.escape_regex_meta_characters(keyword_part))
 	var combined_keywords_pattern: String
 	if escaped_keywords_parts.is_empty():
 		printerr("No valid keywords provided for regex.")
@@ -148,21 +132,21 @@ static func get_regex_pattern(keywords:String, tag):
 	else:
 		combined_keywords_pattern = "(?:" + "|".join(escaped_keywords_parts) + ")"
 	
-	var escaped_tag_char = escape_regex_meta_characters(TAG_CHAR)
-	var escaped_tag = escape_regex_meta_characters(tag)
+	var escaped_tag_char = URegex.escape_regex_meta_characters(TAG_CHAR)
+	var escaped_tag = URegex.escape_regex_meta_characters(tag)
 	
 	var pattern = "(?!)"
 	if regex_target == RegExTarget.CONST_VAR:
-		pattern = "^\\s*(?:static\\s+)?" + combined_keywords_pattern + "\\s+([a-zA-Z_][a-zA-Z0-9_]*)(?:\\s*:\\s*\\S+)?(?:\\s*(?:=|:=)\\s*.*?)?\\s*" + escaped_tag_char + "\\s*" + escaped_tag + "(?:\\s|$)"
+		pattern = "^\\s*(?:(?:#\\s*)?static\\s+|#\\s*)?" + combined_keywords_pattern + "\\s+([a-zA-Z_][a-zA-Z0-9_]*)(?:\\s*:\\s*\\S+)?(?:\\s*(?:=|:=)\\s*.*?)?\\s*" + escaped_tag_char + "\\s*" + escaped_tag + "(?:\\s|$)"
 	elif regex_target == RegExTarget.CLASS:
-		pattern = "^\\s*class\\s+([A-Za-z_][A-Za-z0-9_]*)(?:\\s+extends\\s+(?:[A-Za-z_][A-Za-z0-9_]*|\"[^\"]*\"))?\\s*:\\s*.*?" + escaped_tag_char + "\\s*" + escaped_tag
+		pattern = "^\\s*(?:#)?class\\s+([A-Za-z_][A-Za-z0-9_]*)(?:\\s+extends\\s+(?:[A-Za-z_][A-Za-z0-9_]*|\"[^\"]*\"))?\\s*:\\s*.*?" + escaped_tag_char + "\\s*" + escaped_tag + "(?:\\s|$)"
 	elif regex_target == RegExTarget.FUNC:
-		pattern = "^\\s*(?:static\\s+)?func\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s*\\(.*?\\)(?:\\s*->\\s*\\S+)?\\s*:.*?" + escaped_tag_char + "\\s*(" + escaped_tag + ")(?:\\s|$)"
+		pattern = "^\\s*(?:(?:#\\s*)?static\\s+|#\\s*)?func\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s*\\(.*?\\)(?:\\s*->\\s*\\S+)?\\s*:.*?" + escaped_tag_char + "\\s*" + escaped_tag + "(?:\\s|$)"
 	elif regex_target == RegExTarget.ENUM:
-		pattern = "^\\s*enum\\s+([a-zA-Z_][a-zA-Z0-9_]*)(?:\\s*\\{.*?\\}|\\s*\\{|\\s*:)\\s*" + escaped_tag_char + "\\s*(" + escaped_tag + ")(?:\\s|$)"
+		pattern = "^\\s*(?:#)?enum\\s+([a-zA-Z_][a-zA-Z0-9_]*)(?:\\s*\\{.*?\\}|\\s*\\{|\\s*:)\\s*" + escaped_tag_char + "\\s*" + escaped_tag + "(?:\\s|$)"
 	elif regex_target == RegExTarget.ANY: #CHONKER
 		pattern = (
-			"^\\s*(?:static\\s+)?" +                                  # Start of line, optional leading whitespace
+			"^\\s*(?:(?:#\\s*)?static\\s+|#\\s*)?" +                                  # Start of line, optional leading whitespace
 			combined_keywords_pattern +                # Your combined keywords
 			"\\s+" +                                   # One or more spaces after the keyword
 			"([a-zA-Z_][a-zA-Z0-9_]*)" +               # CAPTURE GROUP 1: The name
@@ -192,7 +176,7 @@ static func get_regex_pattern(keywords:String, tag):
 			")" +
 			
 			"\\s*" + escaped_tag_char + "\\s*" +                              # Whitespace, '#', whitespace (for the comment start)
-			"(" + escaped_tag + ")" +      # CAPTURE GROUP 2: The tag itself
+			escaped_tag +      # CAPTURE GROUP 2: The tag itself
 			"(?:\\s|$)"                                # Trailing whitespace or end of line
 			)
 	

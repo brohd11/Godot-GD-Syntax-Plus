@@ -4,6 +4,7 @@ extends EditorPlugin
 static var syntax_highlighters:Dictionary = {}
 
 const MODULAR_BROWSER_PATH = "res://addons/modular_browser"
+const ZYX_PATH = "res://addons/zyx_popup_wrapper"
 
 const TAG_EDITOR = preload("uid://cgmh6d384m4qe") # res://addons/syntax_tags/ui/tag_editor.tscn
 var window:Window
@@ -13,15 +14,19 @@ var context_menu:CONTEXT_MENU
 
 func _enter_tree() -> void:
 	add_highlighters()
-	context_menu = CONTEXT_MENU.new()
-	add_context_menu_plugin(context_menu.slot, context_menu)
+	
+	if not DirAccess.dir_exists_absolute(ZYX_PATH):
+		context_menu = CONTEXT_MENU.new()
+		add_context_menu_plugin(context_menu.Slot, context_menu)
 	
 	if not DirAccess.dir_exists_absolute(MODULAR_BROWSER_PATH): # If path present, use plugin layout
 		add_tool_menu_item("GDSyntaxTags", _on_tool_menu_pressed)
 
 func _exit_tree() -> void:
 	remove_highlighters()
-	remove_context_menu_plugin(context_menu)
+	
+	if is_instance_valid(context_menu):
+		remove_context_menu_plugin(context_menu)
 	
 	remove_tool_menu_item("GDSyntaxTags") # won't cause error if it doesn't exist
 

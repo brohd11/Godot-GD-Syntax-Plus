@@ -31,7 +31,6 @@ func get_base_highlight(line_idx) -> Dictionary:
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_PREDELETE:
-		pass
 		for ref in _instances:
 			if ref.get_ref() == self:
 				_instances.erase(ref)

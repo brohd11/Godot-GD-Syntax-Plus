@@ -6,7 +6,7 @@ class Data:
 	const nest_in_module = false
 	const name = "Plugins/GDSyntaxTags"
 	const use_name_path = true
-	const icons = [ab_lib.EditorIcons.editor_plugin, ab_lib.EditorIcons.syntax_highlighter]
+	const icons = ["EditorPlugin", Icons.syntax_highlighter]
 	const scene_path = "res://addons/syntax_tags/ui/tag_editor.tscn" # scene that actually instantiates in browser
 	const ui_scene_path = keys.PanelTabData.NONE # ui scene for add panel window, can be none, used with interface
 	const interface_path = keys.PanelTabData.NONE # path to this file, used with ui scene, if not set, defaults to this path

@@ -20,6 +20,10 @@ var debounce:Timer
 
 
 func _ready() -> void:
+	if is_part_of_edited_scene():
+		return
+	delete_button.icon = EditorInterface.get_base_control().get_theme_icon("Close", &"EditorIcons")
+	
 	color_picker_button.color_changed.connect(_on_color_picked)
 	reload_button.pressed.connect(_on_reload_pressed)
 	delete_button.pressed.connect(_on_delete_pressed)

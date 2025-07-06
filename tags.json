@@ -1,35 +1,35 @@
 {
 	"config": {
-		"global_tag_color": "26767aff",
+		"global_tag_color": "269a9aff",
 		"global_tag_mode": "Global"
 	},
 	"tags": {
 		"class": {
-			"color": "22b7c8",
+			"color": "5cce96",
 			"keyword": "class",
 			"menu": "Submenu",
 			"overwrite": false
 		},
-		"debug": {
-			"color": "ff6238",
-			"keyword": "any",
-			"menu": "Submenu",
-			"overwrite": false
-		},
-		"function": {
-			"color": "c9233b",
-			"keyword": "func",
-			"menu": "Submenu",
-			"overwrite": true
-		},
-		"green": {
-			"color": "30a042",
+		"class_inst": {
+			"color": "21aeb5",
 			"keyword": "var",
 			"menu": "Submenu",
 			"overwrite": false
 		},
+		"debug": {
+			"color": "fe5d32",
+			"keyword": "any",
+			"menu": "Submenu",
+			"overwrite": true
+		},
 		"import": {
-			"color": "37b390",
+			"color": "2fc89d",
+			"keyword": "const",
+			"menu": "Main Menu",
+			"overwrite": false
+		},
+		"remote": {
+			"color": "8befea",
 			"keyword": "const",
 			"menu": "Submenu",
 			"overwrite": false

@@ -31,11 +31,11 @@ func _init(data_overide=null) -> void:
 
 
 func read_editor_tags():
-	var tag_file_data = Utils.read_from_json(Utils.JSON_PATH)
+	var tag_file_data = Utils.UFile.read_from_json(Utils.JSON_PATH)
 	editor_tags = tag_file_data.get("tags", {})
 
 static func load_global_data():
-	var tag_file_data = Utils.read_from_json(Utils.JSON_PATH)
+	var tag_file_data = Utils.UFile.read_from_json(Utils.JSON_PATH)
 	GDHelper.config = tag_file_data.get("config", {})
 
 func create_highlight_helpers():
