@@ -2,7 +2,7 @@ extends Node
 
 const Utils = preload("uid://bvmvgtxctmgl") #>import utils.gd
 const GDHelper = preload("uid://es6q2q0qg7pj") #>import gdscript_helper.gd
-const PopupHelper = preload("res://addons/modular_browser/lib_runtime/popup_menu/popup_menu_path_helper.gd")
+const PopupHelper = preload("res://addons/syntax_tags/src/remote/popup_helper.gd")
 const Param = PopupHelper.ParamKeys
 
 static var tags = []

@@ -1,7 +1,7 @@
 extends RefCounted
 
 const UFile = preload("res://addons/syntax_tags/src/remote/u_file.gd") #>remote
-const URegex = preload("uid://dwdlbfkfvn6i3") #>remote u_regex.gd
+const URegex = preload("res://addons/syntax_tags/src/remote/u_regex.gd") #>remote u_regex.gd
 
 const JSON_PATH = "res://addons/syntax_tags/tags.json"
 
@@ -30,20 +30,6 @@ enum RegExTarget{
 	ANY
 }
 
-#static func escape_regex_meta_characters(text: String, strip_symbols=false) -> String:
-	#if strip_symbols:
-		#if text.find("(") > -1:
-			#text = text.replace("(", "")
-		#if text.find(")") > -1:
-			#text = text.replace(")", "")
-	#var output: PackedStringArray = []
-	#for char_str in text:
-		#match char_str:
-			#".", "+", "*", "?", "^", "$", "(", ")", "[", "]", "{", "}", "|", "\\":
-				#output.append("\\" + char_str)
-			#_:
-				#output.append(char_str)
-	#return "".join(output)
 
 static func sort_keys(hl_info:Dictionary):
 	var sorted_keys = hl_info.keys()

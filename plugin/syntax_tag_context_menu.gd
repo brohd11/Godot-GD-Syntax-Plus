@@ -2,7 +2,7 @@ extends EditorContextMenuPlugin
 
 const Slot = CONTEXT_SLOT_SCRIPT_EDITOR_CODE
 
-const PopupHelper = preload("res://addons/modular_browser/lib_runtime/popup_menu/popup_menu_path_helper.gd")
+const PopupHelper = preload("res://addons/syntax_tags/src/remote/popup_helper.gd")
 const Param = PopupHelper.ParamKeys
 const SyntaxTagContextLogic = preload("uid://pb5xaqxl2qsx") #>import syntax_tag_context_logic.gd
 
