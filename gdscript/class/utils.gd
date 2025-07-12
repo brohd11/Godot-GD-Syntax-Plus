@@ -125,7 +125,7 @@ static func get_regex_pattern(keywords:String, tag):
 	if regex_target == RegExTarget.CONST_VAR:
 		pattern = "^\\s*(?:(?:#\\s*)?static\\s+|#\\s*)?" + combined_keywords_pattern + "\\s+([a-zA-Z_][a-zA-Z0-9_]*)(?:\\s*:\\s*\\S+)?(?:\\s*(?:=|:=)\\s*.*?)?\\s*" + escaped_tag_char + "\\s*" + escaped_tag + "(?:\\s|$)"
 	elif regex_target == RegExTarget.CLASS:
-		pattern = "^\\s*(?:#)?class\\s+([A-Za-z_][A-Za-z0-9_]*)(?:\\s+extends\\s+(?:[A-Za-z_][A-Za-z0-9_]*|\"[^\"]*\"))?\\s*:\\s*.*?" + escaped_tag_char + "\\s*" + escaped_tag + "(?:\\s|$)"
+		pattern = "^\\s*(?:#)?class\\s+([A-Za-z_][A-Za-z0-9_]*)(?:\\s+extends\\s+(?:[A-Za-z_][A-Za-z0-9_.]*|\"[^\"]*\"))?\\s*:\\s*.*?" + escaped_tag_char + "\\s*" + escaped_tag + "(?:\\s|$)"
 	elif regex_target == RegExTarget.FUNC:
 		pattern = "^\\s*(?:(?:#\\s*)?static\\s+|#\\s*)?func\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s*\\(.*?\\)(?:\\s*->\\s*\\S+)?\\s*:.*?" + escaped_tag_char + "\\s*" + escaped_tag + "(?:\\s|$)"
 	elif regex_target == RegExTarget.ENUM:

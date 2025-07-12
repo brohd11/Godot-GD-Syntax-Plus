@@ -1,2 +1,2 @@
 #! remote
-extends "res://addons/modular_browser/lib_runtime/utils/src/u_file.gd"
+extends "res://addons/addon_lib/brohd/alib_runtime/utils/src/u_file.gd"
