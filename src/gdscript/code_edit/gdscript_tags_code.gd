@@ -4,7 +4,7 @@ extends CodeHighlighter
 const Utils = preload("uid://bvmvgtxctmgl") #>import utils.gd
 const GDHelper = preload("uid://qaydfc8u03fq") #>import gdscript_helper_code.gd
 const HighlightHelper = preload("uid://raeyegdbxrem") #>import gdscript_highlight_helper.gd
-const TagHighlighter = preload("res://addons/syntax_tags/gdscript/class/tag_highlighter.gd")
+const TagHighlighter = preload("res://addons/syntax_tags/src/gdscript/class/tag_highlighter.gd")
 
 const JSON_PATH = "res://addons/syntax_tags/tags.json"
 
