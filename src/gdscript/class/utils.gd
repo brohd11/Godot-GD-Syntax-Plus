@@ -14,7 +14,10 @@ const DEFAULT_COLOR = Color(DEFAULT_COLOR_STRING)
 class Config:
 	const global_tag_color = "global_tag_color"
 	const global_tag_mode = "global_tag_mode"
-	
+	const highlight_class = "highlight_class"
+	const highlight_class_color = "highlight_class_color"
+	const highlight_const = "highlight_const"
+	const highlight_const_color = "highlight_const_color"
 
 enum TagColorMode{
 	GLOBAL,
@@ -30,6 +33,19 @@ enum RegExTarget{
 	ANY
 }
 
+static func check_line_for_rebuild(line_text:String, line_text_last_state:String):
+	if line_text.strip_edges() == "":
+		return true
+	if line_text.find(TAG_CHAR) > -1:
+		return true
+	if line_text_last_state.find(TAG_CHAR) > -1:
+		return true
+	if line_text.find("const ") > -1:
+		return true
+	if line_text.find("var ") > -1:
+		return true
+	
+	return false
 
 static func sort_keys(hl_info:Dictionary):
 	var sorted_keys = hl_info.keys()
@@ -51,6 +67,24 @@ static func get_config():
 	var config = data.get("config", {})
 	return config
 
+static func get_class_hl_data(config):
+	var class_tag_data  = {
+		"color": config.get(Config.highlight_class_color, Color.AQUA),
+		"keyword":"const|vars",
+		"menu":"None",
+		"overwrite":false
+	}
+	return class_tag_data
+
+static func get_const_hl_data(config):
+	var const_tag_data  = {
+		"color": config.get(Config.highlight_const_color, Color.CADET_BLUE),
+		"keyword":"const",
+		"menu":"None",
+		"overwrite":false
+	}
+	return const_tag_data
+
 static func get_global_tag_mode(selected):
 	if selected is String:
 		if selected == "Global":
@@ -67,7 +101,16 @@ static func get_global_tag_mode(selected):
 		elif selected == 2:
 			return "None"
 
-static func get_regex_pattern(keywords:String, tag): 
+static func get_regex_pattern(keywords:String, tag):
+	if tag == "=CONST_HL":
+		return "(?:const)\\s+([A-Z_0-9]+)\\s*[=:]" # const
+	elif tag == "=CLASS_HL":
+		return "(?:class|const|var)\\s+(?![A-Z_0-9]+\\s*[=:])([A-Z].*?)\\s*[=:]" # class
+		#var pattern
+		#if keywords == "const|vars":
+			#pattern = "(?:const|var|@onready var|@export var)\\s+(.+?)\\s*[=:]"
+	
+	
 	var regex_target = RegExTarget.CONST_VAR
 	keywords = keywords.to_lower()
 	if keywords == "any":

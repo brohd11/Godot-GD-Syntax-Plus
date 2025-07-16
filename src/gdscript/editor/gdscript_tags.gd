@@ -33,12 +33,21 @@ func create_highlight_helpers():
 	highlight_helpers.clear()
 	var tags = []
 	read_editor_tags()
+	load_global_data()
 	for tag in editor_tags:
 		var data = editor_tags.get(tag)
 		var highlighter = HighlightHelper.new(tag, data)
 		highlight_helpers.append(highlighter)
 		
 		tags.append(tag)
+	
+	if GDHelper.config.get(Utils.Config.highlight_const):
+		var const_tag_highlighter = HighlightHelper.new("=CONST_HL",Utils.get_const_hl_data(GDHelper.config))
+		highlight_helpers.append(const_tag_highlighter)
+	if GDHelper.config.get(Utils.Config.highlight_class, false):
+		var class_tag_highlighter = HighlightHelper.new("=CLASS_HL",Utils.get_class_hl_data(GDHelper.config))
+		highlight_helpers.append(class_tag_highlighter)
+	
 	tag_highlighter = TagHighlighter.new(tags, editor_tags, GDHelper.config)
 
 
@@ -100,6 +109,7 @@ func _first_line_update() -> void:
 
 
 func update_tagged_name_list(force_build=false) -> void:
+	var t = Time.get_ticks_usec()
 	var text_edit_node: CodeEdit = get_text_edit()
 	
 	var current_line_index = text_edit_node.get_caret_line()
@@ -115,10 +125,9 @@ func update_tagged_name_list(force_build=false) -> void:
 		var old_data = tagged_data.get(highlight_helper, [])
 		new_tagged_data[highlight_helper] = old_data.duplicate()
 	
-	var current_line_delim = current_line_text.find(Utils.TAG_CHAR) > -1 
-	var last_line_delim = current_line_last_state.find(Utils.TAG_CHAR) > -1
-	var delim_or_blank = current_line_delim or last_line_delim or current_line_text.strip_edges() == ""
-	if delim_or_blank and not full_rebuild: # if not pound sign, no need to check. If blank, check if tag deleted
+	
+	var check = Utils.check_line_for_rebuild(current_line_text, current_line_last_state)
+	if check and not full_rebuild: # if not pound sign, no need to check. If blank, check if tag deleted
 		for highlight_helper in highlight_helpers:
 			var declaration_regex = highlight_helper.declaration_regex
 			var _match = declaration_regex.search(current_line_text)
@@ -155,6 +164,8 @@ func update_tagged_name_list(force_build=false) -> void:
 	
 	current_line_last_state = text_edit_node.get_line(current_line_index)
 	last_line_count = text_edit_node.get_line_count()
+	
+	print(Time.get_ticks_usec() - t)
 
 
 func _clear_highlighting_cache() -> void:

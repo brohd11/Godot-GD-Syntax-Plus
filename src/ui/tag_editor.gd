@@ -18,6 +18,10 @@ signal close_requested
 
 @onready var global_tag_color: ColorPickerButton = %GlobalTagColor
 @onready var tag_highlight_option: OptionButton = %TagHighlightOption
+@onready var class_color: ColorPickerButton = %ClassColor
+@onready var class_check: CheckBox = %ClassCheck
+@onready var const_color: ColorPickerButton = %ConstColor
+@onready var const_check: CheckBox = %ConstCheck
 
 @onready var save_button: Button = %SaveButton
 @onready var button_spacer: Control = %ButtonSpacer
@@ -31,6 +35,10 @@ func _ready() -> void:
 	new_entry_button.pressed.connect(_on_new_entry_button_pressed)
 	tag_highlight_option.item_selected.connect(_on_tag_highlight_selected)
 	global_tag_color.color_changed.connect(_on_tag_color_changed)
+	class_color.color_changed.connect(_on_tag_color_changed)
+	class_check.pressed.connect(_start_debounce)
+	const_color.color_changed.connect(_on_tag_color_changed)
+	const_check.pressed.connect(_start_debounce)
 	
 	save_button.pressed.connect(_on_save_button_pressed)
 	cancel_button.pressed.connect(_on_cancel_button_pressed)
@@ -59,6 +67,14 @@ func _read_json():
 	var tag_color_option = config.get(Utils.Config.global_tag_mode, "Global")
 	tag_highlight_option.select(Utils.get_global_tag_mode(tag_color_option))
 	
+	var class_tag_color = config.get(Utils.Config.highlight_class_color, Utils.DEFAULT_COLOR_STRING)
+	class_color.color = Color.html(class_tag_color)
+	class_check.button_pressed = config.get(Utils.Config.highlight_class, false)
+	
+	var const_tag_color = config.get(Utils.Config.highlight_const_color, Utils.DEFAULT_COLOR_STRING)
+	const_color.color = Color.html(const_tag_color)
+	const_check.button_pressed = config.get(Utils.Config.highlight_const, false)
+	
 	GDHelper.config = config
 	
 	var editor_tags =  tag_data.get("tags", {})
@@ -75,6 +91,8 @@ func _on_new_entry_button_pressed():
 	entries_target.add_child(new_entry)
 	new_entry.set_data("new_tag", {"keyword":"var"})
 
+func _start_debounce():
+	debounce.start()
 
 func _on_tag_color_changed(color:Color) -> void:
 	debounce.start()
@@ -84,6 +102,7 @@ func _on_tag_highlight_selected(idx):
 
 func _on_debounce_timeout():
 	GDHelper.config = _get_config_data()
+	await get_tree().process_frame
 	for entry in entries_target.get_children():
 		entry.set_highlighter()
 
@@ -98,7 +117,11 @@ func _get_tag_data() -> Dictionary:
 func _get_config_data() -> Dictionary:
 	var config_data = {
 		Utils.Config.global_tag_color:global_tag_color.color.to_html(),
-		Utils.Config.global_tag_mode: Utils.get_global_tag_mode(tag_highlight_option.selected)
+		Utils.Config.global_tag_mode: Utils.get_global_tag_mode(tag_highlight_option.selected),
+		Utils.Config.highlight_class: class_check.button_pressed,
+		Utils.Config.highlight_class_color: class_color.color.to_html(),
+		Utils.Config.highlight_const: const_check.button_pressed,
+		Utils.Config.highlight_const_color: const_color.color.to_html(),
 	}
 	return config_data
 

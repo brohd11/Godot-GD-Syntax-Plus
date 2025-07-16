@@ -7,7 +7,7 @@ class Data:
 	const name = "Plugins/GDSyntaxTags"
 	const use_name_path = true
 	const icons = ["EditorPlugin", Icons.syntax_highlighter]
-	const scene_path = "res://addons/syntax_tags/ui/tag_editor.tscn" # scene that actually instantiates in browser
+	const scene_path = "res://addons/syntax_tags/src/ui/tag_editor.gd" # scene that actually instantiates in browser
 	const ui_scene_path = keys.PanelTabData.NONE # ui scene for add panel window, can be none, used with interface
 	const interface_path = keys.PanelTabData.NONE # path to this file, used with ui scene, if not set, defaults to this path
 	const single_instance = SingleInstance.GLOBAL # if panel must be limited to 1 instance per 'instance' or global
