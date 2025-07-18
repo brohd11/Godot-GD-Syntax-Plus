@@ -1,8 +1,8 @@
 @tool
 extends RefCounted
 
-const Utils = preload("uid://bvmvgtxctmgl") #>import utils.gd
-const GDHelper = preload("uid://es6q2q0qg7pj")  #>import gdscript_helper.gd
+const Utils = preload("res://addons/syntax_plus/src/gdscript/class/syntax_plus_utils.gd") #>import utils.gd
+const GDHelper = preload("res://addons/syntax_plus/src/gdscript/editor/gdscript_helper.gd")  #>import gdscript_helper.gd
 
 var tagged_names: Array = [] # Stores the names of consts marked for special highlighting
 var _tagged_name_regex: RegEx # Dynamically built regex for these names

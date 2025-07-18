@@ -3,11 +3,11 @@ extends Control
 
 const PLUGIN_EXPORT_FLAT = false
 
-const EditorGDTags = preload("uid://c4om4mori5lad") #>import gdscript_tags.gd
+const EditorGDTags = preload("res://addons/syntax_plus/src/gdscript/editor/gdscript_tags.gd") #>import gdscript_tags.gd
 
-const Utils = preload("uid://bvmvgtxctmgl") #>import utils.gd
-const GDHelper = preload("uid://qaydfc8u03fq") #>import gdscript_helper_code.gd
-const TagEntry = preload("uid://d3g8fsl5famtx") #>import tag_entry.tscn
+const Utils = preload("res://addons/syntax_plus/src/gdscript/class/syntax_plus_utils.gd") #>import utils.gd
+const GDHelper = preload("res://addons/syntax_plus/src/gdscript/code_edit/gdscript_helper_code.gd") #>import gdscript_helper_code.gd
+const TagEntry = preload("res://addons/syntax_plus/src/ui/tag_entry.tscn") #>import tag_entry.tscn
 
 signal close_requested
 

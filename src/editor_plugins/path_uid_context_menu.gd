@@ -2,7 +2,7 @@ extends EditorContextMenuPlugin
 
 const Slot = CONTEXT_SLOT_SCRIPT_EDITOR_CODE
 
-const PathUIDLogic = preload("uid://ckcb25okrq5xs") # path_uid_context_logic.gd
+const PathUIDLogic = preload("res://addons/syntax_plus/src/editor_plugins/path_uid_context_logic.gd") # path_uid_context_logic.gd
 
 func _popup_menu(paths: PackedStringArray) -> void:
 	var se:CodeEdit = Engine.get_main_loop().root.get_node(paths[0]);

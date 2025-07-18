@@ -1,10 +1,10 @@
 @tool
 extends EditorSyntaxHighlighter
 
-const Utils = preload("uid://bvmvgtxctmgl") #>import utils.gd
-const GDHelper = preload("uid://es6q2q0qg7pj") #>import gdscript_helper.gd
-const HighlightHelper = preload("uid://raeyegdbxrem") #>import gdscript_highlight_helper.gd
-const TagHighlighter = preload("uid://cip5yr8ajjqpw") #>import tag_highlighter.gd
+const Utils = preload("res://addons/syntax_plus/src/gdscript/class/syntax_plus_utils.gd") #>import utils.gd
+const GDHelper = preload("res://addons/syntax_plus/src/gdscript/editor/gdscript_helper.gd") #>import gdscript_helper.gd
+const HighlightHelper = preload("res://addons/syntax_plus/src/gdscript/class/gdscript_highlight_helper.gd") #>import gdscript_highlight_helper.gd
+const TagHighlighter = preload("res://addons/syntax_plus/src/gdscript/class/tag_highlighter.gd") #>import tag_highlighter.gd
 
 var gd_helper: GDHelper
 var highlight_helpers:Array[HighlightHelper] = []

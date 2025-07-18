@@ -19,7 +19,7 @@ const SYNTAX_TAG_LOGIC = preload("res://addons/syntax_plus/src/editor_plugins/sy
 
 const MODULAR_BROWSER_PATH = "res://addons/modular_browser"
 
-const TAG_EDITOR = preload("uid://cgmh6d384m4qe") # tag_editor.tscn
+const TAG_EDITOR = preload("res://addons/syntax_plus/src/ui/tag_editor.tscn") # tag_editor.tscn
 var window:Window
 
 func _init(_plugin:EditorPlugin) -> void:

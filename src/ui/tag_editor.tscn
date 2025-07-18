@@ -1,6 +1,6 @@
 [gd_scene load_steps=4 format=3 uid="uid://bioxwqat2fy2x"]
 
-[ext_resource type="Script" uid="uid://blrucbrwhq0e7" path="res://addons/syntax_plus/src/ui/tag_editor.gd" id="1_2rmus"]
+[ext_resource type="Script" uid="uid://d35k3uqvw2we5" path="res://addons/syntax_plus/src/ui/tag_editor.gd" id="1_2rmus"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ilbj5"]
 content_margin_left = 10.0

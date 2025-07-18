@@ -1,8 +1,8 @@
 @tool
 extends VBoxContainer
 
-const GDSynTags = preload("uid://vfj0wuk56rq7") #>import gdscript_tags_code.gd
-const GDHelper = preload("uid://qaydfc8u03fq") #>import gdscript_helper_code.gd
+const GDSynTags = preload("res://addons/syntax_plus/src/gdscript/code_edit/gdscript_tags_code.gd") #>import gdscript_tags_code.gd
+const GDHelper = preload("res://addons/syntax_plus/src/gdscript/code_edit/gdscript_helper_code.gd") #>import gdscript_helper_code.gd
 const Utils = GDSynTags.Utils #>import
 
 

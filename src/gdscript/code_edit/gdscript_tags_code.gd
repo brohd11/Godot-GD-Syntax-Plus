@@ -1,9 +1,9 @@
 @tool
 extends CodeHighlighter
 
-const Utils = preload("uid://bvmvgtxctmgl") #>import utils.gd
-const GDHelper = preload("uid://qaydfc8u03fq") #>import gdscript_helper_code.gd
-const HighlightHelper = preload("uid://raeyegdbxrem") #>import gdscript_highlight_helper.gd
+const Utils = preload("res://addons/syntax_plus/src/gdscript/class/syntax_plus_utils.gd") # syntax_plus_utils.gd #>import
+const GDHelper = preload("res://addons/syntax_plus/src/gdscript/code_edit/gdscript_helper_code.gd") #>import gdscript_helper_code.gd
+const HighlightHelper = preload("res://addons/syntax_plus/src/gdscript/class/gdscript_highlight_helper.gd") #>import gdscript_highlight_helper.gd
 const TagHighlighter = preload("res://addons/syntax_plus/src/gdscript/class/tag_highlighter.gd")
 
 var gd_helper: GDHelper
