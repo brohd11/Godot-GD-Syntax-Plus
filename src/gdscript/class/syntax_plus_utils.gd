@@ -1,9 +1,11 @@
 extends RefCounted
 
-const UFile = preload("res://addons/syntax_tags/src/remote/u_file.gd") #>remote
-const URegex = preload("res://addons/syntax_tags/src/remote/u_regex.gd") #>remote u_regex.gd
+const Remote = preload("res://addons/syntax_plus/src/gdscript/class/syntax_plus_remote.gd")
 
-const JSON_PATH = "res://addons/syntax_tags/tags.json"
+const UFile = Remote.UFile #>remote
+const URegex = Remote.URegex #>remote u_regex.gd
+
+const JSON_PATH = "res://addons/syntax_plus/syntax_plus_tags.json"
 
 const ANY_STRING = "const|var|@onready var|@export var|enum|class|func"
 

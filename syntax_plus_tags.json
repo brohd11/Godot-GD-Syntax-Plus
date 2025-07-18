@@ -15,7 +15,7 @@
 			"overwrite": false
 		},
 		"debug": {
-			"color": "fe5d32",
+			"color": "fcf31b",
 			"keyword": "any",
 			"menu": "Submenu",
 			"overwrite": true
@@ -27,7 +27,7 @@
 			"overwrite": false
 		},
 		"remote": {
-			"color": "8befea",
+			"color": "69c2ee",
 			"keyword": "const",
 			"menu": "Submenu",
 			"overwrite": false

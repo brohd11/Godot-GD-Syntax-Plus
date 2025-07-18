@@ -1,6 +1,6 @@
-[gd_scene load_steps=4 format=3 uid="uid://cgmh6d384m4qe"]
+[gd_scene load_steps=4 format=3 uid="uid://bioxwqat2fy2x"]
 
-[ext_resource type="Script" uid="uid://blrucbrwhq0e7" path="res://addons/syntax_tags/src/ui/tag_editor.gd" id="1_5u3oj"]
+[ext_resource type="Script" uid="uid://blrucbrwhq0e7" path="res://addons/syntax_plus/src/ui/tag_editor.gd" id="1_2rmus"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ilbj5"]
 content_margin_left = 10.0
@@ -26,7 +26,7 @@ grow_horizontal = 2
 grow_vertical = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-script = ExtResource("1_5u3oj")
+script = ExtResource("1_2rmus")
 
 [node name="BG" type="ColorRect" parent="."]
 unique_name_in_owner = true
@@ -49,20 +49,6 @@ grow_vertical = 2
 [node name="TopSpacer" type="Control" parent="V"]
 custom_minimum_size = Vector2(0, 3)
 layout_mode = 2
-
-[node name="H" type="HBoxContainer" parent="V"]
-layout_mode = 2
-
-[node name="MBOptionsTarget" type="HBoxContainer" parent="V/H"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(24, 0)
-layout_mode = 2
-size_flags_vertical = 4
-theme_override_constants/separation = 0
-
-[node name="Spacer" type="Control" parent="V/H"]
-layout_mode = 2
-size_flags_horizontal = 3
 
 [node name="MBHideSpacer" type="Control" parent="V"]
 unique_name_in_owner = true
@@ -106,6 +92,8 @@ size_flags_horizontal = 3
 
 [node name="Panel" type="PanelContainer" parent="V/MainH"]
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 2.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_5u3oj")
 
 [node name="MarginContainer" type="MarginContainer" parent="V/MainH/Panel"]
@@ -160,11 +148,13 @@ text = "Highlight Class:"
 unique_name_in_owner = true
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
+color = Color(0.156863, 0.882353, 0.796078, 1)
 
 [node name="ClassCheck" type="CheckBox" parent="V/MainH/Panel/MarginContainer/VBoxContainer/HBoxContainer"]
 unique_name_in_owner = true
 layout_mode = 2
 focus_mode = 0
+button_pressed = true
 
 [node name="HBoxContainer3" type="HBoxContainer" parent="V/MainH/Panel/MarginContainer/VBoxContainer"]
 layout_mode = 2
@@ -178,11 +168,13 @@ text = "Highlight Const:"
 unique_name_in_owner = true
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
+color = Color(0.105882, 0.541176, 0.729412, 1)
 
 [node name="ConstCheck" type="CheckBox" parent="V/MainH/Panel/MarginContainer/VBoxContainer/HBoxContainer3"]
 unique_name_in_owner = true
 layout_mode = 2
 focus_mode = 0
+button_pressed = true
 
 [node name="Spacer" type="Control" parent="V/MainH/Panel/MarginContainer/VBoxContainer"]
 custom_minimum_size = Vector2(0, 50)
@@ -199,6 +191,7 @@ If just \"vars\" ,will apply to @onready and @export as well.
 
 Replace will cause occurences of word that are already highlighted to
 change color too, like function calling."
+autowrap_mode = 2
 
 [node name="Spacer3" type="Control" parent="V/MainH"]
 custom_minimum_size = Vector2(30, 0)

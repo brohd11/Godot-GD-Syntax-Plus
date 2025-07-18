@@ -1,9 +1,10 @@
-extends Node
+extends "res://addons/addon_lib/brohd/popup_wrapper/pw_context_logic_base.gd"
+
+const Slot = EditorContextMenuPlugin.CONTEXT_SLOT_SCRIPT_EDITOR_CODE
+const PopupPriority = 1
 
 const Utils = preload("uid://bvmvgtxctmgl") #>import utils.gd
 const GDHelper = preload("uid://es6q2q0qg7pj") #>import gdscript_helper.gd
-const PopupHelper = preload("res://addons/syntax_tags/src/remote/popup_helper.gd")
-const Param = PopupHelper.ParamKeys
 
 static var tags = []
 
@@ -61,9 +62,9 @@ static func get_popup_data(script_editor) -> Dictionary:
 		var texture = ImageTexture.create_from_image(img)
 		if menu == "Submenu":
 			var tag_path = "Syntax Tags".path_join(tag)
-			submenu_tags[tag_path] = {Param.ICON_KEY:[texture]}
+			submenu_tags[tag_path] = {Params.ICON_KEY:[texture]}
 		elif menu == "Main Menu":
-			main_menu_tags[tag] = {Param.ICON_KEY:[texture]}
+			main_menu_tags[tag] = {Params.ICON_KEY:[texture]}
 	
 	for key in main_menu_tags.keys():
 		popup_custom_items[key] = main_menu_tags.get(key)
@@ -77,7 +78,6 @@ static func get_popup_data(script_editor) -> Dictionary:
 
 
 static func custom_item_pressed(id, popup, script_editor):
-	print("SYNTAX %s %s %s" % [id, popup, script_editor])
 	if id < 5000:
 		return
 	var id_text = PopupHelper.parse_id_text(id, popup)

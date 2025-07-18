@@ -17,7 +17,7 @@ var current_line_last_state = ""
 var last_line_count = 0
 
 func _get_name() -> String:
-	return "GDSynTags"
+	return "SyntaxPlus"
 
 func _init() -> void:
 	gd_helper = GDHelper.new()
@@ -109,7 +109,6 @@ func _first_line_update() -> void:
 
 
 func update_tagged_name_list(force_build=false) -> void:
-	var t = Time.get_ticks_usec()
 	var text_edit_node: CodeEdit = get_text_edit()
 	
 	var current_line_index = text_edit_node.get_caret_line()
@@ -165,7 +164,6 @@ func update_tagged_name_list(force_build=false) -> void:
 	current_line_last_state = text_edit_node.get_line(current_line_index)
 	last_line_count = text_edit_node.get_line_count()
 	
-	print(Time.get_ticks_usec() - t)
 
 
 func _clear_highlighting_cache() -> void:

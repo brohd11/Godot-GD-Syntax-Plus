@@ -4,14 +4,14 @@ extends "res://addons/modular_browser/plugin/scripts_panels/panel_interface_base
 class Data:
 	const module = Modules.None
 	const nest_in_module = false
-	const name = "Plugins/GDSyntaxTags"
+	const name = "Plugins/GDSyntaxPlus"
 	const use_name_path = true
-	const icons = ["EditorPlugin", Icons.syntax_highlighter]
-	const scene_path = "res://addons/syntax_tags/src/ui/tag_editor.gd" # scene that actually instantiates in browser
+	const icons = ["EditorPlugin", "SyntaxHighlighter"]
+	const scene_path = "res://addons/syntax_plus/src/ui/tag_editor.gd" # scene that actually instantiates in browser
 	const ui_scene_path = keys.PanelTabData.NONE # ui scene for add panel window, can be none, used with interface
 	const interface_path = keys.PanelTabData.NONE # path to this file, used with ui scene, if not set, defaults to this path
 	const single_instance = SingleInstance.GLOBAL # if panel must be limited to 1 instance per 'instance' or global
-	const requires_plugin = "syntax_tags" # name of plugin required to allow instancing
+	const requires_plugin = "syntax_plus" # name of plugin required to allow instancing
 
 
 static func register_panel(): # return name and interface path for registering

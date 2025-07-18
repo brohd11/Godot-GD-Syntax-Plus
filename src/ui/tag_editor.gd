@@ -1,6 +1,8 @@
 @tool
 extends Control
 
+const PLUGIN_EXPORT_FLAT = false
+
 const EditorGDTags = preload("uid://c4om4mori5lad") #>import gdscript_tags.gd
 
 const Utils = preload("uid://bvmvgtxctmgl") #>import utils.gd
@@ -10,7 +12,6 @@ const TagEntry = preload("uid://d3g8fsl5famtx") #>import tag_entry.tscn
 signal close_requested
 
 @onready var bg: ColorRect = %BG
-@onready var mb_options_target: HBoxContainer = %MBOptionsTarget
 @onready var mb_hide_spacer: Control = %MBHideSpacer
 
 @onready var entries_target: VBoxContainer = %EntriesTarget
@@ -52,7 +53,6 @@ func _ready() -> void:
 	_read_json()
 
 func is_mb_panel(): # for Modular Browser
-	is_mb_panel_flag = true
 	cancel_button.hide()
 	button_spacer.hide()
 	mb_hide_spacer.hide()
@@ -131,7 +131,7 @@ func _on_save_button_pressed():
 		"config": _get_config_data()
 	}
 	
-	Utils.UFile.write_to_json(tag_file_data, Utils.JSON_PATH)
+	Utils.UFile.write_to_json_exported(tag_file_data, Utils.JSON_PATH, PLUGIN_EXPORT_FLAT)
 	
 	GDHelper.config = Utils.get_config()
 	EditorGDTags.read_editor_tags()

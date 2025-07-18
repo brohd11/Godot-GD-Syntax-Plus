@@ -1,4 +1,7 @@
-extends RefCounted
+extends "res://addons/addon_lib/brohd/popup_wrapper/pw_context_logic_base.gd"
+
+const Slot = EditorContextMenuPlugin.CONTEXT_SLOT_SCRIPT_EDITOR_CODE
+const PopupPriority = 0
 
 static func get_callable() -> Callable:
 	return custom_item_pressed
