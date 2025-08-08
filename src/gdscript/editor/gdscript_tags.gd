@@ -1,6 +1,8 @@
 @tool
 extends EditorSyntaxHighlighter
 
+const PLUGIN_EXPORTED = false
+
 const Utils = preload("res://addons/syntax_plus/src/gdscript/class/syntax_plus_utils.gd") #>import utils.gd
 const GDHelper = preload("res://addons/syntax_plus/src/gdscript/editor/gdscript_helper.gd") #>import gdscript_helper.gd
 const HighlightHelper = preload("res://addons/syntax_plus/src/gdscript/class/gdscript_highlight_helper.gd") #>import gdscript_highlight_helper.gd
@@ -109,6 +111,10 @@ func _first_line_update() -> void:
 
 
 func update_tagged_name_list(force_build=false) -> void:
+	var t
+	if not PLUGIN_EXPORTED:
+		t = Time.get_ticks_usec()
+	
 	var text_edit_node: CodeEdit = get_text_edit()
 	
 	var current_line_index = text_edit_node.get_caret_line()
@@ -164,6 +170,8 @@ func update_tagged_name_list(force_build=false) -> void:
 	current_line_last_state = text_edit_node.get_line(current_line_index)
 	last_line_count = text_edit_node.get_line_count()
 	
+	if not PLUGIN_EXPORTED:
+		print(Time.get_ticks_usec() - t)
 
 
 func _clear_highlighting_cache() -> void:
