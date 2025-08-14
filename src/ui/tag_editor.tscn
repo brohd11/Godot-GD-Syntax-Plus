@@ -77,6 +77,12 @@ size_flags_horizontal = 3
 custom_minimum_size = Vector2(29, 0)
 layout_mode = 2
 
+[node name="DockButton" type="Button" parent="V/H2"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+size_flags_vertical = 4
+
 [node name="Spacer4" type="Control" parent="V"]
 custom_minimum_size = Vector2(0, 15)
 layout_mode = 2

@@ -1,0 +1,40 @@
+{
+	"export_root": "/home/brohd/Godot/PluginExport",
+	"exports": [
+		{
+			"exclude": {
+				"directories": [
+					"res://addons/syntax_plus/export_ignore"
+				],
+				"file_extensions": [],
+				"files": []
+			},
+			"export_folder": "syntax-plus{{version=syntax_plus}}/syntax_plus",
+			"other_transfers": [
+				{
+					"from":"res://addons/modular_browser/export_ignore/plugin_export/gdignore.txt",
+					"to":"modular_browser/.gdignore"
+				}
+			],
+			"source": "res://addons/syntax_plus/"
+		}
+	],
+	"options": {
+		"include_import": true,
+		"include_uid": true,
+		"overwrite": true,
+		"parser_settings": {
+			"parse_cs": {
+				"namespace_rename": {
+				}
+			},
+			"parse_gd": {
+			},
+			"parse_tscn": {
+			}
+		}
+	},
+	"plugin_folder": "SyntaxPlus/SyntaxPlus{{version=syntax_plus}}",
+	"post_script": "res://addons/syntax_plus/export_ignore/pre_post_export.gd",
+	"pre_script": "res://addons/syntax_plus/export_ignore/pre_post_export.gd"
+}

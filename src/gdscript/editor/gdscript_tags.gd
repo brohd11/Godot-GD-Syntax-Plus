@@ -171,7 +171,8 @@ func update_tagged_name_list(force_build=false) -> void:
 	last_line_count = text_edit_node.get_line_count()
 	
 	if not PLUGIN_EXPORTED:
-		print(Time.get_ticks_usec() - t)
+		#print(Time.get_ticks_usec() - t)
+		pass
 
 
 func _clear_highlighting_cache() -> void:

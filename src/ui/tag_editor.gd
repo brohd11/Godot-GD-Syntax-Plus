@@ -11,6 +11,8 @@ const TagEntry = preload("res://addons/syntax_plus/src/ui/tag_entry.tscn") #>imp
 
 signal close_requested
 
+@onready var dock_button: Button = %DockButton
+
 @onready var bg: ColorRect = %BG
 @onready var mb_hide_spacer: Control = %MBHideSpacer
 
@@ -51,6 +53,8 @@ func _ready() -> void:
 	debounce.timeout.connect(_on_debounce_timeout)
 	
 	_read_json()
+	
+	is_mb_panel() # with Docking Manager this is ok, maybe just remove
 
 func is_mb_panel(): # for Modular Browser
 	cancel_button.hide()
