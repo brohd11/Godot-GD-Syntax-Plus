@@ -2,22 +2,17 @@
 
 [ext_resource type="Script" uid="uid://d35k3uqvw2we5" path="res://addons/syntax_plus/src/ui/tag_editor.gd" id="1_2rmus"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ilbj5"]
-content_margin_left = 10.0
-content_margin_top = 10.0
-content_margin_right = 10.0
-content_margin_bottom = 10.0
-bg_color = Color(0.148989, 0.148989, 0.148989, 1)
-corner_radius_top_left = 5
-corner_radius_top_right = 5
-corner_radius_bottom_right = 5
-corner_radius_bottom_left = 5
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_2jjcr"]
+content_margin_left = 5.0
+content_margin_top = 5.0
+content_margin_right = 5.0
+content_margin_bottom = 5.0
+bg_color = Color(0, 0, 0, 0.184314)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_5u3oj"]
 bg_color = Color(0, 0, 0, 0.219608)
 
 [node name="TagEditor" type="Control"]
-clip_contents = true
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -30,6 +25,7 @@ script = ExtResource("1_2rmus")
 
 [node name="BG" type="ColorRect" parent="."]
 unique_name_in_owner = true
+visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -47,11 +43,13 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="TopSpacer" type="Control" parent="V"]
+visible = false
 custom_minimum_size = Vector2(0, 3)
 layout_mode = 2
 
 [node name="MBHideSpacer" type="Control" parent="V"]
 unique_name_in_owner = true
+visible = false
 custom_minimum_size = Vector2(0, 12)
 layout_mode = 2
 
@@ -65,8 +63,8 @@ size_flags_horizontal = 3
 [node name="Label" type="Label" parent="V/H2"]
 layout_mode = 2
 size_flags_horizontal = 4
-theme_override_font_sizes/font_size = 20
-theme_override_styles/normal = SubResource("StyleBoxFlat_ilbj5")
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("StyleBoxFlat_2jjcr")
 text = "Syntax Tags Editor"
 
 [node name="Spacer3" type="Control" parent="V/H2"]
@@ -81,7 +79,8 @@ layout_mode = 2
 unique_name_in_owner = true
 custom_minimum_size = Vector2(24, 24)
 layout_mode = 2
-size_flags_vertical = 4
+size_flags_vertical = 0
+focus_mode = 0
 
 [node name="Spacer4" type="Control" parent="V"]
 custom_minimum_size = Vector2(0, 15)
@@ -116,6 +115,19 @@ layout_mode = 2
 layout_mode = 2
 text = "Global:"
 
+[node name="HBoxContainer6" type="HBoxContainer" parent="V/MainH/Panel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="V/MainH/Panel/MarginContainer/VBoxContainer/HBoxContainer6"]
+layout_mode = 2
+text = "Set SyntaxPlus as Default"
+
+[node name="SetAllScripts" type="CheckBox" parent="V/MainH/Panel/MarginContainer/VBoxContainer/HBoxContainer6"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 0
+button_pressed = true
+
 [node name="HBoxContainer2" type="HBoxContainer" parent="V/MainH/Panel/MarginContainer/VBoxContainer"]
 layout_mode = 2
 
@@ -128,19 +140,13 @@ text = "Tag Color:"
 unique_name_in_owner = true
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
-color = Color(0.14902, 0.603922, 0.603922, 1)
+color = Color(0.372549, 0.615686, 0.623529, 1)
 
-[node name="TagHighlightOption" type="OptionButton" parent="V/MainH/Panel/MarginContainer/VBoxContainer/HBoxContainer2"]
+[node name="TagCheck" type="CheckBox" parent="V/MainH/Panel/MarginContainer/VBoxContainer/HBoxContainer2"]
 unique_name_in_owner = true
 layout_mode = 2
-selected = 0
-item_count = 3
-popup/item_0/text = "Global"
-popup/item_0/id = 0
-popup/item_1/text = "Tag"
-popup/item_1/id = 1
-popup/item_2/text = "Off"
-popup/item_2/id = 2
+focus_mode = 0
+button_pressed = true
 
 [node name="HBoxContainer" type="HBoxContainer" parent="V/MainH/Panel/MarginContainer/VBoxContainer"]
 layout_mode = 2
@@ -148,13 +154,13 @@ layout_mode = 2
 [node name="Label" type="Label" parent="V/MainH/Panel/MarginContainer/VBoxContainer/HBoxContainer"]
 custom_minimum_size = Vector2(131, 0)
 layout_mode = 2
-text = "Highlight Class:"
+text = "PascalCase"
 
 [node name="ClassColor" type="ColorPickerButton" parent="V/MainH/Panel/MarginContainer/VBoxContainer/HBoxContainer"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
-color = Color(0.156863, 0.882353, 0.796078, 1)
+color = Color(0.156863, 0.878431, 0.792157, 1)
 
 [node name="ClassCheck" type="CheckBox" parent="V/MainH/Panel/MarginContainer/VBoxContainer/HBoxContainer"]
 unique_name_in_owner = true
@@ -168,15 +174,75 @@ layout_mode = 2
 [node name="Label" type="Label" parent="V/MainH/Panel/MarginContainer/VBoxContainer/HBoxContainer3"]
 custom_minimum_size = Vector2(131, 0)
 layout_mode = 2
-text = "Highlight Const:"
+text = "CONSTANT"
 
 [node name="ConstColor" type="ColorPickerButton" parent="V/MainH/Panel/MarginContainer/VBoxContainer/HBoxContainer3"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
-color = Color(0.105882, 0.541176, 0.729412, 1)
+color = Color(0.14902, 0.521569, 0.670588, 1)
 
 [node name="ConstCheck" type="CheckBox" parent="V/MainH/Panel/MarginContainer/VBoxContainer/HBoxContainer3"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 0
+button_pressed = true
+
+[node name="HBoxContainer5" type="HBoxContainer" parent="V/MainH/Panel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="V/MainH/Panel/MarginContainer/VBoxContainer/HBoxContainer5"]
+custom_minimum_size = Vector2(131, 0)
+layout_mode = 2
+text = "Member"
+
+[node name="MemberColor" type="ColorPickerButton" parent="V/MainH/Panel/MarginContainer/VBoxContainer/HBoxContainer5"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+color = Color(0.737255, 0.878431, 1, 1)
+
+[node name="MemberCheck" type="CheckBox" parent="V/MainH/Panel/MarginContainer/VBoxContainer/HBoxContainer5"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 0
+button_pressed = true
+
+[node name="HBoxContainer7" type="HBoxContainer" parent="V/MainH/Panel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="V/MainH/Panel/MarginContainer/VBoxContainer/HBoxContainer7"]
+custom_minimum_size = Vector2(131, 0)
+layout_mode = 2
+text = "Member Access"
+
+[node name="MemberAccessColor" type="ColorPickerButton" parent="V/MainH/Panel/MarginContainer/VBoxContainer/HBoxContainer7"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+color = Color(0.5698, 0.723287, 0.77, 1)
+
+[node name="MemberAccessCheck" type="CheckBox" parent="V/MainH/Panel/MarginContainer/VBoxContainer/HBoxContainer7"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 0
+button_pressed = true
+
+[node name="HBoxContainer4" type="HBoxContainer" parent="V/MainH/Panel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="V/MainH/Panel/MarginContainer/VBoxContainer/HBoxContainer4"]
+custom_minimum_size = Vector2(131, 0)
+layout_mode = 2
+text = "@onready"
+
+[node name="OnreadyColor" type="ColorPickerButton" parent="V/MainH/Panel/MarginContainer/VBoxContainer/HBoxContainer4"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+color = Color(0.403922, 0.611765, 0.32549, 1)
+
+[node name="OnreadyCheck" type="CheckBox" parent="V/MainH/Panel/MarginContainer/VBoxContainer/HBoxContainer4"]
 unique_name_in_owner = true
 layout_mode = 2
 focus_mode = 0
@@ -281,12 +347,14 @@ size_flags_horizontal = 4
 
 [node name="CancelButton" type="Button" parent="V/ButtonsH"]
 unique_name_in_owner = true
+visible = false
 layout_mode = 2
 focus_mode = 0
 text = "Cancel"
 
 [node name="ButtonSpacer" type="Control" parent="V/ButtonsH"]
 unique_name_in_owner = true
+visible = false
 custom_minimum_size = Vector2(35, 0)
 layout_mode = 2
 

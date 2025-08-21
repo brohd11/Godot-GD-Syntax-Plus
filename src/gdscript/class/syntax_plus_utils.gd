@@ -1,30 +1,21 @@
 extends RefCounted
 
 const Remote = preload("res://addons/syntax_plus/src/gdscript/class/syntax_plus_remote.gd")
-
 const UFile = Remote.UFile #>remote
 const URegex = Remote.URegex #>remote u_regex.gd
 
 const JSON_PATH = "res://addons/syntax_plus/syntax_plus_tags.json"
 
 const ANY_STRING = "const|var|@onready var|@export var|enum|class|func"
-
 const TAG_CHAR = "#>"
 const DEFAULT_COLOR_STRING = "35cc9b"
 const DEFAULT_COLOR = Color(DEFAULT_COLOR_STRING)
 
-class Config:
-	const global_tag_color = "global_tag_color"
-	const global_tag_mode = "global_tag_mode"
-	const highlight_class = "highlight_class"
-	const highlight_class_color = "highlight_class_color"
-	const highlight_const = "highlight_const"
-	const highlight_const_color = "highlight_const_color"
-
-enum TagColorMode{
-	GLOBAL,
-	TAG,
-	NONE
+enum MemberMode{
+	NONE,
+	ALL,
+	INHERITED,
+	SCRIPT,
 }
 
 enum RegExTarget{
@@ -35,19 +26,40 @@ enum RegExTarget{
 	ANY
 }
 
-static func check_line_for_rebuild(line_text:String, line_text_last_state:String):
-	if line_text.strip_edges() == "":
-		return true
-	if line_text.find(TAG_CHAR) > -1:
-		return true
-	if line_text_last_state.find(TAG_CHAR) > -1:
-		return true
-	if line_text.find("const ") > -1:
-		return true
-	if line_text.find("var ") > -1:
-		return true
+
+static func set_script_highlighter(highlighter:="SyntaxPlus"):
+	var script_editor = EditorInterface.get_script_editor().get_current_editor()
+	var pop = UEdScriptEditor.get_syntax_hl_popup() as PopupMenu
+	var id = -1
+	for i in range(pop.item_count):
+		var text = pop.get_item_text(i)
+		if text != highlighter:
+			pop.set_item_checked(i, false)
+		else:
+			id = pop.get_item_id(i)
+			pop.set_item_checked(i, true)
+	if id == -1:
+		printerr("Error finding highlighter item: %s\
+Ensure scripts have been reopened since enabling plugin. (Restart editor is quickest)" % highlighter)
+	pop.id_pressed.emit(id)
+
+
+static func reset_script_highlighters():
+	var script_editor = EditorInterface.get_script_editor()
+	var current_syntax = script_editor.get_current_editor().get_base_editor().syntax_highlighter
+	if current_syntax.has_method("load_global_data"):
+		current_syntax.load_global_data()
+		current_syntax.read_editor_tags()
+		current_syntax.create_highlight_helpers()
+		current_syntax.clear_highlighting_cache()
 	
-	return false
+	for script:ScriptEditorBase in script_editor.get_open_script_editors():
+		var syntax = script.get_base_editor().syntax_highlighter
+		if syntax.has_method("load_global_data"):
+			syntax.read_editor_tags()
+			syntax.create_highlight_helpers()
+			syntax.clear_highlighting_cache()
+
 
 static func sort_keys(hl_info:Dictionary):
 	var sorted_keys = hl_info.keys()
@@ -55,63 +67,97 @@ static func sort_keys(hl_info:Dictionary):
 	var temp_dict = {}
 	for key in sorted_keys:
 		temp_dict[key] = hl_info.get(key)
-	hl_info = temp_dict
+	return temp_dict
+
+
+static func check_line_for_rebuild(line_text:String, line_text_last_state:String):
+	if line_text.strip_edges(false, true) == "": # unsure of this with args
+		return true
+	if line_text.find(TAG_CHAR) > -1:
+		return true
+	if line_text_last_state.find(TAG_CHAR) > -1:
+		return true
+	var check_triggers = ["const ", "var ", "class ", "enum ", "func "]
+	for trigger in check_triggers: ## Space at end for declaration
+		if trigger in line_text:
+			return true
 	
-	return hl_info
+	return false
 
-static func get_tags_data():
-	var data = UFile.read_from_json(JSON_PATH)
-	var tags = data.get("tags", {})
-	return tags
 
-static func get_config():
-	var data = UFile.read_from_json(JSON_PATH)
-	var config = data.get("config", {})
-	return config
+static func get_all_class_members(script=null):
+	if script == null:
+		script = EditorInterface.get_script_editor().get_current_script()
+	if script == null:
+		return []
+	var members_array = []
+	var instance_type = script.get_instance_base_type()
+	var class_signals = ClassDB.class_get_signal_list(instance_type)
+	for data in class_signals:
+		var name = data.get("name")
+		members_array.append(name)
+	var class_properties = ClassDB.class_get_property_list(instance_type)
+	for data in class_properties:
+		var name = data.get("name")
+		members_array.append(name)
+	var class_methods = ClassDB.class_get_method_list(instance_type)
+	for data in class_methods:
+		var name = data.get("name")
+		members_array.append(name)
+	var class_enums = ClassDB.class_get_enum_list(instance_type)
+	members_array.append_array(class_enums)
+	
+	return members_array
 
-static func get_class_hl_data(config):
-	var class_tag_data  = {
-		"color": config.get(Config.highlight_class_color, Color.AQUA),
-		"keyword":"const|vars",
-		"menu":"None",
-		"overwrite":false
-	}
-	return class_tag_data
 
-static func get_const_hl_data(config):
-	var const_tag_data  = {
-		"color": config.get(Config.highlight_const_color, Color.CADET_BLUE),
-		"keyword":"const",
-		"menu":"None",
-		"overwrite":false
-	}
-	return const_tag_data
+static func get_all_script_members(inh_class_members): # TODO make possible to choose regex version or this version
+	var script:Script = EditorInterface.get_script_editor().get_current_script()
+	if script == null:
+		return []
+	
+	var members_array = []
+	## THINK THESE CAN BE REMOVED, PARSE MANUALLY?
+	var script_members = script.get_script_signal_list()
+	for data in script_members:
+		var name = data.get("name")
+		if not name in inh_class_members:
+			members_array.append(name)
+	var const_array = script.get_script_constant_map().keys()
+	for name in const_array:
+		if not name in inh_class_members:
+			members_array.append(name)
+	var script_method_list = script.get_script_method_list()
+	for data in script_method_list:
+		var name = data.get("name")
+		if not name in inh_class_members:
+			members_array.append(name)
+	
+	var class_members = script.get_property_list()
+	class_members.append_array(script.get_signal_list())
+	for data in class_members:
+		var name = data.get("name")
+		if not name in inh_class_members:
+			members_array.append(name)
+	
+	return members_array
 
-static func get_global_tag_mode(selected):
-	if selected is String:
-		if selected == "Global":
-			return 0
-		elif selected == "Tag":
-			return 1
-		elif selected == "None":
-			return 2
-	elif selected is int:
-		if selected == 0:
-			return "Global"
-		elif selected == 1:
-			return "Tag"
-		elif selected == 2:
-			return "None"
+static func get_current_script_class():
+	var script = EditorInterface.get_script_editor().get_current_script()
+	if script != null:
+		return script.get_instance_base_type()
+	else: return ""
 
 static func get_regex_pattern(keywords:String, tag):
+	#if tag =="=MEMBER_HL":
+		#return "^(?:@onready var|@export var|static var|var|const|class|enum|signal)\\s+(\\w+)"
+	if tag =="=MEMBER_HL":
+		return "^(?:@onready var|@export var|static var|var|const|class|enum|signal|func|static func)\\s+(\\w+)"
 	if tag == "=CONST_HL":
 		return "(?:const)\\s+([A-Z_0-9]+)\\s*[=:]" # const
 	elif tag == "=CLASS_HL":
 		return "(?:class|const|var)\\s+(?![A-Z_0-9]+\\s*[=:])([A-Z].*?)\\s*[=:]" # class
-		#var pattern
-		#if keywords == "const|vars":
-			#pattern = "(?:const|var|@onready var|@export var)\\s+(.+?)\\s*[=:]"
-	
+	elif tag == "=ONREADY_HL":
+		return "(?:@onready var)\\s+([a-z_].*?)\\s*[=:]"
 	
 	var regex_target = RegExTarget.CONST_VAR
 	keywords = keywords.to_lower()
@@ -134,7 +180,7 @@ static func get_regex_pattern(keywords:String, tag):
 			if keyword == "const" or keyword == "var":
 				has_const_or_var = true
 		if keywords.count("vars") == 1 and keywords.find("@onready") == -1 and keywords.find("@export") == -1:
-			keywords = keywords.replace("vars", "var|@onready var|@export var")
+			keywords = keywords.replace("vars", "@onready var|@export var|var")
 		if int(has_func) + int(has_class) + int(has_enum) > 1:
 			regex_target = RegExTarget.ANY
 		elif has_func:
@@ -166,8 +212,8 @@ static func get_regex_pattern(keywords:String, tag):
 	var escaped_tag_char = URegex.escape_regex_meta_characters(TAG_CHAR)
 	var escaped_tag = URegex.escape_regex_meta_characters(tag)
 	
-	var pattern = "(?!)"
-	if regex_target == RegExTarget.CONST_VAR:
+	var pattern = "(?!)" # (?:#\\s*) == allows to see tags in comments
+	if regex_target == RegExTarget.CONST_VAR: 
 		pattern = "^\\s*(?:(?:#\\s*)?static\\s+|#\\s*)?" + combined_keywords_pattern + "\\s+([a-zA-Z_][a-zA-Z0-9_]*)(?:\\s*:\\s*\\S+)?(?:\\s*(?:=|:=)\\s*.*?)?\\s*" + escaped_tag_char + "\\s*" + escaped_tag + "(?:\\s|$)"
 	elif regex_target == RegExTarget.CLASS:
 		pattern = "^\\s*(?:#)?class\\s+([A-Za-z_][A-Za-z0-9_]*)(?:\\s+extends\\s+(?:[A-Za-z_][A-Za-z0-9_.]*|\"[^\"]*\"))?\\s*:\\s*.*?" + escaped_tag_char + "\\s*" + escaped_tag + "(?:\\s|$)"
@@ -212,3 +258,144 @@ static func get_regex_pattern(keywords:String, tag):
 			)
 	
 	return pattern
+
+static func build_name_regex(name_array:Array, tag_hl:=false):
+	var regex = RegEx.new()
+	if name_array.is_empty():
+		if is_instance_valid(regex): # Check if already created
+			regex.compile("(?!)") # Non-matching regex
+		else:
+			regex = RegEx.new()
+			regex.compile("(?!)")
+		return
+	
+	var pattern_parts = []
+	for name in name_array:
+		pattern_parts.append(URegex.escape_regex_meta_characters(str(name))) # Escape the name
+	
+	if not is_instance_valid(regex):
+		regex = RegEx.new()
+	var err
+	if tag_hl:
+		err = regex.compile("(?:#)?(" + "|".join(pattern_parts) + ")\\b")
+	else:
+		err = regex.compile("\\b(" + "|".join(pattern_parts) + ")\\b")
+	if err != OK:
+		printerr("CustomHighlighter: Regex compilation error: %s - Names:\n%s" % [err, " ".join(name_array)])
+		regex.compile("(?!)")
+	
+	return regex
+
+static func _get_editor_setting(setting:String):
+	var ed_s = EditorInterface.get_editor_settings()
+	if ed_s.has_setting(setting):
+		return ed_s.get_setting(setting)
+	else:
+		var default_val = Config.default_settings.get(setting)
+		if setting.ends_with("color"):
+			default_val = Color.html(default_val)
+		ed_s.set_setting(setting, default_val)
+		return ed_s.get_setting(setting)
+		
+
+static func _set_editor_setting(setting:String, val:Variant):
+	EditorInterface.get_editor_settings().set_setting(setting, val)
+
+static func _unset():
+	for key in Config.default_settings.keys():
+		_set_editor_setting(key, null)
+
+static func initial_set_editor_settings():
+	_set_editor_setting(Config.set_as_default_highlighter, Config.default_settings.get(Config.set_as_default_highlighter))
+	_set_editor_setting(Config.const_color, Color.html(Config.default_settings.get(Config.const_color)))
+	_set_editor_setting(Config.const_enable, Config.default_settings.get(Config.const_enable))
+	_set_editor_setting(Config.pascal_color, Color.html(Config.default_settings.get(Config.pascal_color)))
+	_set_editor_setting(Config.pascal_enable, Config.default_settings.get(Config.pascal_enable))
+	_set_editor_setting(Config.onready_color, Color.html(Config.default_settings.get(Config.onready_color)))
+	_set_editor_setting(Config.onready_enable, Config.default_settings.get(Config.onready_enable))
+	_set_editor_setting(Config.member_color, Color.html(Config.default_settings.get(Config.member_color)))
+	_set_editor_setting(Config.member_enable, Config.default_settings.get(Config.member_enable))
+	_set_editor_setting(Config.member_highlight_mode, Config.default_settings.get(Config.member_highlight_mode))
+	_set_editor_setting(Config.member_access_color, Color.html(Config.default_settings.get(Config.member_access_color)))
+	_set_editor_setting(Config.member_access_enable, Config.default_settings.get(Config.member_access_enable))
+	_set_editor_setting(Config.tag_color, Color.html(Config.default_settings.get(Config.tag_color)))
+	_set_editor_setting(Config.tag_color_enable, Config.default_settings.get(Config.tag_color_enable))
+
+static func get_tags_data():
+	var data = UFile.read_from_json(JSON_PATH)
+	var tags = data.get("tags", {})
+	return tags
+
+static func get_editor_config():
+	var config = {}
+	for key in Config.default_settings.keys():
+		config[key] = _get_editor_setting(key)
+	return config
+	
+
+static func get_pascal_hl_data():
+	return {
+		"color": _get_editor_setting(Config.pascal_color).to_html(),
+		"keyword":"const|vars",
+		"menu":"None",
+		"overwrite":false
+	}
+
+static func get_const_hl_data():
+	return {
+		"color": _get_editor_setting(Config.const_color).to_html(),
+		"keyword":"const",
+		"menu":"None",
+		"overwrite":false
+	}
+
+static func get_onready_hl_data():
+	return {
+		"color": _get_editor_setting(Config.onready_color).to_html(),
+		"keyword":"@onready var",
+		"menu":"None",
+		"overwrite":false 
+	}
+	
+ 
+static func get_member_hl_data():
+	return {
+		"color": _get_editor_setting(Config.member_color).to_html(),
+		Config.member_highlight_mode: _get_editor_setting(Config.member_highlight_mode),
+		"keyword":"@export var|@onready var|var|const|class",
+		"menu":"None",
+		"overwrite":false 
+	}
+
+class Config:
+	const set_as_default_highlighter = "plugin/syntax_plus/set_as_default_highlighter"
+	const pascal_enable = "plugin/syntax_plus/pascal_enable"
+	const pascal_color = "plugin/syntax_plus/pascal_color"
+	const const_enable = "plugin/syntax_plus/constant_enable"
+	const const_color = "plugin/syntax_plus/constant_color"
+	const onready_enable = "plugin/syntax_plus/onready_enable"
+	const onready_color = "plugin/syntax_plus/onready_color"
+	const member_enable = "plugin/syntax_plus/member_enable"
+	const member_highlight_mode = "plugin/syntax_plus/member_highlight_mode"
+	const member_color = "plugin/syntax_plus/member_color"
+	const member_access_enable = "plugin/syntax_plus/member_access_enable"
+	const member_access_color = "plugin/syntax_plus/member_access_color"
+	const tag_color = "plugin/syntax_plus/tags/tag_color"
+	const tag_color_enable = "plugin/syntax_plus/tags/tag_color_enable"
+	
+	const default_settings = {
+		set_as_default_highlighter: false,
+		pascal_enable: true,
+		pascal_color: "28e0caff",
+		const_enable: true,
+		const_color: "2685ab",
+		onready_enable: false,
+		onready_color: "679c53ff",
+		member_enable: true,
+		member_highlight_mode: MemberMode.ALL,
+		member_color: "bce0ff",
+		member_access_enable: false,
+		member_access_color: "7b9ca6",
+		tag_color: "5f9d9fff",
+		tag_color_enable: true
+	}

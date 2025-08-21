@@ -4,7 +4,7 @@ extends RefCounted
 const Utils = preload("res://addons/syntax_plus/src/gdscript/class/syntax_plus_utils.gd") #>import utils.gd
 const GDHelper = preload("res://addons/syntax_plus/src/gdscript/editor/gdscript_helper.gd")  #>import gdscript_helper.gd
 
-var tagged_names: Array = [] # Stores the names of consts marked for special highlighting
+var tagged_names: Dictionary = {} # Stores the names of consts marked for special highlighting
 var _tagged_name_regex: RegEx # Dynamically built regex for these names
 var declaration_regex: RegEx # To find "const NAME = xxx #import"
 
@@ -40,11 +40,6 @@ func _init(tag, tag_data) -> void:
 
 func check_line(hl_info, current_line_text): 
 	var needs_sort = false
-	#var tag_idx = current_line_text.find(">"+highlight_tag)
-	#if tag_idx > -1:
-		#hl_info[tag_idx] = {"color":highlight_color}
-		#hl_info[tag_idx + highlight_tag.length()+1] = hl_info[tag_idx-1]
-		#needs_sort = true
 	if not tagged_names.is_empty() and is_instance_valid(_tagged_name_regex):
 		var _matches = _tagged_name_regex.search_all(current_line_text)
 		for _match in _matches:
@@ -77,22 +72,4 @@ func check_line(hl_info, current_line_text):
 	return [hl_info, needs_sort]
 
 func rebuild_tagged_name_regex():
-	if tagged_names.is_empty():
-		if is_instance_valid(_tagged_name_regex): # Check if already created
-			_tagged_name_regex.compile("(?!)") # Non-matching regex
-		else:
-			_tagged_name_regex = RegEx.new()
-			_tagged_name_regex.compile("(?!)")
-		return
-	
-	var pattern_parts = []
-	for name in tagged_names:
-		pattern_parts.append(Utils.URegex.escape_regex_meta_characters(str(name))) # Escape the name
-	
-	if not is_instance_valid(_tagged_name_regex):
-		_tagged_name_regex = RegEx.new()
-	
-	var err = _tagged_name_regex.compile("\\b(" + "|".join(pattern_parts) + ")\\b")
-	if err != OK:
-		printerr("CustomHighlighter: Regex compilation error for imported consts: ", err)
-		_tagged_name_regex.compile("(?!)")
+	_tagged_name_regex = Utils.build_name_regex(tagged_names.keys())

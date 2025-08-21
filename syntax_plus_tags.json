@@ -1,21 +1,7 @@
 {
-	"config": {
-		"global_tag_color": "269a9aff",
-		"global_tag_mode": "Global",
-		"highlight_class": true,
-		"highlight_class_color": "28e1cbff",
-		"highlight_const": true,
-		"highlight_const_color": "1b8abaff"
-	},
 	"tags": {
-		"class_inst": {
-			"color": "21aeb5",
-			"keyword": "var",
-			"menu": "Submenu",
-			"overwrite": false
-		},
 		"debug": {
-			"color": "fcf31b",
+			"color": "f7ff00",
 			"keyword": "any",
 			"menu": "Submenu",
 			"overwrite": true

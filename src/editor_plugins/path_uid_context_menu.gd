@@ -1,8 +1,8 @@
 extends EditorContextMenuPlugin
 
 const SLOT = CONTEXT_SLOT_SCRIPT_EDITOR_CODE
-
-const PopupWrapper = preload("res://addons/addon_lib/brohd/popup_wrapper/popup_wrapper.gd")
+const UtilsRemote = preload("res://addons/syntax_plus/src/gdscript/class/syntax_plus_remote.gd")
+const PopupWrapper = UtilsRemote.PopupWrapper
 const Param = PopupWrapper.ItemParams
 
 func _popup_menu(paths: PackedStringArray) -> void:

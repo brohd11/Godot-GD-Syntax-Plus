@@ -25,7 +25,7 @@ func _init(data_overide=null) -> void:
 		editor_tags = data_overide
 	
 	create_highlight_helpers()
-	update_tagged_name_list.call_deferred(true)
+	#update_tagged_name_list.call_deferred(true)
 
 
 func read_editor_tags():
@@ -34,7 +34,7 @@ func read_editor_tags():
 
 static func load_global_data():
 	var tag_file_data = Utils.UFile.read_from_json(Utils.JSON_PATH)
-	GDHelper.config = tag_file_data.get("config", {})
+	GDHelper.config = Utils.get_editor_config()
 
 func create_highlight_helpers():
 	for highlight_helper in highlight_helpers:
@@ -53,13 +53,19 @@ func create_highlight_helpers():
 		
 		tags.append(tag)
 	
-	if GDHelper.config.get(Utils.Config.highlight_const):
-		var const_tag_highlighter = HighlightHelper.new("=CONST_HL",Utils.get_const_hl_data(GDHelper.config))
+	if GDHelper.config.get(Utils.Config.const_enable):
+		var const_tag_highlighter = HighlightHelper.new("=CONST_HL",Utils.get_const_hl_data())
 		highlight_helpers.append(const_tag_highlighter)
-	if GDHelper.config.get(Utils.Config.highlight_class, false):
-		var class_tag_highlighter = HighlightHelper.new("=CLASS_HL",Utils.get_class_hl_data(GDHelper.config))
+	if GDHelper.config.get(Utils.Config.pascal_enable, false):
+		var class_tag_highlighter = HighlightHelper.new("=CLASS_HL",Utils.get_pascal_hl_data())
 		highlight_helpers.append(class_tag_highlighter)
+	if GDHelper.config.get(Utils.Config.onready_enable):
+		var onready_tag_highlighter = HighlightHelper.new("=ONREADY_HL", Utils.get_onready_hl_data())
+		highlight_helpers.append(onready_tag_highlighter)
 	
+	#if GDHelper.config.get(Utils.Config.member_enable, true):
+		#var member_tag_highlighter = HighlightHelper.new("=MEMBER_HL",Utils.get_member_hl_data())
+		#highlight_helpers.append(member_tag_highlighter)
 	
 	tag_highlighter = TagHighlighter.new(tags, editor_tags, GDHelper.config)
 
@@ -67,6 +73,7 @@ func create_highlight_helpers():
 func _on_caret_changed():
 	var text_edit = get_text_edit()
 	current_line_last_state = text_edit.get_line(text_edit.get_caret_line())
+	
 
 
 func _get_line_syntax_highlighting(line_idx: int) -> Dictionary:
@@ -113,7 +120,7 @@ func _first_line_update() -> void:
 
 func update_tagged_name_list(force_build=false) -> void:
 	var text_edit_node: CodeEdit = get_text_edit()
-	
+	#symbol_color
 	var current_line_index = text_edit_node.get_caret_line()
 	var current_line_text = text_edit_node.get_line(current_line_index)
 	var current_line_count = text_edit_node.get_line_count()
@@ -124,25 +131,25 @@ func update_tagged_name_list(force_build=false) -> void:
 	
 	var new_tagged_data: Dictionary = {}
 	for highlight_helper in highlight_helpers:
-		var old_data = tagged_data.get(highlight_helper, [])
+		var old_data = tagged_data.get(highlight_helper, {})
 		new_tagged_data[highlight_helper] = old_data.duplicate()
 	
 	var check = Utils.check_line_for_rebuild(current_line_text, current_line_last_state)
 	if check and not full_rebuild: # if not pound sign, no need to check. If blank, check if tag deleted
-		for highlight_helper in highlight_helpers:
+		for highlight_helper:HighlightHelper in highlight_helpers:
 			var declaration_regex = highlight_helper.declaration_regex
 			var _match = declaration_regex.search(current_line_text)
 			if _match:
 				var tagged_name = _match.get_string(1)
-				if not new_tagged_data[highlight_helper].has(tagged_name): # Avoid duplicates
-					new_tagged_data[highlight_helper].append(tagged_name)
-					break
+				new_tagged_data[highlight_helper][tagged_name] = true
+				break
 			else:
 				var last_match = declaration_regex.search(current_line_last_state)
 				if last_match:
 					var tagged_name = last_match.get_string(1)
 					new_tagged_data[highlight_helper].erase(tagged_name)
 					break
+			
 	
 	if full_rebuild or tagged_data.hash() != new_tagged_data.hash():
 		for highlight_helper in highlight_helpers:
@@ -155,12 +162,12 @@ func update_tagged_name_list(force_build=false) -> void:
 				var _match = declaration_regex.search(line_text)
 				if _match:
 					var tagged_name = _match.get_string(1)
-					if not new_tagged_data[highlight_helper].has(tagged_name): # Avoid duplicates
-						new_tagged_data[highlight_helper].append(tagged_name)
+					new_tagged_data[highlight_helper][tagged_name] = true
+					highlight_helper.tagged_names[tagged_name] = true
 		
 		tagged_data = new_tagged_data
 		for highlight_helper in highlight_helpers:
-			highlight_helper.tagged_names = tagged_data[highlight_helper]
+			#highlight_helper.tagged_names = tagged_data[highlight_helper]
 			highlight_helper.rebuild_tagged_name_regex()
 	
 	current_line_last_state = text_edit_node.get_line(current_line_index)

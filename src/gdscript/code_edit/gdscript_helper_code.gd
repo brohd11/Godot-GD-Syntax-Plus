@@ -6,6 +6,7 @@ static var dummy_code_edit: CodeEdit
 static var base_gdscript_highlighter: GDScriptSyntaxHighlighter
 
 static var default_text_color:Color
+static var editor_member_color:Color
 
 static var config:Dictionary = {}
 
@@ -23,6 +24,7 @@ static func set_code_edit() -> void:
 		EditorInterface.get_base_control().add_child(dummy_code_edit) 
 		EditorInterface.get_base_control().remove_child(dummy_code_edit)
 		default_text_color = EditorInterface.get_editor_settings().get("text_editor/theme/highlighting/text_color")
+		editor_member_color = EditorInterface.get_editor_settings().get('text_editor/theme/highlighting/member_variable_color')
 
 
 func get_base_highlight(line_idx) -> Dictionary:
