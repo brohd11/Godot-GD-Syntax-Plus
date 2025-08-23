@@ -158,14 +158,15 @@ func _on_save_button_pressed():
 	EditorGDTags.read_editor_tags()
 	Utils.reset_script_highlighters()
 	
-	if is_mb_panel_flag:
-		var accept = AcceptDialog.new()
-		accept.dialog_text = "Saved, you can close the window."
-		
-		accept.initial_position = Window.WINDOW_INITIAL_POSITION_CENTER_SCREEN_WITH_MOUSE_FOCUS
-		add_child(accept)
-		accept.popup_centered()
-		await accept.confirmed
+	
+	var accept = AcceptDialog.new()
+	accept.dialog_text = "Saved, you can close the tag editor."
+	accept.title = "Saved Tags"
+	
+	accept.initial_position = Window.WINDOW_INITIAL_POSITION_CENTER_SCREEN_WITH_MOUSE_FOCUS
+	add_child(accept)
+	accept.popup_centered()
+	await accept.confirmed
 	
 	self.close_requested.emit()
 

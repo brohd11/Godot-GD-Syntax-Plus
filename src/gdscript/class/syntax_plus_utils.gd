@@ -2,7 +2,7 @@ extends RefCounted
 
 const Remote = preload("res://addons/syntax_plus/src/gdscript/class/syntax_plus_remote.gd")
 const UFile = Remote.UFile #>remote
-const URegex = Remote.URegex #>remote u_regex.gd
+const URegex = Remote.URegex #>remote
 
 const JSON_PATH = "res://addons/syntax_plus/syntax_plus_tags.json"
 
@@ -26,10 +26,11 @@ enum RegExTarget{
 	ANY
 }
 
-
 static func set_script_highlighter(highlighter:="SyntaxPlus"):
 	var script_editor = EditorInterface.get_script_editor().get_current_editor()
 	var pop = UEdScriptEditor.get_syntax_hl_popup() as PopupMenu
+	if pop == null:
+		return
 	var id = -1
 	for i in range(pop.item_count):
 		var text = pop.get_item_text(i)
@@ -39,9 +40,10 @@ static func set_script_highlighter(highlighter:="SyntaxPlus"):
 			id = pop.get_item_id(i)
 			pop.set_item_checked(i, true)
 	if id == -1:
-		printerr("Error finding highlighter item: %s\
-Ensure scripts have been reopened since enabling plugin. (Restart editor is quickest)" % highlighter)
-	pop.id_pressed.emit(id)
+		printerr("Error finding highlighter item: %s - \
+Ensure open scripts have been reopened since enabling plugin. (Restart editor is quickest)" % highlighter)
+	else:
+		pop.id_pressed.emit(id)
 
 
 static func reset_script_highlighters():
@@ -85,61 +87,14 @@ static func check_line_for_rebuild(line_text:String, line_text_last_state:String
 	return false
 
 
-static func get_all_class_members(script=null):
-	if script == null:
-		script = EditorInterface.get_script_editor().get_current_script()
-	if script == null:
-		return []
-	var members_array = []
-	var instance_type = script.get_instance_base_type()
-	var class_signals = ClassDB.class_get_signal_list(instance_type)
-	for data in class_signals:
-		var name = data.get("name")
-		members_array.append(name)
-	var class_properties = ClassDB.class_get_property_list(instance_type)
-	for data in class_properties:
-		var name = data.get("name")
-		members_array.append(name)
-	var class_methods = ClassDB.class_get_method_list(instance_type)
-	for data in class_methods:
-		var name = data.get("name")
-		members_array.append(name)
-	var class_enums = ClassDB.class_get_enum_list(instance_type)
-	members_array.append_array(class_enums)
-	
-	return members_array
-
+static func get_all_class_members(script:GDScript=null):
+	return UClassDetail.class_get_all_members(script)
 
 static func get_all_script_members(inh_class_members): # TODO make possible to choose regex version or this version
 	var script:Script = EditorInterface.get_script_editor().get_current_script()
 	if script == null:
 		return []
-	
-	var members_array = []
-	## THINK THESE CAN BE REMOVED, PARSE MANUALLY?
-	var script_members = script.get_script_signal_list()
-	for data in script_members:
-		var name = data.get("name")
-		if not name in inh_class_members:
-			members_array.append(name)
-	var const_array = script.get_script_constant_map().keys()
-	for name in const_array:
-		if not name in inh_class_members:
-			members_array.append(name)
-	var script_method_list = script.get_script_method_list()
-	for data in script_method_list:
-		var name = data.get("name")
-		if not name in inh_class_members:
-			members_array.append(name)
-	
-	var class_members = script.get_property_list()
-	class_members.append_array(script.get_signal_list())
-	for data in class_members:
-		var name = data.get("name")
-		if not name in inh_class_members:
-			members_array.append(name)
-	
-	return members_array
+	return UClassDetail.script_get_all_members(script, inh_class_members)
 
 static func get_current_script_class():
 	var script = EditorInterface.get_script_editor().get_current_script()
@@ -306,20 +261,31 @@ static func _unset():
 		_set_editor_setting(key, null)
 
 static func initial_set_editor_settings():
-	_set_editor_setting(Config.set_as_default_highlighter, Config.default_settings.get(Config.set_as_default_highlighter))
-	_set_editor_setting(Config.const_color, Color.html(Config.default_settings.get(Config.const_color)))
-	_set_editor_setting(Config.const_enable, Config.default_settings.get(Config.const_enable))
-	_set_editor_setting(Config.pascal_color, Color.html(Config.default_settings.get(Config.pascal_color)))
-	_set_editor_setting(Config.pascal_enable, Config.default_settings.get(Config.pascal_enable))
-	_set_editor_setting(Config.onready_color, Color.html(Config.default_settings.get(Config.onready_color)))
-	_set_editor_setting(Config.onready_enable, Config.default_settings.get(Config.onready_enable))
-	_set_editor_setting(Config.member_color, Color.html(Config.default_settings.get(Config.member_color)))
-	_set_editor_setting(Config.member_enable, Config.default_settings.get(Config.member_enable))
-	_set_editor_setting(Config.member_highlight_mode, Config.default_settings.get(Config.member_highlight_mode))
-	_set_editor_setting(Config.member_access_color, Color.html(Config.default_settings.get(Config.member_access_color)))
-	_set_editor_setting(Config.member_access_enable, Config.default_settings.get(Config.member_access_enable))
-	_set_editor_setting(Config.tag_color, Color.html(Config.default_settings.get(Config.tag_color)))
-	_set_editor_setting(Config.tag_color_enable, Config.default_settings.get(Config.tag_color_enable))
+	var settings_array = [
+		Config.set_as_default_highlighter,
+		Config.const_color,
+		Config.const_enable,
+		Config.pascal_color,
+		Config.pascal_enable,
+		Config.onready_color,
+		Config.onready_enable,
+		Config.member_color,
+		Config.member_enable,
+		Config.member_highlight_mode,
+		Config.member_access_color,
+		Config.member_access_enable,
+		Config.tag_color,
+		Config.tag_color_enable,
+	]
+	var ed_settings = EditorInterface.get_editor_settings()
+	for setting in settings_array:
+		if ed_settings.has_setting(setting):
+			continue
+		var val = Config.default_settings.get(setting)
+		if setting.ends_with("color"):
+			val = Color.html(val)
+		_set_editor_setting(setting, val)
+	
 
 static func get_tags_data():
 	var data = UFile.read_from_json(JSON_PATH)
@@ -369,17 +335,17 @@ static func get_member_hl_data():
 
 class Config:
 	const set_as_default_highlighter = "plugin/syntax_plus/set_as_default_highlighter"
-	const pascal_enable = "plugin/syntax_plus/pascal_enable"
-	const pascal_color = "plugin/syntax_plus/pascal_color"
-	const const_enable = "plugin/syntax_plus/constant_enable"
-	const const_color = "plugin/syntax_plus/constant_color"
-	const onready_enable = "plugin/syntax_plus/onready_enable"
-	const onready_color = "plugin/syntax_plus/onready_color"
-	const member_enable = "plugin/syntax_plus/member_enable"
-	const member_highlight_mode = "plugin/syntax_plus/member_highlight_mode"
-	const member_color = "plugin/syntax_plus/member_color"
-	const member_access_enable = "plugin/syntax_plus/member_access_enable"
-	const member_access_color = "plugin/syntax_plus/member_access_color"
+	const pascal_enable = "plugin/syntax_plus/pascal/pascal_enable"
+	const pascal_color = "plugin/syntax_plus/pascal/pascal_color"
+	const const_enable = "plugin/syntax_plus/constant/constant_enable"
+	const const_color = "plugin/syntax_plus/constant/constant_color"
+	const onready_enable = "plugin/syntax_plus/onready/onready_enable"
+	const onready_color = "plugin/syntax_plus/onready/onready_color"
+	const member_enable = "plugin/syntax_plus/member/member_enable"
+	const member_highlight_mode = "plugin/syntax_plus/member/member_highlight_mode"
+	const member_color = "plugin/syntax_plus/member/member_color"
+	const member_access_enable = "plugin/syntax_plus/member_access/member_access_enable"
+	const member_access_color = "plugin/syntax_plus/member_access/member_access_color"
 	const tag_color = "plugin/syntax_plus/tags/tag_color"
 	const tag_color_enable = "plugin/syntax_plus/tags/tag_color_enable"
 	
@@ -395,7 +361,7 @@ class Config:
 		member_highlight_mode: MemberMode.ALL,
 		member_color: "bce0ff",
 		member_access_enable: false,
-		member_access_color: "7b9ca6",
+		member_access_color: "91b8c4",
 		tag_color: "5f9d9fff",
 		tag_color_enable: true
 	}
