@@ -1,2 +1,7 @@
 exports/*
 !exports/SyntaxPlus-0.8.0/
+
+
+
+
+exports/**/*.zip

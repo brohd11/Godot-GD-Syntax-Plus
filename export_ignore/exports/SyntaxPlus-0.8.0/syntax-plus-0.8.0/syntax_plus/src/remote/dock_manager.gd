@@ -16,6 +16,7 @@ var plugin:EditorPlugin
 var plugin_control:Control
 var dock_button:Button
 var default_dock:int
+var last_dock:int
 var can_be_freed:bool
 
 var _default_window_size:= Vector2i(1200,800)
@@ -188,8 +189,7 @@ func dock_instance(target_dock:int):
 	if is_instance_valid(window):
 		if window is PanelWindow:
 			window.queue_free()
-	
-	save_layout_data()
+
 
 func undock_instance():
 	_remove_control_from_parent()
@@ -203,6 +203,7 @@ func undock_instance():
 func _remove_control_from_parent():
 	var window = plugin_control.get_window()
 	var current_dock = _get_current_dock()
+	last_dock = current_dock
 	var control_parent = plugin_control.get_parent()
 	if is_instance_valid(control_parent):
 		if current_dock > -1:
@@ -229,11 +230,7 @@ func _get_current_dock():
 		return Docks.get_current_dock(plugin_control)
 
 func window_close_requested() -> void:
-	var layout_data = load_layout_data()
-	var current_dock = layout_data.get("current_dock", default_dock)
-	if current_dock == -3 or current_dock == null:
-		current_dock = _slot.get(Slot.BOTTOM_PANEL)
-	dock_instance(current_dock)
+	dock_instance(last_dock)
 func _on_window_mouse_entered(window):
 	window.grab_focus()
 func _on_window_mouse_exited():
