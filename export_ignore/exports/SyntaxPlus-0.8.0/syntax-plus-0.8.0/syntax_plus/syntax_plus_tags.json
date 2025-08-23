@@ -1,0 +1,10 @@
+{
+	"tags": {
+		"debug": {
+			"color": "f7ff00",
+			"keyword": "any",
+			"menu": "Submenu",
+			"overwrite": true
+		}
+	}
+}
