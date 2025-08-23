@@ -26,6 +26,7 @@ var last_line_count = 0
 var lines_highlighting = false
 var init_scan_done:= false
 
+
 func _get_name() -> String:
 	return "SyntaxPlus"
 
@@ -33,6 +34,7 @@ func _init() -> void:
 	gd_helper = GDHelper.new()
 	EditorInterface.get_script_editor().editor_script_changed.connect(_on_editor_script_changed)
 	create_highlight_helpers()
+	
 
 
 func create_highlight_helpers():

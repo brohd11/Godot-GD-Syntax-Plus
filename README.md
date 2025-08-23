@@ -6,7 +6,15 @@ Originally, this plugin was meant to make plugins a bit nicer to work on by prov
 
 ### Version 0.8.0
 
-Currently tested with 4.4 and 4.5. I do use context menu plugins which were introduced in 4.4, so earlier version support may be added with some reduced features. 
+Currently tested with 4.4 and 4.5. I do use context menu plugins which were introduced in 4.4, so earlier version support may be added with some reduced features.
+
+#### Settings
+
+The settings can be found in Editor Settings, under plugins/syntax_plus.
+
+Colors can be changed and toggled here. After making a change, right click the text editor and click SyntaxPlus -> Reset All. This will reset all highlighters with your new parameters.
+
+The set as default option will check if a script is ".gd" when it opens and switch the highlighter for you if so.
 
 #### Automatic Highlights
 
