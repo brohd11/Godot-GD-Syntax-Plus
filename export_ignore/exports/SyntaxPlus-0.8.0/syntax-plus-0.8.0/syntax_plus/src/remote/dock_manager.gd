@@ -62,6 +62,7 @@ _can_be_freed:=false, _main_screen_handler=null, add_to_tree:=true) -> void:
 		plugin_control = _control.instantiate()
 	
 	default_dock = _slot.get(_dock)
+	last_dock = default_dock
 	can_be_freed = _can_be_freed
 	
 	if _main_screen_handler != null:
@@ -203,7 +204,8 @@ func undock_instance():
 func _remove_control_from_parent():
 	var window = plugin_control.get_window()
 	var current_dock = _get_current_dock()
-	last_dock = current_dock
+	if current_dock != null:
+		last_dock = current_dock
 	var control_parent = plugin_control.get_parent()
 	if is_instance_valid(control_parent):
 		if current_dock > -1:

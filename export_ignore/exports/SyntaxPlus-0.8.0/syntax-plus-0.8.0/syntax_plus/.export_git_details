@@ -5,4 +5,4 @@ Main Repo: plugin-dev
 Export: syntax-plus-0.8.0/syntax_plus/
 	Submodule: brohd
 		Dir: res://addons/addon_lib/brohd
-		Commit: 3739e8e76d4fc8a7578e2d5b4b061d934d441905
+		Commit: deb2ae371dedb8bdb8e9fed140a9d67389f42183
