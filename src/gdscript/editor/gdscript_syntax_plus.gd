@@ -103,6 +103,10 @@ func set_class_member_names():
 		member_highlighter.member_highlight_mode = Utils._get_editor_setting(Utils.Config.member_highlight_mode)
 		member_highlighter.check_class_valid()
 
+func force_class_member_rebuild():
+	if member_highlighter:
+		member_highlighter.force_class_member_rebuild()
+
 func _on_caret_changed():
 	var text_edit = get_text_edit()
 	current_line_last_state = text_edit.get_line(text_edit.get_caret_line())

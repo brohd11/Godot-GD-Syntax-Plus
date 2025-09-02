@@ -11,6 +11,8 @@ const TAG_CHAR = "#>"
 const DEFAULT_COLOR_STRING = "35cc9b"
 const DEFAULT_COLOR = Color(DEFAULT_COLOR_STRING)
 
+
+
 enum MemberMode{
 	NONE,
 	ALL,
@@ -90,11 +92,6 @@ static func check_line_for_rebuild(line_text:String, line_text_last_state:String
 static func get_all_class_members(script:GDScript=null):
 	return UClassDetail.class_get_all_members(script)
 
-static func get_all_script_members(inh_class_members): # TODO make possible to choose regex version or this version
-	var script:Script = EditorInterface.get_script_editor().get_current_script()
-	if script == null:
-		return []
-	return UClassDetail.script_get_all_members(script, inh_class_members)
 
 static func get_current_script_class():
 	var script = EditorInterface.get_script_editor().get_current_script()
@@ -260,6 +257,10 @@ static func _unset():
 	for key in Config.default_settings.keys():
 		_set_editor_setting(key, null)
 
+static func set_editor_property_hints():
+	var ed_settings = EditorInterface.get_editor_settings()
+	ed_settings.add_property_info(Config.member_mode_propery_info) # set as enum
+
 static func initial_set_editor_settings():
 	var settings_array = [
 		Config.set_as_default_highlighter,
@@ -365,3 +366,10 @@ class Config:
 		tag_color: "5f9d9fff",
 		tag_color_enable: true
 	}
+	
+	const member_mode_propery_info = {
+	"name": Config.member_highlight_mode,
+	"type": TYPE_INT,
+	"hint": PROPERTY_HINT_ENUM,
+	"hint_string": "NONE,ALL,INHERITED,SCRIPT"
+}

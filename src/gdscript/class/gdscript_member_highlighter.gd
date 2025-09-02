@@ -34,6 +34,12 @@ func _init(tag, cfg_data) -> void:
 	rebuild_script_member_regex() # Initialize with an empty regex
 	rebuild_class_member_regex()
 
+func force_class_member_rebuild():
+	script_class_name = Utils.get_current_script_class()
+	var class_member_check = Utils.get_all_class_members()
+	class_member_names = class_member_check
+	rebuild_class_member_regex()
+
 func check_class_valid():
 	if script_class_name != Utils.get_current_script_class():
 		script_class_name = Utils.get_current_script_class()

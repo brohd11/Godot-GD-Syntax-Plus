@@ -98,6 +98,7 @@ static func get_valid_items(script_editor) -> Dictionary:
 static func clear_cache():
 	var syntax = EditorInterface.get_script_editor().get_current_editor().get_base_editor().syntax_highlighter
 	if syntax.has_method("update_tagged_name_list"):
+		syntax.force_class_member_rebuild() # force class member rebuild
 		syntax.update_tagged_name_list(true)
 		syntax.clear_highlighting_cache()
 

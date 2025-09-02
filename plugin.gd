@@ -50,7 +50,7 @@ func _enter_tree() -> void:
 	editor_plugin_manager.syntax_highlighter_paths = SYNTAX_HIGHLIGHTERS
 	
 	editor_plugin_manager.add_plugins.call_deferred()
-	
+	Utils.set_editor_property_hints()
 	_set_editor_description.call_deferred()
 
 func _exit_tree() -> void:
