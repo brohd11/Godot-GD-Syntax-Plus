@@ -188,7 +188,7 @@ static func get_regex_pattern(keywords:String, tag):
 			"|" +
 				# ---- BRANCH 2: Class definition with optional 'extends' ----
 				# This needs to be before simple colon match if colon is part of extends
-				"(?:\\s*(?:extends\\s+\\S+)?\\s*:)" + # Matches optional 'extends Something' then a colon
+				"(?:\\s*(?:extends\\s+\\S+)?\\s*:)" + # Matches optional 'extends Something' then a colon # parser -> ""
 			"|" +
 				# ---- BRANCH 3: Enum with inline body, tag is AFTER this structure `enum E {...} #tag` ----
 				"(?:\\s*\\{.*?\\})" + # Non-greedy match for content within {}, then \s*#tag follows

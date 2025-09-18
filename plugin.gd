@@ -38,6 +38,7 @@ func _has_main_screen() -> bool:
 
 func _enable_plugin() -> void:
 	Utils.initial_set_editor_settings()
+	
 
 func _enter_tree() -> void:
 	DockManager.hide_main_screen_button(self)
