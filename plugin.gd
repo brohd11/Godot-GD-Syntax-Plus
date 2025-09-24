@@ -29,11 +29,16 @@ const TAG_EDITOR = preload("res://addons/syntax_plus/src/ui/tag_editor.tscn") # 
 
 var window:Window
 
+var syntax_plus
+var added_main_screen:=false
+
 func _get_plugin_name() -> String:
 	return "Syntax Plus"
 func _get_plugin_icon() -> Texture2D:
 	return EditorInterface.get_editor_theme().get_icon("SyntaxHighlighter", &"EditorIcons")
 func _has_main_screen() -> bool:
+	if SyntaxPlus.instance_valid() and not added_main_screen:
+		return false
 	return true
 
 func _enable_plugin() -> void:
@@ -41,6 +46,12 @@ func _enable_plugin() -> void:
 	
 
 func _enter_tree() -> void:
+	var singleton_present = SyntaxPlus.instance_valid()
+	syntax_plus = SyntaxPlus.register_node(self)
+	if singleton_present:
+		return
+	
+	added_main_screen = true
 	DockManager.hide_main_screen_button(self)
 	add_tool_menu_item("SyntaxPlus", _on_tool_menu_pressed)
 	
@@ -55,6 +66,9 @@ func _enter_tree() -> void:
 	_set_editor_description.call_deferred()
 
 func _exit_tree() -> void:
+	if is_instance_valid(syntax_plus):
+		syntax_plus.unregister_node(self)
+	
 	if is_instance_valid(editor_plugin_manager):
 		editor_plugin_manager.remove_plugins()
 		editor_plugin_manager = null

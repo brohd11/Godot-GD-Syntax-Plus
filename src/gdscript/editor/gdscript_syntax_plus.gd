@@ -79,6 +79,7 @@ func _on_editor_script_changed(new_script:Script):
 	var text_edit = get_text_edit()
 	if not is_instance_valid(text_edit):
 		return
+	
 	var script_editor = text_edit.get_parent()
 	for i in range(5):
 		if script_editor != null:
@@ -88,9 +89,6 @@ func _on_editor_script_changed(new_script:Script):
 		else: return # this is called on all instance, return if cant get to script ed
 	
 	if script_editor == EditorInterface.get_script_editor().get_current_editor():
-		#if not get_text_edit(): # check if not a script file?
-			#return
-		#await get_text_edit().get_tree().process_frame
 		if not get_text_edit(): # double check for closing scripts
 			return
 		set_class_member_names()
@@ -129,10 +127,16 @@ func _get_line_syntax_highlighting(line_idx: int) -> Dictionary:
 		if line_idx == text_edit.get_caret_line():
 			update_tagged_name_list()
 	
+	var comment_tag_index = current_line_text.find("#!")
+	if comment_tag_index == 0:
+		if current_line_text.find('"#!') == -1:
+			return GDHelper.get_comment_tag_info(current_line_text)
 	
 	## Not 100% sure duplicate is neces
 	var hl_info:Dictionary = gd_helper.base_gdscript_highlighter.get_line_syntax_highlighting(line_idx)
-	#var hl_info:Dictionary = gd_helper.base_gdscript_highlighter.get_line_syntax_highlighting(line_idx).duplicate()
+	
+	
+	
 	
 	## clear signal member color, set via regex
 	var stripped_line_text = current_line_text.strip_edges()
@@ -172,6 +176,10 @@ func _get_line_syntax_highlighting(line_idx: int) -> Dictionary:
 	if not needs_sort:
 		needs_sort = tag_check[1]
 	##
+	
+	if comment_tag_index != -1:
+		if current_line_text.find('"#!') == -1:
+			hl_info = GDHelper.get_comment_tag_info(current_line_text, hl_info)
 	
 	if needs_sort:
 		hl_info = Utils.sort_keys(hl_info)
