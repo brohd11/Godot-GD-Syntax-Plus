@@ -6,7 +6,7 @@ const SCRIPT = preload("res://addons/syntax_plus/src/syntax_plus_singleton.gd")
 static func get_singleton_name() -> String:
 	return "SyntaxPlus"
 
-static func get_instance() -> SCRIPT:
+static func get_instance() -> SyntaxPlus:
 	return _get_instance(SCRIPT)
 
 static func instance_valid() -> bool:
@@ -20,41 +20,40 @@ static func call_on_ready(callable, print_err:bool=true):
 
 #region Highlight Helper Funcs
 
-static var default_text_color:Color
-static var editor_member_color:Color
-static var comment_color:Color
-static var annotation_color:Color
-static var symbol_color:Color
+var default_text_color:Color
+var editor_member_color:Color
+var comment_color:Color
+var annotation_color:Color
+var symbol_color:Color
 
-static var single_line_code_edit:CodeEdit
-static var single_line_gdscript_highlighter: GDScriptSyntaxHighlighter
+var single_line_code_edit:CodeEdit
+var single_line_gdscript_highlighter: GDScriptSyntaxHighlighter
 
 static func set_default_text_colors():
-	default_text_color = EditorInterface.get_editor_settings().get("text_editor/theme/highlighting/text_color")
-	editor_member_color = EditorInterface.get_editor_settings().get('text_editor/theme/highlighting/member_variable_color')
-	comment_color = EditorInterface.get_editor_settings().get_setting("text_editor/theme/highlighting/comment_color")
-	annotation_color = EditorInterface.get_editor_settings().get_setting("text_editor/theme/highlighting/gdscript/annotation_color")
-	symbol_color = EditorInterface.get_editor_settings().get_setting("text_editor/theme/highlighting/symbol_color")
+	var instance = get_instance()
+	instance.default_text_color = EditorInterface.get_editor_settings().get("text_editor/theme/highlighting/text_color")
+	instance.editor_member_color = EditorInterface.get_editor_settings().get('text_editor/theme/highlighting/member_variable_color')
+	instance.comment_color = EditorInterface.get_editor_settings().get_setting("text_editor/theme/highlighting/comment_color")
+	instance.annotation_color = EditorInterface.get_editor_settings().get_setting("text_editor/theme/highlighting/gdscript/annotation_color")
+	instance.symbol_color = EditorInterface.get_editor_settings().get_setting("text_editor/theme/highlighting/symbol_color")
 
 static func check_code_edit():
-	if not is_instance_valid(single_line_gdscript_highlighter):
-		single_line_gdscript_highlighter = GDScriptSyntaxHighlighter.new()
-	if not is_instance_valid(single_line_code_edit):
-		single_line_code_edit = CodeEdit.new()
-		single_line_code_edit.highlight_current_line = false
-		single_line_code_edit.syntax_highlighter = single_line_gdscript_highlighter
-		EditorInterface.get_base_control().add_child(single_line_code_edit) 
-		EditorInterface.get_base_control().remove_child(single_line_code_edit)
+	var instance = get_instance()
+	if not is_instance_valid(instance.single_line_gdscript_highlighter):
+		instance.single_line_gdscript_highlighter = GDScriptSyntaxHighlighter.new()
+	if not is_instance_valid(instance.single_line_code_edit):
+		instance.single_line_code_edit = CodeEdit.new()
+		instance.single_line_code_edit.highlight_current_line = false
+		instance.single_line_code_edit.syntax_highlighter = instance.single_line_gdscript_highlighter
+		EditorInterface.get_base_control().add_child(instance.single_line_code_edit) 
+		EditorInterface.get_base_control().remove_child(instance.single_line_code_edit)
 
 static func get_single_line_highlight(text:String) -> Dictionary:
-	single_line_code_edit.set_line(0, text)
-	var hl_info = single_line_gdscript_highlighter.get_line_syntax_highlighting(0)
+	var instance = get_instance()
+	instance.single_line_code_edit.set_line(0, text)
+	var hl_info = instance.single_line_gdscript_highlighter.get_line_syntax_highlighting(0)
 	return hl_info.duplicate()
 
-static func class_name_in_script(word, script):
-	var const_map = script.get_script_constant_map()
-	if const_map.has(word):
-		return const_map.get(word)
 
 #endregion
 

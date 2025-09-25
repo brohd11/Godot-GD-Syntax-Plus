@@ -97,11 +97,6 @@ static func get_comment_tag_info(current_line_text:String, existing_hl_info=null
 	
 	return hl_info
 
-static func _class_name_in_script(word, script):
-	var const_map = script.get_script_constant_map()
-	if const_map.has(word):
-		return const_map.get(word)
-
 
 static func _get_comment_tag_hl_info(current_line_text):
 	var comment_tags = SyntaxPlus.get_comment_tags()
