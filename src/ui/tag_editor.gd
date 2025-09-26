@@ -92,8 +92,6 @@ func _read_json():
 	
 	GDHelperCode.config = editor_config
 	
-	#var tag_data = Utils.UFile.read_from_json(Utils.JSON_PATH)
-	#var editor_tags =  tag_data.get("tags", {})
 	var editor_tags = Utils.get_tags_data()
 	for tag in editor_tags:
 		var data = editor_tags.get(tag)
@@ -150,11 +148,7 @@ func _on_save_button_pressed():
 	for key in new_cfg:
 		Utils._set_editor_setting(key, new_cfg.get(key))
 	
-	#var tag_file_data = {
-		#"tags": _get_tag_data(),
-	#}
 	EditorInterface.get_editor_settings().set_setting(Utils.Config.defined_tags, _get_tag_data())
-	#Utils.UFile.write_to_json(tag_file_data, Utils.JSON_PATH)
 	
 	GDHelperCode.config = Utils.get_editor_config()
 	EditorGDTags.read_editor_tags()

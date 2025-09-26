@@ -5,7 +5,6 @@ const SCRIPT = preload("res://addons/syntax_plus/src/syntax_plus_singleton.gd")
 
 const Utils = preload("res://addons/syntax_plus/src/gdscript/class/syntax_plus_utils.gd")
 const GDScriptSyntaxPlus = preload("res://addons/syntax_plus/src/gdscript/editor/gdscript_syntax_plus.gd")
-const EditorSettingDesc = preload("res://addons/syntax_plus/src/editor_desc/editor_settings_description.gd")
 
 # deps
 const CONTEXT_PLUGINS = [
@@ -167,7 +166,7 @@ func _set_editor_description():
 	1 = All (4.5 style)
 	2 = Inherited (<=4.4 style)
 	3 = Script"
-	EditorSettingDesc.set_editor_setting_desc(Utils.Config.member_highlight_mode, member_mode)
+	#EditorSettingsDescription.set_editor_setting_desc(Utils.Config.member_highlight_mode, member_mode)
 
 
 func _on_editor_script_changed(script:Script) -> void:

@@ -69,8 +69,6 @@ func create_highlight_helpers():
 
 
 static func read_editor_tags():
-	#var tag_file_data = Utils.UFile.read_from_json(Utils.JSON_PATH)
-	#editor_tags = tag_file_data.get("tags", {})
 	editor_tags = Utils.get_tags_data()
 
 static func load_global_data():

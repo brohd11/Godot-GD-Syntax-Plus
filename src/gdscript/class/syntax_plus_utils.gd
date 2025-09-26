@@ -4,8 +4,6 @@ const Remote = preload("res://addons/syntax_plus/src/gdscript/class/syntax_plus_
 const UFile = Remote.UFile #>remote
 const URegex = Remote.URegex #>remote
 
-const JSON_PATH = "res://.addons/syntax_plus/syntax_plus_tags.json" #! ignore-remote
-
 const ANY_STRING = "const|var|@onready var|@export var|enum|class|func"
 const TAG_CHAR = "#>"
 const DEFAULT_COLOR_STRING = "35cc9b"
@@ -293,13 +291,7 @@ static func get_tags_data():
 	if not ed_settings.has_setting(Config.defined_tags):
 		ed_settings.set_setting(Config.defined_tags, Config.default_tags.get("tags"))
 	return ed_settings.get_setting(Config.defined_tags)
-	
-	#if not FileAccess.file_exists(JSON_PATH):
-		#UFile.write_to_json(Config.default_tags, JSON_PATH)
-		#return Config.default_tags.get("tags")
-	#var data = UFile.read_from_json(JSON_PATH)
-	#var tags = data.get("tags", {})
-	#return tags
+
 
 static func get_editor_config():
 	var config = {}
