@@ -1,7 +1,23 @@
-class_name SyntaxPlus
+class_name SyntaxPlus #! singleton-module
 extends Singleton.RefCount
 
 const SCRIPT = preload("res://addons/syntax_plus/src/syntax_plus_singleton.gd")
+
+const Utils = preload("res://addons/syntax_plus/src/gdscript/class/syntax_plus_utils.gd")
+const GDScriptSyntaxPlus = preload("res://addons/syntax_plus/src/gdscript/editor/gdscript_syntax_plus.gd")
+const EditorSettingDesc = preload("res://addons/syntax_plus/src/editor_desc/editor_settings_description.gd")
+
+# deps
+const CONTEXT_PLUGINS = [
+	"res://addons/syntax_plus/src/editor_plugins/path_uid_context_menu.gd", #! dependency
+	"res://addons/syntax_plus/src/editor_plugins/syntax_tag_context_menu.gd" #! dependency
+]
+const SYNTAX_HIGHLIGHTERS = [
+	"res://addons/syntax_plus/src/gdscript/editor/gdscript_syntax_plus.gd" #! dependency
+]
+
+var editor_plugin_manager:EditorPluginManager
+
 
 static func get_singleton_name() -> String:
 	return "SyntaxPlus"
@@ -108,25 +124,60 @@ static func get_highlight_callables():
 	return instance.highlight_callable_data
 
 
-
 var comment_tags = []
 var comment_tag_data = {}
+var highlight_callable_data = {}
 
 func update_comment_tags():
 	comment_tags = comment_tag_data.keys()
 
-
-var highlight_callable_data = {}
-
 func _all_unregistered_callback():
-	print("Class callback")
-	pass
+	if is_instance_valid(editor_plugin_manager):
+		editor_plugin_manager.remove_plugins()
 
 func _init(node) -> void:
+	Utils.initial_set_editor_settings()
 	
-	pass
+	if node is EditorPlugin:
+		_add_plugins(node)
+	else:
+		print("Node passed to SyntaxPlus singleton not an EditorPlugin, will not add highlighter and context plugins.")
+	
+	
+	Utils.set_editor_property_hints()
+	_set_editor_description.call_deferred()
+	
+	EditorNodeRef.call_on_ready(_connect_on_editor_node_ref_ready)
 
-static func test():
-	var instance = get_instance()
-	instance.update_comment_tags()
-	print(instance.instance_refs)
+func _connect_on_editor_node_ref_ready():
+	EditorInterface.get_script_editor().editor_script_changed.connect(_on_editor_script_changed)
+
+
+func _add_plugins(plugin:EditorPlugin):
+	editor_plugin_manager = EditorPluginManager.new(plugin)
+	editor_plugin_manager.context_menu_plugin_paths = CONTEXT_PLUGINS
+	editor_plugin_manager.syntax_highlighter_paths = SYNTAX_HIGHLIGHTERS
+	editor_plugin_manager.add_plugins.call_deferred()
+
+
+func _set_editor_description():
+	var member_mode = \
+"Choose which members will be highlighted:
+	0 = None
+	1 = All (4.5 style)
+	2 = Inherited (<=4.4 style)
+	3 = Script"
+	EditorSettingDesc.set_editor_setting_desc(Utils.Config.member_highlight_mode, member_mode)
+
+
+func _on_editor_script_changed(script:Script) -> void:
+	if script == null:
+		return
+	if script.resource_path.get_extension() != "gd":
+		return
+	if EditorInterface.get_script_editor().get_current_editor() == null:
+		return
+	if Utils._get_editor_setting(Utils.Config.set_as_default_highlighter):
+		var base_ed = EditorInterface.get_script_editor().get_current_editor().get_base_editor()
+		if base_ed.syntax_highlighter is not GDScriptSyntaxPlus:
+			Utils.set_script_highlighter()

@@ -69,8 +69,9 @@ func create_highlight_helpers():
 
 
 static func read_editor_tags():
-	var tag_file_data = Utils.UFile.read_from_json(Utils.JSON_PATH)
-	editor_tags = tag_file_data.get("tags", {})
+	#var tag_file_data = Utils.UFile.read_from_json(Utils.JSON_PATH)
+	#editor_tags = tag_file_data.get("tags", {})
+	editor_tags = Utils.get_tags_data()
 
 static func load_global_data():
 	GDHelper.config = Utils.get_editor_config()
@@ -238,7 +239,6 @@ func update_tagged_name_list(force_build=false) -> void:
 				new_tagged_data[member_highlighter].erase(tagged_name)
 	##
 	
-	#print("HASH ", tagged_data.hash() != new_tagged_data.hash())
 	## Full scan of doc for valid highlights
 	if full_rebuild or tagged_data.hash() != new_tagged_data.hash():
 		for highlight_helper in highlight_helpers:

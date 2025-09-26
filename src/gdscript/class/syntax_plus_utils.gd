@@ -4,7 +4,7 @@ const Remote = preload("res://addons/syntax_plus/src/gdscript/class/syntax_plus_
 const UFile = Remote.UFile #>remote
 const URegex = Remote.URegex #>remote
 
-const JSON_PATH = "res://addons/syntax_plus/syntax_plus_tags.json"
+const JSON_PATH = "res://.addons/syntax_plus/syntax_plus_tags.json" #! ignore-remote
 
 const ANY_STRING = "const|var|@onready var|@export var|enum|class|func"
 const TAG_CHAR = "#>"
@@ -289,9 +289,17 @@ static func initial_set_editor_settings():
 	
 
 static func get_tags_data():
-	var data = UFile.read_from_json(JSON_PATH)
-	var tags = data.get("tags", {})
-	return tags
+	var ed_settings = EditorInterface.get_editor_settings()
+	if not ed_settings.has_setting(Config.defined_tags):
+		ed_settings.set_setting(Config.defined_tags, Config.default_tags.get("tags"))
+	return ed_settings.get_setting(Config.defined_tags)
+	
+	#if not FileAccess.file_exists(JSON_PATH):
+		#UFile.write_to_json(Config.default_tags, JSON_PATH)
+		#return Config.default_tags.get("tags")
+	#var data = UFile.read_from_json(JSON_PATH)
+	#var tags = data.get("tags", {})
+	#return tags
 
 static func get_editor_config():
 	var config = {}
@@ -349,6 +357,7 @@ class Config:
 	const member_access_color = "plugin/syntax_plus/member_access/member_access_color"
 	const tag_color = "plugin/syntax_plus/tags/tag_color"
 	const tag_color_enable = "plugin/syntax_plus/tags/tag_color_enable"
+	const defined_tags = "plugin/syntax_plus/tags/defined_tags"
 	
 	const default_settings = {
 		set_as_default_highlighter: false,
@@ -365,6 +374,17 @@ class Config:
 		member_access_color: "91b8c4",
 		tag_color: "5f9d9fff",
 		tag_color_enable: true
+	}
+	
+	const default_tags = {
+	"tags": {
+		"debug": {
+			"color": "f7ff00",
+			"keyword": "any",
+			"menu": "Submenu",
+			"overwrite": true
+			}
+		}
 	}
 	
 	const member_mode_propery_info = {

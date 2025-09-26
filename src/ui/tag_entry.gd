@@ -18,7 +18,6 @@ const Utils = GDSynTags.Utils #>import
 
 var debounce:Timer
 
-
 func _ready() -> void:
 	if is_part_of_edited_scene():
 		return
@@ -51,8 +50,9 @@ func set_data(tag, data):
 		menu_option.select(1)
 	elif _menu_option == "None":
 		menu_option.select(2)
-	_set_tags(tag)
+	
 	set_highlighter()
+	_set_tags(tag)
 
 func _set_tags(new_tag):
 	for line in range(code_edit.get_line_count()):
@@ -85,11 +85,12 @@ func get_data():
 	return data
 
 
-
 func set_highlighter():
 	var data = get_data()
+	var t = code_edit.text
 	var new_hl = GDSynTags.new(data)
 	code_edit.syntax_highlighter = new_hl
+	_adjust_text()
 
 func update_highlighter():
 	pass
@@ -109,10 +110,12 @@ func _on_debounce_timeout():
 	set_highlighter()
 
 func _on_overwrite_pressed():
-	set_highlighter()
+	#set_highlighter()
+	debounce.start()
 
 func _on_reload_pressed():
-	set_highlighter()
+	#set_highlighter()
+	debounce.start()
 
 func _on_delete_pressed():
 	queue_free()
@@ -132,3 +135,13 @@ func _line_strip_edges(line_edit:LineEdit, new_text:String):
 		else:
 			line_edit.caret_column = line_edit.text.length()
 	return new_text
+
+func _adjust_text():
+	code_edit.set_line(0, code_edit.get_line(0) + " ")
+	await get_tree().process_frame
+	code_edit.set_line(0, code_edit.get_line(0).strip_edges())
+	
+	#for i in range(code_edit.get_line_count()):
+		#code_edit.set_line(i, code_edit.get_line(i) + " ")
+	
+	pass

@@ -29,11 +29,9 @@ func _init(data_overide=null) -> void:
 
 
 func read_editor_tags():
-	var tag_file_data = Utils.UFile.read_from_json(Utils.JSON_PATH)
-	editor_tags = tag_file_data.get("tags", {})
+	editor_tags = Utils.get_tags_data()
 
 static func load_global_data():
-	var tag_file_data = Utils.UFile.read_from_json(Utils.JSON_PATH)
 	GDHelper.config = Utils.get_editor_config()
 
 func create_highlight_helpers():
@@ -116,6 +114,7 @@ func _first_line_update() -> void:
 		#gd_helper.base_gdscript_highlighter.clear_highlighting_cache()
 		GDHelper.default_text_color = EditorInterface.get_editor_settings().get("text_editor/theme/highlighting/text_color")
 		update_tagged_name_list()
+		
 
 
 func update_tagged_name_list(force_build=false) -> void:
@@ -154,6 +153,8 @@ func update_tagged_name_list(force_build=false) -> void:
 	if full_rebuild or tagged_data.hash() != new_tagged_data.hash():
 		for highlight_helper in highlight_helpers:
 			new_tagged_data[highlight_helper].clear()
+			highlight_helper.tagged_names.clear()
+		
 		for i in range(current_line_count):
 			var line_text = text_edit_node.get_line(i)
 			
