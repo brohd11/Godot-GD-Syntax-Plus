@@ -1,6 +1,6 @@
 extends EditorContextMenuPlugin
 
-const SLOT = CONTEXT_SLOT_SCRIPT_EDITOR_CODE
+const SLOT = EditorContextMenuPlugin.CONTEXT_SLOT_SCRIPT_EDITOR_CODE
 const UtilsRemote = preload("res://addons/syntax_plus/src/gdscript/class/syntax_plus_remote.gd")
 const PopupWrapper = UtilsRemote.PopupWrapper
 const Param = PopupWrapper.ItemParams
