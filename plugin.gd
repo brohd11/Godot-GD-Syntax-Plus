@@ -31,6 +31,7 @@ func _exit_tree() -> void:
 	
 	if is_instance_valid(dock_manager):
 		dock_manager.clean_up()
+	
 	remove_tool_menu_item(PLUGIN_NAME) # won't cause error if it doesn't exist
 
 

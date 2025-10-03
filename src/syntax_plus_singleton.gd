@@ -8,7 +8,6 @@ const GDScriptSyntaxPlus = preload("res://addons/syntax_plus/src/gdscript/editor
 
 # deps
 const CONTEXT_PLUGINS = [
-	"res://addons/syntax_plus/src/editor_plugins/path_uid_context_menu.gd", #! dependency
 	"res://addons/syntax_plus/src/editor_plugins/syntax_tag_context_menu.gd" #! dependency
 ]
 const SYNTAX_HIGHLIGHTERS = [

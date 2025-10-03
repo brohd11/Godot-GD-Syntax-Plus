@@ -3,6 +3,8 @@ extends RefCounted
 const Remote = preload("res://addons/syntax_plus/src/gdscript/class/syntax_plus_remote.gd")
 const UFile = Remote.UFile #>remote
 const URegex = Remote.URegex #>remote
+const UClassDetail = Remote.UClassDetail
+const ConfirmationDialogHandler = Remote.ConfirmationDialogHandler
 
 const ANY_STRING = "const|var|@onready var|@export var|enum|class|func"
 const TAG_CHAR = "#>"
@@ -28,7 +30,7 @@ enum RegExTarget{
 
 static func set_script_highlighter(highlighter:="SyntaxPlus"):
 	var script_editor = EditorInterface.get_script_editor().get_current_editor()
-	var pop = UEdScriptEditor.get_syntax_hl_popup() as PopupMenu
+	var pop = EditorNodeRef.get_registered(EditorNodeRef.Nodes.SCRIPT_EDITOR_SYNTAX_POPUP) as PopupMenu
 	if pop == null:
 		return
 	var id = -1
