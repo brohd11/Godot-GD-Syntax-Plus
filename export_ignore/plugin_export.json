@@ -12,7 +12,6 @@
 			"export_folder": "syntax-plus{{version=syntax_plus}}/syntax_plus",
 			"other_transfers": [
 				{
-					"from":"res://addons/modular_browser/export_ignore/plugin_export/gdignore.txt",
 					"to":"modular_browser/.gdignore"
 				}
 			],
