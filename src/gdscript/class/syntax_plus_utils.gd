@@ -90,7 +90,7 @@ static func check_line_for_rebuild(line_text:String, line_text_last_state:String
 
 
 static func get_all_class_members(script:GDScript=null):
-	return UClassDetail.class_get_all_members(script)
+	return UClassDetail.class_get_all_members(script).keys()
 
 
 static func get_current_script_class():

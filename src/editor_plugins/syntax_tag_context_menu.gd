@@ -4,6 +4,7 @@ const SLOT = EditorContextMenuPlugin.CONTEXT_SLOT_SCRIPT_EDITOR_CODE
 
 const UtilsRemote = preload("res://addons/syntax_plus/src/gdscript/class/syntax_plus_remote.gd")
 const PopupWrapper = UtilsRemote.PopupWrapper
+const Params = PopupWrapper.ItemParams
 
 const Utils = preload("res://addons/syntax_plus/src/gdscript/class/syntax_plus_utils.gd") #>import utils.gd
 #const GDHelper = preload("res://addons/syntax_plus/src/gdscript/editor/gdscript_helper.gd") #>import gdscript_helper.gd
@@ -17,13 +18,13 @@ func _popup_menu(paths: PackedStringArray) -> void:
 	PopupWrapper.create_context_plugin_items(self, se, popup_items, _on_context_pressed)
 
 func _on_context_pressed(se, popup_path):
-	
 	if popup_path == "Syntax Plus/Clear Cache":
 		clear_cache()
 		return
 	elif popup_path == "Syntax Plus/Reset All":
 		Utils.reset_script_highlighters()
 		return
+	
 	write_tag(se, popup_path.get_file())
 
 
@@ -78,9 +79,9 @@ static func get_valid_items(script_editor) -> Dictionary:
 		var texture = ImageTexture.create_from_image(img)
 		if menu == "Submenu":
 			var tag_path = "Syntax Plus".path_join(tag)
-			submenu_tags[tag_path] = {PopupWrapper.ItemParams.ICON_KEY:[texture]}
+			submenu_tags[tag_path] = {Params.ICON_KEY:[texture]}
 		elif menu == "Main Menu":
-			main_menu_tags[tag] = {PopupWrapper.ItemParams.ICON_KEY:[texture]}
+			main_menu_tags[tag] = {Params.ICON_KEY:[texture]}
 	
 	for key in main_menu_tags.keys():
 		popup_custom_items[key] = main_menu_tags.get(key)
