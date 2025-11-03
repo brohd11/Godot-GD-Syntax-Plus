@@ -14,6 +14,14 @@ const SYNTAX_HIGHLIGHTERS = [
 	"res://addons/syntax_plus/src/gdscript/editor/gdscript_syntax_plus.gd" #! dependency
 ]
 
+const CommentHighlightExt = preload("res://addons/syntax_plus/src/extensions/comment_highlight.gd")
+
+enum CallableLocation {
+	START,
+	END,
+	ANY,
+}
+
 var editor_plugin_manager:EditorPluginManager
 
 
@@ -39,17 +47,42 @@ var editor_member_color:Color
 var comment_color:Color
 var annotation_color:Color
 var symbol_color:Color
+var number_color:Color
+var keyword_color:Color
+var control_flow_color:Color
+var function_color:Color
+var global_function_color:Color
+var base_type_color:Color
+var engine_type_color:Color
+var user_type_color:Color
+var string_color:Color
+var string_name_color:Color
+var node_path_color:Color
+var node_reference_color:Color
 
 var single_line_code_edit:CodeEdit
 var single_line_gdscript_highlighter: GDScriptSyntaxHighlighter
 
 static func set_default_text_colors():
 	var instance = get_instance()
-	instance.default_text_color = EditorInterface.get_editor_settings().get("text_editor/theme/highlighting/text_color")
-	instance.editor_member_color = EditorInterface.get_editor_settings().get('text_editor/theme/highlighting/member_variable_color')
-	instance.comment_color = EditorInterface.get_editor_settings().get_setting("text_editor/theme/highlighting/comment_color")
-	instance.annotation_color = EditorInterface.get_editor_settings().get_setting("text_editor/theme/highlighting/gdscript/annotation_color")
-	instance.symbol_color = EditorInterface.get_editor_settings().get_setting("text_editor/theme/highlighting/symbol_color")
+	var editor_settings = EditorInterface.get_editor_settings()
+	instance.default_text_color = editor_settings.get("text_editor/theme/highlighting/text_color")
+	instance.editor_member_color = editor_settings.get('text_editor/theme/highlighting/member_variable_color')
+	instance.comment_color = editor_settings.get_setting("text_editor/theme/highlighting/comment_color")
+	instance.annotation_color = editor_settings.get_setting("text_editor/theme/highlighting/gdscript/annotation_color")
+	instance.symbol_color = editor_settings.get_setting("text_editor/theme/highlighting/symbol_color")
+	instance.number_color = editor_settings.get_setting("text_editor/theme/highlighting/number_color")
+	instance.keyword_color = editor_settings.get_setting("text_editor/theme/highlighting/keyword_color")
+	instance.control_flow_color = editor_settings.get_setting("text_editor/theme/highlighting/control_flow_keyword_color")
+	instance.function_color = editor_settings.get_setting("text_editor/theme/highlighting/function_color")
+	instance.global_function_color = editor_settings.get_setting("text_editor/theme/highlighting/gdscript/global_function_color")
+	instance.base_type_color = editor_settings.get_setting("text_editor/theme/highlighting/base_type_color")
+	instance.engine_type_color = editor_settings.get_setting("text_editor/theme/highlighting/engine_type_color")
+	instance.user_type_color = editor_settings.get_setting("text_editor/theme/highlighting/user_type_color")
+	instance.string_color = editor_settings.get_setting("text_editor/theme/highlighting/string_color")
+	instance.string_name_color = editor_settings.get_setting("text_editor/theme/highlighting/gdscript/string_name_color")
+	instance.node_path_color = editor_settings.get_setting("text_editor/theme/highlighting/gdscript/node_path_color")
+	instance.node_reference_color = editor_settings.get_setting("text_editor/theme/highlighting/gdscript/node_reference_color")
 
 static func check_code_edit():
 	var instance = get_instance()
@@ -71,22 +104,48 @@ static func get_single_line_highlight(text:String) -> Dictionary:
 
 #endregion
 
+var extensions:= []
+
+func _add_extensions():
+	extensions = []
+	var exts = [
+		CommentHighlightExt,
+	]
+	
+	for e in exts:
+		var ins = e.new()
+		extensions.append(ins)
+
+static func notify_extensions(what:int):
+	var instance = get_instance()
+	for ext in instance.extensions:
+		if ext.has_method("syntax_plus_notification"):
+			ext.syntax_plus_notification(what)
+	
+	pass
 
 #region Comment Tags
 
 
-static func register_comment_tag(tag:String, color:Color=Color.GOLDENROD):
+static func register_comment_tag(prefix:String, tag:String, color:Color=Color.GOLDENROD):
 	var instance = get_instance()
-	if instance.comment_tag_data.has(tag):
+	if not instance.comment_tag_data.has(prefix):
+		instance.comment_tag_data[prefix] = {}
+	if instance.comment_tag_data[prefix].has(tag):
 		print("Already have comment tag registered: %s" % tag)
 		return
-	instance.comment_tag_data[tag] = {"color": color}
+	instance.comment_tag_data[prefix][tag] = {"color": color}
 	instance.update_comment_tags()
 
-static func unregister_comment_tag(tag:String):
+static func unregister_comment_tag(prefix:String, tag:String):
 	var instance = get_instance()
-	if instance.comment_tag_data.has(tag):
-		instance.comment_tag_data.erase(tag)
+	if not instance.comment_tag_data.has(prefix):
+		print("Comment tag not registered: %s" % tag)
+		return
+	if instance.comment_tag_data[prefix].has(tag):
+		instance.comment_tag_data[prefix].erase(tag)
+		if instance.comment_tag_data[prefix].is_empty():
+			instance.comment_tag_data.erase(prefix)
 		instance.update_comment_tags()
 		return
 	print("Comment tag not registered: %s" % tag)
@@ -102,18 +161,25 @@ static func get_comment_tags():
 #endregion
 
 
-static func register_highlight_callable(tag:String, callable:Callable, at_start:bool=true):
+static func register_highlight_callable(prefix:String, tag:String, callable:Callable, callable_location:=CallableLocation.START):
 	var instance = get_instance()
-	if instance.highlight_callable_data.has(tag):
+	if not instance.highlight_callable_data.has(prefix):
+		instance.highlight_callable_data[prefix] = {}
+	if instance.highlight_callable_data[prefix].has(tag):
 		print("Already have highlight callable registered: %s" % tag)
 		return
-	instance.highlight_callable_data[tag] = {"callable":callable, "at_start":at_start}
+	instance.highlight_callable_data[prefix][tag] = {"callable":callable, "callable_location":callable_location}
 
 
-static func unregister_highlight_callable(tag:String):
+static func unregister_highlight_callable(prefix:String, tag:String):
 	var instance = get_instance()
-	if instance.highlight_callable_data.has(tag):
-		instance.highlight_callable_data.erase(tag)
+	if not instance.highlight_callable_data.has(prefix):
+		print("Highlight callable not registered: %s" % tag)
+		return
+	if instance.highlight_callable_data[prefix].has(tag):
+		instance.highlight_callable_data[prefix].erase(tag)
+		if instance.highlight_callable_data[prefix].is_empty():
+			instance.highlight_callable_data.erase(prefix)
 		return
 	print("Highlight callable not registered: %s" % tag)
 
@@ -121,13 +187,54 @@ static func get_highlight_callables():
 	var instance = get_instance()
 	return instance.highlight_callable_data
 
+static func get_prefixes():
+	var instance = get_instance()
+	return instance.comment_tag_prefixes
 
-var comment_tags = []
+static func get_prefix_color(prefix):
+	var instance = get_instance()
+	return instance.prefix_colors.get(prefix)
+
+static func set_prefix_color(prefix:String, color:Color):
+	var instance = get_instance()
+	instance.prefix_colors[prefix] = color
+
+var prefix_colors = {}
+var comment_tag_prefixes = []
+var comment_tags = {}
 var comment_tag_data = {}
 var highlight_callable_data = {}
 
-func update_comment_tags():
-	comment_tags = comment_tag_data.keys()
+const DEFAULT_TAG_COLOR = Color.GOLDENROD
+
+static func update_comment_tags():
+	var instance = get_instance()
+	var prefixes = {}
+	for prefix in instance.comment_tag_data.keys():
+		prefixes[prefix] = true
+		var tag_dict = instance.comment_tag_data.get(prefix, {})
+		var tag_array = tag_dict.keys()
+		instance.comment_tags[prefix] = tag_array
+	for prefix in instance.highlight_callable_data.keys():
+		prefixes[prefix] = true
+	
+	instance.comment_tag_prefixes = prefixes.keys()
+
+#region Misc Api
+
+
+static func clear_cache():
+	var hl = ScriptEditorRef.get_current_code_edit().syntax_highlighter
+	if hl.has_method("invalidate"):
+		hl.invalidate()
+
+
+
+
+
+
+#endregion
+
 
 func _all_unregistered_callback():
 	if is_instance_valid(editor_plugin_manager):
@@ -149,6 +256,7 @@ func _init(node) -> void:
 
 func _connect_on_editor_node_ref_ready():
 	EditorInterface.get_script_editor().editor_script_changed.connect(_on_editor_script_changed)
+	_add_extensions()
 
 
 func _add_plugins(plugin:EditorPlugin):
@@ -175,7 +283,10 @@ func _on_editor_script_changed(script:Script) -> void:
 		return
 	if EditorInterface.get_script_editor().get_current_editor() == null:
 		return
+	var code_edit = ScriptEditorRef.get_current_code_edit()
 	if Utils._get_editor_setting(Utils.Config.set_as_default_highlighter):
-		var base_ed = EditorInterface.get_script_editor().get_current_editor().get_base_editor()
-		if base_ed.syntax_highlighter is not GDScriptSyntaxPlus:
+		if code_edit.syntax_highlighter is not GDScriptSyntaxPlus:
 			Utils.set_script_highlighter()
+
+static func get_hl_info_dict(color:Color) -> Dictionary:
+	return {"color": color}

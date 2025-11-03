@@ -16,7 +16,7 @@ static var config:Dictionary = {}
 func _init() -> void:
 	_instances.append(weakref(self))
 	set_code_edit()
-
+#^ som
 static func set_code_edit() -> void:
 	if not is_instance_valid(base_gdscript_highlighter):
 		base_gdscript_highlighter = GDScriptSyntaxHighlighter.new()
@@ -45,48 +45,71 @@ func get_base_highlight(line_idx) -> Dictionary:
 	return hl_info.duplicate()
 
 
-
-
-static func sort_comment_tag_info(hl_info:Dictionary, offset=0):
+static func sort_comment_tag_info(hl_info:Dictionary, prefix_color:Color, offset=0):
 	var key_adjusted_data = {}
 	key_adjusted_data[offset] = {"color": comment_color}
-	key_adjusted_data[offset + 1] = {"color": annotation_color}
+	key_adjusted_data[offset + 1] = {"color": prefix_color}
 	key_adjusted_data[offset + 2] = {"color": comment_color}
 	var hl_keys = hl_info.keys()
 	hl_keys.sort()
 	for key in hl_keys:
+		#var new_key = key + offset + 3
 		var new_key = key + offset + 3
 		key_adjusted_data[new_key] = hl_info[key]
 	
 	return key_adjusted_data
 
-static func get_comment_tag_info(current_line_text:String, existing_hl_info=null):
-	var tag = current_line_text.get_slice("#!", 1).strip_edges().get_slice(" ", 0).strip_edges()
-	var highlight_callables = SyntaxPlus.get_highlight_callables()
+static func get_comment_tag_info(current_line_text:String, line:int, prefix:String, comment_tag_idx:int, existing_hl_info=null):
+	var tag = current_line_text.get_slice(prefix, 1).strip_edges().get_slice(" ", 0).strip_edges()
+	var callable_data = SyntaxPlus.get_highlight_callables()
+	if callable_data == null:
+		return
+	var highlight_callables = callable_data.get(prefix)
+	var has_tag = highlight_callables.has(tag)
+	var has_empty = false
+	if highlight_callables.has(""):
+		if not has_tag:
+			tag = ""
+		has_empty = true
+	var prefix_color = SyntaxPlus.get_prefix_color(prefix)
+	if prefix_color == null:
+		prefix_color = annotation_color
 	if existing_hl_info == null:
 		var callable = _get_comment_tag_hl_info
-		if highlight_callables.has(tag):
+		var custom_callable = false
+		if has_tag or has_empty:
 			var data = highlight_callables.get(tag)
-			var at_start = data.get("at_start")
-			if at_start:
+			var callable_location:SyntaxPlus.CallableLocation = data.get("callable_location")
+			if callable_location != SyntaxPlus.CallableLocation.END:
+				custom_callable = true
 				callable = data.get("callable")
 		
-		var hl_info = callable.call(current_line_text)
-		hl_info = sort_comment_tag_info(hl_info)
+		var hl_info:Dictionary
+		if custom_callable:
+			hl_info = callable.call(current_line_text, line, comment_tag_idx)
+		else:
+			hl_info = callable.call(current_line_text, prefix)
+		
+		hl_info = sort_comment_tag_info(hl_info, prefix_color, comment_tag_idx)
 		return hl_info
 	
 	var callable = _get_comment_tag_hl_info
-	if highlight_callables.has(tag):
+	var custom_callable = false
+	if has_tag or has_empty:
 		var data = highlight_callables.get(tag)
-		var at_start = data.get("at_start")
-		if not at_start:
+		var callable_location:SyntaxPlus.CallableLocation = data.get("callable_location")
+		if callable_location != SyntaxPlus.CallableLocation.START:
+			custom_callable = true
 			callable = data.get("callable")
 	
-	var new_hl_info = callable.call(current_line_text)
+	var new_hl_info:Dictionary
+	if custom_callable:
+		new_hl_info = callable.call(current_line_text, line, comment_tag_idx)
+	else:
+		new_hl_info = callable.call(current_line_text, prefix)
 	
-		
-	#var new_hl_info = _get_comment_tag_hl_info(current_line_text)
-	new_hl_info = sort_comment_tag_info(new_hl_info, current_line_text.get_slice("#!", 0).length())
+	#new_hl_info = sort_comment_tag_info(new_hl_info, prefix_color)
+	new_hl_info = sort_comment_tag_info(new_hl_info, prefix_color, comment_tag_idx)
 	existing_hl_info.merge(new_hl_info)
 	
 	var hl_info = {}
@@ -98,9 +121,12 @@ static func get_comment_tag_info(current_line_text:String, existing_hl_info=null
 	return hl_info
 
 
-static func _get_comment_tag_hl_info(current_line_text):
-	var comment_tags = SyntaxPlus.get_comment_tags()
-	var comment_tag_data = SyntaxPlus.get_comment_tag_data()
+static func _get_comment_tag_hl_info(current_line_text:String, prefix:String):
+	var all_comment_tags = SyntaxPlus.get_comment_tags()
+	var comment_tags = all_comment_tags.get(prefix, [])
+	var all_comment_tag_data = SyntaxPlus.get_comment_tag_data()
+	var comment_tag_data = all_comment_tag_data.get(prefix)
+	
 	var temp_hl_info:Dictionary = {}
 	var comment_tag_text = current_line_text.get_slice("#!", 1).replace(".", " ").strip_edges()
 	var new_hl_info = SyntaxPlus.get_instance().get_single_line_highlight(comment_tag_text)
@@ -113,6 +139,7 @@ static func _get_comment_tag_hl_info(current_line_text):
 			while idx < word.length():
 				temp_hl_info.erase(idx)
 				idx += 1
+			temp_hl_info[word.length()] = {"color":comment_color}
 	return temp_hl_info
 
 func _notification(what: int) -> void:
