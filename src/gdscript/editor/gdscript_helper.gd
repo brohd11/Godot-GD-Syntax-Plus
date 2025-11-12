@@ -59,7 +59,7 @@ static func sort_comment_tag_info(hl_info:Dictionary, prefix_color:Color, offset
 	
 	return key_adjusted_data
 
-static func get_comment_tag_info(current_line_text:String, line:int, prefix:String, comment_tag_idx:int, existing_hl_info=null):
+static func get_comment_tag_info(script_editor:CodeEdit, current_line_text:String, line:int, prefix:String, comment_tag_idx:int, existing_hl_info=null):
 	var tag = current_line_text.get_slice(prefix, 1).strip_edges().get_slice(" ", 0).strip_edges()
 	var callable_data = SyntaxPlus.get_highlight_callables()
 	if callable_data == null:
@@ -84,9 +84,12 @@ static func get_comment_tag_info(current_line_text:String, line:int, prefix:Stri
 				custom_callable = true
 				callable = data.get("callable")
 		
+		if callable.get_object() == null:
+			return {}
+		
 		var hl_info:Dictionary
 		if custom_callable:
-			hl_info = callable.call(current_line_text, line, comment_tag_idx)
+			hl_info = callable.call(script_editor, current_line_text, line, comment_tag_idx)
 		else:
 			hl_info = callable.call(current_line_text, prefix)
 		
@@ -102,9 +105,12 @@ static func get_comment_tag_info(current_line_text:String, line:int, prefix:Stri
 			custom_callable = true
 			callable = data.get("callable")
 	
+	if callable.get_object() == null:
+		return existing_hl_info
+	
 	var new_hl_info:Dictionary
 	if custom_callable:
-		new_hl_info = callable.call(current_line_text, line, comment_tag_idx)
+		new_hl_info = callable.call(script_editor, current_line_text, line, comment_tag_idx)
 	else:
 		new_hl_info = callable.call(current_line_text, prefix)
 	

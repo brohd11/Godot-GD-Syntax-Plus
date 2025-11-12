@@ -69,7 +69,7 @@ func _on_validate_script():
 func set_backgrounds():
 	_set_background_colors()
 
-func _highlight_comment(current_line_text:String, line:int, comment_tag_idx:int):
+func _highlight_comment(script_editor:CodeEdit, current_line_text:String, line:int, comment_tag_idx:int):
 	#if group_data.is_empty(): #^r would be nice to only run once
 		#_read_group_data()
 	
@@ -187,10 +187,11 @@ func _read_group_data():
 	for i in range(line_count):
 		var line = script_editor.get_line(i)
 		var stripped = line.strip_edges()
-		var has_tag = stripped.find("#^") > -1
+		var tag_idx = stripped.find("#^")
+		var has_tag = tag_idx > -1
 		if not has_tag and bracket_stack_size == 0:
 			continue
-		var sub_str = stripped.substr(2)
+		var sub_str = stripped.substr(tag_idx + 2)
 		var open_brack_i = sub_str.find("{")
 		if open_brack_i > -1:
 			sub_str = sub_str.substr(open_brack_i)
@@ -201,7 +202,7 @@ func _read_group_data():
 			if bracket_stack.is_empty():
 				group_id += 1
 				group_data[group_id] = {}
-			print(color_data)
+			
 			bracket_stack.push_back("{")
 			bracket_stack_size = bracket_stack.size()
 			group_data[group_id][bracket_stack_size] = {
@@ -287,10 +288,10 @@ func _set_background_colors():
 
 func _get_bracket_color_data(stripped_line:String):
 	var sq_brack_i = stripped_line.find("]")
-	var fg_color = null
-	var bg_color = default_color
+	var fg_color = null #^ should these be swapped?
+	var bg_color = default_color #^ should these be swapped?
 	var bg_darken_amout = default_bg_darken
-	if sq_brack_i > -1:
+	if sq_brack_i > -1 and stripped_line.find("{") > -1:
 		var color_slice = stripped_line.get_slice("]", 0)
 		color_slice = color_slice.get_slice("[", 1)
 		var bg_color_str = ""
@@ -315,6 +316,7 @@ func _get_bracket_color_data(stripped_line:String):
 			else:
 				bg_color = _get_color(inner_color)
 			bg_darken_amout = _get_bg_darken(inner_color)
+	
 	
 	return {"fg_color":fg_color, "bg_color":bg_color, "bg_darken": bg_darken_amout}
 

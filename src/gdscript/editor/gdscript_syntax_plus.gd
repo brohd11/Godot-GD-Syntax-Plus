@@ -151,7 +151,7 @@ func _get_line_syntax_highlighting(line_idx: int) -> Dictionary:
 				comment_tag_index = current_line_text.find(prefix)
 				comment_tag_prefix = prefix
 				if comment_index == 0:
-					return GDHelper.get_comment_tag_info(current_line_text, line_idx, comment_tag_prefix, comment_tag_index)
+					return GDHelper.get_comment_tag_info(text_edit, current_line_text, line_idx, comment_tag_prefix, comment_tag_index)
 				break
 	
 	#^ Not 100% sure duplicate is neces
@@ -197,7 +197,7 @@ func _get_line_syntax_highlighting(line_idx: int) -> Dictionary:
 	#^
 	
 	if comment_tag_prefix != "":
-		hl_info = GDHelper.get_comment_tag_info(current_line_text, line_idx, comment_tag_prefix, comment_tag_index, hl_info)
+		hl_info = GDHelper.get_comment_tag_info(text_edit, current_line_text, line_idx, comment_tag_prefix, comment_tag_index, hl_info)
 	
 	if needs_sort:
 		hl_info = Utils.sort_keys(hl_info)

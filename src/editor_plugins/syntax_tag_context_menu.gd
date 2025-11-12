@@ -2,6 +2,9 @@ extends EditorContextMenuPlugin
 
 const SLOT = EditorContextMenuPlugin.CONTEXT_SLOT_SCRIPT_EDITOR_CODE
 
+const _UID = "uid" + "://"
+const _UID_INVALID = _UID + "<invalid>"
+
 const UtilsRemote = preload("res://addons/syntax_plus/src/gdscript/class/syntax_plus_remote.gd")
 const PopupWrapper = UtilsRemote.PopupWrapper
 const Params = PopupWrapper.ItemParams
@@ -163,14 +166,14 @@ static func _check_for_path(se:CodeEdit):
 	return path
 
 static func path_to_uid(path:String):
-	if path.begins_with("uid://"):
+	if path.begins_with(UtilsRemote.UFile._UID):
 		return path
 	var uid = ResourceUID.id_to_text(ResourceLoader.get_resource_uid(path))
-	if uid == "uid://<invalid>":
+	if uid == UtilsRemote.UFile._UID_INVALID:
 		uid = path
 	return uid
 
 static func uid_to_path(uid:String):
-	if not uid.begins_with("uid://"):
+	if not uid.begins_with(UtilsRemote.UFile._UID):
 		return uid
 	return ResourceUID.get_id_path(ResourceUID.text_to_id(uid))
