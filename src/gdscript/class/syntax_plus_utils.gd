@@ -101,13 +101,15 @@ static func get_current_script_class():
 
 static func get_regex_pattern(keywords:String, tag):
 	#if tag =="=MEMBER_HL":
-		#return "^(?:@onready var|@export var|static var|var|const|class|enum|signal)\\s+(\\w+)"
-	if tag =="=MEMBER_HL":
-		return "^(?:@onready var|@export var|static var|var|const|class|enum|signal|func|static func)\\s+(\\w+)"
-	if tag == "=CONST_HL":
+		#return "^(?:@onready var|@export var|static var|var|const|class|enum|signal|func|static func)\\s+(\\w+)"
+	if tag =="=MEMBER_HL": #^ new one accounts for exports
+		return "^(?:@onready var|@export.*?\\s*var|static var|var|const|class|enum|signal|func|static func)\\s+(\\w+)"
+	elif tag == "=CONST_HL":
 		return "(?:const)\\s+([A-Z_0-9]+)\\s*[=:]" # const
 	elif tag == "=CLASS_HL":
-		return "(?:class|const|var)\\s+(?![A-Z_0-9]+\\s*[=:])([A-Z].*?)\\s*[=:]" # class
+		return "(?:class|const|var)\\s+(?=[A-Z_0-9]*[a-z].*?[:=])([A-Z]\\w*)" # class
+		# "(?:class|const|var)\\s+(?![A-Z_0-9]+\\s*[=:])([A-Z].*?)\\s*[=:]" #^ original
+		# "(?:class|const|var)\\s+(?=[A-Z_0-9]*[a-z])([A-Z]\\w*)"
 	elif tag == "=ONREADY_HL":
 		return "(?:@onready var)\\s+([a-z_].*?)\\s*[=:]"
 	
@@ -355,9 +357,9 @@ class Config:
 	
 	const default_settings = {
 		set_as_default_highlighter: false,
-		pascal_enable: true,
+		pascal_enable: false,
 		pascal_color: "28e0caff",
-		const_enable: true,
+		const_enable: false,
 		const_color: "2685ab",
 		onready_enable: false,
 		onready_color: "679c53ff",
