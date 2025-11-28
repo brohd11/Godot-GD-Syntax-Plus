@@ -64,7 +64,7 @@ static func get_comment_tag_info(script_editor:CodeEdit, current_line_text:Strin
 	var callable_data = SyntaxPlus.get_highlight_callables()
 	if callable_data == null:
 		return
-	var highlight_callables = callable_data.get(prefix)
+	var highlight_callables = callable_data.get(prefix, {})
 	var has_tag = highlight_callables.has(tag)
 	var has_empty = false
 	if highlight_callables.has(""):
