@@ -71,7 +71,8 @@ func check_line(hl_info, current_line_text):
 	if check_class:
 		var check = check_line_hl(hl_info, t, class_member_names, class_member_regex, highlight_color, overwr)
 		hl_info = check[0]
-		needs_sort = check[1]
+		if not needs_sort:
+			needs_sort = check[1]
 	 
 	return [hl_info, needs_sort]
 
