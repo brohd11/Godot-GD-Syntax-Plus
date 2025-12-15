@@ -22,8 +22,6 @@ enum CallableLocation {
 	ANY,
 }
 
-var editor_plugin_manager:EditorPluginManager
-
 
 static func get_singleton_name() -> String:
 	return "SyntaxPlus"
@@ -115,14 +113,15 @@ func _add_extensions():
 	for e in exts:
 		var ins = e.new()
 		extensions.append(ins)
+	
+	update_comment_tags()
 
 static func notify_extensions(what:int):
 	var instance = get_instance()
 	for ext in instance.extensions:
 		if ext.has_method("syntax_plus_notification"):
 			ext.syntax_plus_notification(what)
-	
-	pass
+
 
 #region Comment Tags
 
@@ -169,6 +168,7 @@ static func register_highlight_callable(prefix:String, tag:String, callable:Call
 		print("Already have highlight callable registered: %s" % tag)
 		return
 	instance.highlight_callable_data[prefix][tag] = {"callable":callable, "callable_location":callable_location}
+	instance.update_comment_tags()
 
 
 static func unregister_highlight_callable(prefix:String, tag:String):
@@ -180,6 +180,7 @@ static func unregister_highlight_callable(prefix:String, tag:String):
 		instance.highlight_callable_data[prefix].erase(tag)
 		if instance.highlight_callable_data[prefix].is_empty():
 			instance.highlight_callable_data.erase(prefix)
+			instance.update_comment_tags()
 		return
 	print("Highlight callable not registered: %s" % tag)
 
@@ -198,6 +199,8 @@ static func get_prefix_color(prefix):
 static func set_prefix_color(prefix:String, color:Color):
 	var instance = get_instance()
 	instance.prefix_colors[prefix] = color
+
+var editor_plugin_manager:EditorPluginManager
 
 var prefix_colors = {}
 var comment_tag_prefixes = []
@@ -228,10 +231,8 @@ static func clear_cache():
 	if hl.has_method("invalidate"):
 		hl.invalidate()
 
-
-
-
-
+static func get_hl_info_dict(color:Color) -> Dictionary:
+	return {"color": color}
 
 #endregion
 
@@ -239,28 +240,25 @@ static func clear_cache():
 func _all_unregistered_callback():
 	if is_instance_valid(editor_plugin_manager):
 		editor_plugin_manager.remove_plugins()
+		editor_plugin_manager.plugin.queue_free()
 
 func _init(node) -> void:
 	Utils.initial_set_editor_settings()
-	
-	if node is EditorPlugin:
-		_add_plugins(node)
-	else:
-		print("Node passed to SyntaxPlus singleton not an EditorPlugin, will not add highlighter and context plugins.")
-	
-	
 	Utils.set_editor_property_hints()
 	_set_editor_description.call_deferred()
-	
+
+func _ready() -> void:
 	EditorNodeRef.call_on_ready(_connect_on_editor_node_ref_ready)
 
 func _connect_on_editor_node_ref_ready():
 	EditorInterface.get_script_editor().editor_script_changed.connect(_on_editor_script_changed)
-	_add_extensions()
+	_add_plugins()
+	_add_extensions.call_deferred()
 
-
-func _add_plugins(plugin:EditorPlugin):
-	editor_plugin_manager = EditorPluginManager.new(plugin)
+func _add_plugins():
+	var ed_plug = EditorPlugin.new()
+	add_child(ed_plug)
+	editor_plugin_manager = EditorPluginManager.new(ed_plug)
 	editor_plugin_manager.context_menu_plugin_paths = CONTEXT_PLUGINS
 	editor_plugin_manager.syntax_highlighter_paths = SYNTAX_HIGHLIGHTERS
 	editor_plugin_manager.add_plugins.call_deferred()
@@ -287,6 +285,3 @@ func _on_editor_script_changed(script:Script) -> void:
 	if Utils._get_editor_setting(Utils.Config.set_as_default_highlighter):
 		if code_edit.syntax_highlighter is not GDScriptSyntaxPlus:
 			Utils.set_script_highlighter()
-
-static func get_hl_info_dict(color:Color) -> Dictionary:
-	return {"color": color}

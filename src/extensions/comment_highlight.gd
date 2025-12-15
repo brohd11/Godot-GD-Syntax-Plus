@@ -73,8 +73,6 @@ func _highlight_comment(script_editor:CodeEdit, current_line_text:String, line:i
 	#if group_data.is_empty(): #^r would be nice to only run once
 		#_read_group_data()
 	
-	#var t = ALibRuntime.Utils.UProfile.TimeFunction.new("HL")
-	
 	var substr = current_line_text.substr(comment_tag_idx + 2)
 	var first_word = substr.get_slice(" ", 0)
 	
@@ -167,7 +165,6 @@ func _highlight_comment(script_editor:CodeEdit, current_line_text:String, line:i
 		#^ apply to both cases
 		hl_info[close_brack_i + 1] = _hl_info_color_dict(hl_color)
 	
-	#t.stop()
 	return hl_info
 
 
