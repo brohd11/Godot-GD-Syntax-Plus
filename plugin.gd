@@ -46,6 +46,7 @@ func _add_tool_menu():
 	add_tool_menu_item(PLUGIN_NAME, _on_tool_menu_pressed)
 
 func _on_tool_menu_pressed():
-	dock_manager = DockManager.new(self, TAG_EDITOR, DockManager.Slot.MAIN_SCREEN, true, null, false)
+	dock_manager = DockManager.new(self, TAG_EDITOR, DockManager.Slot.MAIN_SCREEN, null, false)
+	dock_manager.can_be_freed = true
 	dock_manager.set_default_window_size(Vector2i(DisplayServer.screen_get_size() * 0.8))
-	dock_manager.post_init()
+	dock_manager.add_to_tree()
