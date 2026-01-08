@@ -90,15 +90,22 @@ func _on_editor_script_changed(new_script:Script):
 	if script_editor == EditorInterface.get_script_editor().get_current_editor():
 		if not get_text_edit(): # double check for closing scripts
 			return
-		
+		SyntaxPlus.notify_extensions(1)
 		comment_tag_prefixes = SyntaxPlus.get_prefixes()
 		set_class_member_names()
 		GDHelper.set_default_text_colors()
 		GDHelper.set_code_edit()
 		init_scan_done = false
 
-func invalidate():
+func invalidate(line:=-1):
 	init_scan_done = false
+	var text_edit = get_text_edit()
+	if line == -1 or line > text_edit.get_line_count():
+		line = text_edit.get_caret_line()
+	var current_line_text = text_edit.get_line(line)
+	text_edit.set_line(line, current_line_text)
+	text_edit.undo()
+	#text_edit.queue_redraw()
 
 
 func set_class_member_names():

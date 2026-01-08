@@ -15,6 +15,7 @@ const SYNTAX_HIGHLIGHTERS = [
 ]
 
 const CommentHighlightExt = preload("res://addons/syntax_plus/src/extensions/comment_highlight.gd")
+const EnsurePathExt = preload("res://addons/syntax_plus/src/extensions/ensure_path.gd")
 
 enum CallableLocation {
 	START,
@@ -108,6 +109,7 @@ func _add_extensions():
 	extensions = []
 	var exts = [
 		CommentHighlightExt,
+		EnsurePathExt
 	]
 	
 	for e in exts:
@@ -226,10 +228,10 @@ static func update_comment_tags():
 #region Misc Api
 
 
-static func clear_cache():
+static func clear_cache(line:=-1):
 	var hl = ScriptEditorRef.get_current_code_edit().syntax_highlighter
 	if hl.has_method("invalidate"):
-		hl.invalidate()
+		hl.invalidate(line)
 
 static func get_hl_info_dict(color:Color) -> Dictionary:
 	return {"color": color}

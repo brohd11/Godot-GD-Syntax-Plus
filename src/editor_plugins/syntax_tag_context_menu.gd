@@ -82,9 +82,9 @@ static func get_valid_items(script_editor) -> Dictionary:
 		var texture = ImageTexture.create_from_image(img)
 		if menu == "Submenu":
 			var tag_path = "Syntax Plus".path_join(tag)
-			submenu_tags[tag_path] = {Params.ICON_KEY:[texture]}
+			submenu_tags[tag_path] = {Params.ICON:[texture]}
 		elif menu == "Main Menu":
-			main_menu_tags[tag] = {Params.ICON_KEY:[texture]}
+			main_menu_tags[tag] = {Params.ICON:[texture]}
 	
 	for key in main_menu_tags.keys():
 		popup_custom_items[key] = main_menu_tags.get(key)
