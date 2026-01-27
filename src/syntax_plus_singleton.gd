@@ -1,5 +1,6 @@
 class_name SyntaxPlus #! singleton-module
-extends Singleton.RefCount
+extends SingletonRefCount
+const SingletonRefCount = Singleton.RefCount
 
 const SCRIPT = preload("res://addons/syntax_plus/src/syntax_plus_singleton.gd")
 
@@ -253,7 +254,7 @@ func _ready() -> void:
 	EditorNodeRef.call_on_ready(_connect_on_editor_node_ref_ready)
 
 func _connect_on_editor_node_ref_ready():
-	EditorInterface.get_script_editor().editor_script_changed.connect(_on_editor_script_changed)
+	ScriptEditorRef.get_instance().editor_script_changed.connect(_on_editor_script_changed)
 	_add_plugins()
 	_add_extensions.call_deferred()
 
