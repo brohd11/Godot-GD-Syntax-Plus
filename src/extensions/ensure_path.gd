@@ -7,7 +7,7 @@ const PREFIX = "#!"
 const TAG = "ensure-path"
 const FULL_TAG = PREFIX + " " + TAG
 
-var settings_helper:ALibEditor.SettingHelper
+var settings_helper:ALibEditor.Settings.SettingHelperEditor
 
 var _completion_tags_added:=false
 
@@ -19,10 +19,10 @@ var watched_scripts = {}
 var current_script_path:String = ""
 
 func _init() -> void:
-	settings_helper = ALibEditor.SettingHelper.new(self)
-	settings_helper.subscribe(&"valid_color", Settings.VALID_COLOR, Settings.COLOR_VALID)
-	settings_helper.subscribe(&"invalid_color", Settings.INVALID_COLOR, Settings.COLOR_INVALID)
-	settings_helper.subscribe(&"invalid_bg_color", Settings.INVALID_BG_COLOR, Settings.COLOR_INVALID_BG)
+	settings_helper = ALibEditor.Settings.SettingHelperEditor.new()
+	settings_helper.subscribe(self, &"valid_color", Settings.VALID_COLOR, Settings.COLOR_VALID)
+	settings_helper.subscribe(self, &"invalid_color", Settings.INVALID_COLOR, Settings.COLOR_INVALID)
+	settings_helper.subscribe(self, &"invalid_bg_color", Settings.INVALID_BG_COLOR, Settings.COLOR_INVALID_BG)
 	settings_helper.initialize()
 	
 	

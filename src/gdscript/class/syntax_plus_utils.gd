@@ -29,9 +29,8 @@ enum RegExTarget{
 }
 
 static func set_script_highlighter(highlighter:="SyntaxPlus"):
-	var script_editor = EditorInterface.get_script_editor().get_current_editor()
-	var pop = EditorNodeRef.get_registered(EditorNodeRef.Nodes.SCRIPT_EDITOR_SYNTAX_POPUP) as PopupMenu
-	if pop == null:
+	var pop = EditorNodeRef.get_registered(EditorNodeRef.Nodes.SCRIPT_EDITOR_SYNTAX_POPUP)
+	if not is_instance_valid(pop):
 		return
 	var id = -1
 	for i in range(pop.item_count):
