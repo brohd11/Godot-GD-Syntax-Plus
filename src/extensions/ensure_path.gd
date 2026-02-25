@@ -20,9 +20,9 @@ var current_script_path:String = ""
 
 func _init() -> void:
 	settings_helper = ALibEditor.Settings.SettingHelperEditor.new()
-	settings_helper.subscribe(self, &"valid_color", Settings.VALID_COLOR, Settings.COLOR_VALID)
-	settings_helper.subscribe(self, &"invalid_color", Settings.INVALID_COLOR, Settings.COLOR_INVALID)
-	settings_helper.subscribe(self, &"invalid_bg_color", Settings.INVALID_BG_COLOR, Settings.COLOR_INVALID_BG)
+	settings_helper.subscribe_property(self, &"valid_color", Settings.VALID_COLOR, Settings.COLOR_VALID)
+	settings_helper.subscribe_property(self, &"invalid_color", Settings.INVALID_COLOR, Settings.COLOR_INVALID)
+	settings_helper.subscribe_property(self, &"invalid_bg_color", Settings.INVALID_BG_COLOR, Settings.COLOR_INVALID_BG)
 	settings_helper.initialize()
 	
 	

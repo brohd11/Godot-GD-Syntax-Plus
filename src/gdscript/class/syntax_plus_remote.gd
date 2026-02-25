@@ -6,7 +6,7 @@ const UFile = preload("res://addons/addon_lib/brohd/alib_runtime/utils/src/u_fil
 const URegex = preload("res://addons/addon_lib/brohd/alib_runtime/utils/src/u_regex.gd")
 const UClassDetail = preload("res://addons/addon_lib/brohd/alib_editor/utils/src/u_class_detail.gd")
 
-const ConfirmationDialogHandler = preload("res://addons/addon_lib/brohd/alib_runtime/utils/src/dialog/confirmation/confirmation_dialog_handler.gd")
+const ConfirmationDialogHandler = ALibRuntime.Dialog.Handlers.Confirmation
 
 const PopupWrapper = preload("res://addons/addon_lib/brohd/popup_wrapper/popup_wrapper.gd")
 const DockManager = preload("res://addons/addon_lib/brohd/dock_manager/dock_manager.gd")
