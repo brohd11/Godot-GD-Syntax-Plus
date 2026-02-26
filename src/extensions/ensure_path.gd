@@ -1,13 +1,16 @@
 extends RefCounted
 
-const UString = preload("res://addons/addon_lib/brohd/alib_runtime/utils/src/u_string.gd")
+const UtilsRemote = preload("res://addons/syntax_plus/src/gdscript/class/syntax_plus_remote.gd")
+
+const UString = UtilsRemote.UString
+const SettingHelperEditor = UtilsRemote.SettingHelperEditor
 const UNCOLORED_BG = Color(0,0,0,0)
 
 const PREFIX = "#!"
 const TAG = "ensure-path"
 const FULL_TAG = PREFIX + " " + TAG
 
-var settings_helper:ALibEditor.Settings.SettingHelperEditor
+var settings_helper:SettingHelperEditor
 
 var _completion_tags_added:=false
 
@@ -19,7 +22,7 @@ var watched_scripts = {}
 var current_script_path:String = ""
 
 func _init() -> void:
-	settings_helper = ALibEditor.Settings.SettingHelperEditor.new()
+	settings_helper = SettingHelperEditor.new()
 	settings_helper.subscribe_property(self, &"valid_color", Settings.VALID_COLOR, Settings.COLOR_VALID)
 	settings_helper.subscribe_property(self, &"invalid_color", Settings.INVALID_COLOR, Settings.COLOR_INVALID)
 	settings_helper.subscribe_property(self, &"invalid_bg_color", Settings.INVALID_BG_COLOR, Settings.COLOR_INVALID_BG)
@@ -52,10 +55,12 @@ func _highlight_line(script_editor:CodeEdit, current_line_text:String, line:int,
 	watched_scripts[current_script_path][Keys.INVALID_LINES].erase(line)
 	var valid = _validate_paths_in_line(line)
 	if valid:
-		return {0 : SyntaxPlus.get_hl_info_dict(valid_color)}
+		var valid_dict = SyntaxPlus.get_hl_info_dict(valid_color)
+		return {0 : valid_dict}
 	else:
 		watched_scripts[current_script_path][Keys.INVALID_LINES][line] = true
-		return {0 : SyntaxPlus.get_hl_info_dict(invalid_color)}
+		var invalid_dict = SyntaxPlus.get_hl_info_dict(invalid_color)
+		return {0 : invalid_dict}
 
 func _on_validate_script():
 	_set_background_colors()

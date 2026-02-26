@@ -12,7 +12,6 @@ const DEFAULT_COLOR_STRING = "35cc9b"
 const DEFAULT_COLOR = Color(DEFAULT_COLOR_STRING)
 
 
-
 enum MemberMode{
 	NONE,
 	ALL,
@@ -29,7 +28,7 @@ enum RegExTarget{
 }
 
 static func set_script_highlighter(highlighter:="SyntaxPlus"):
-	var pop = EditorNodeRef.get_registered(EditorNodeRef.Nodes.SCRIPT_EDITOR_SYNTAX_POPUP)
+	var pop = EditorNodeRef.get_registered(EditorNodeRef.Nodes.SCRIPT_EDITOR_SYNTAX_POPUP, false)
 	if not is_instance_valid(pop):
 		return
 	var id = -1
