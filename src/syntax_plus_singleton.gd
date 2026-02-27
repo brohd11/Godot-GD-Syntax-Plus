@@ -1,4 +1,4 @@
-class_name SyntaxPlus #! singleton-module
+class_name SyntaxPlusSingleton
 extends SingletonRefCount
 const SingletonRefCount = Singleton.RefCount
 
@@ -26,9 +26,9 @@ enum CallableLocation {
 
 
 static func get_singleton_name() -> String:
-	return "SyntaxPlus"
+	return "SyntaxPlusSingleton"
 
-static func get_instance() -> SyntaxPlus:
+static func get_instance() -> SyntaxPlusSingleton:
 	return _get_instance(SCRIPT)
 
 static func instance_valid() -> bool:
@@ -36,6 +36,9 @@ static func instance_valid() -> bool:
 
 static func register_node(node:Node):
 	return _register_node(SCRIPT, node)
+
+static func unregister_node(node):
+	_unregister_node(SCRIPT, node)
 
 static func call_on_ready(callable, print_err:bool=true):
 	_call_on_ready(SCRIPT, callable, print_err)

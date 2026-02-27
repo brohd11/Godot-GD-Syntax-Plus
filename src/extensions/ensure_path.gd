@@ -29,7 +29,7 @@ func _init() -> void:
 	settings_helper.initialize()
 	
 	
-	SyntaxPlus.register_highlight_callable(PREFIX, TAG, _highlight_line, SyntaxPlus.CallableLocation.END)
+	SyntaxPlusSingleton.register_highlight_callable(PREFIX, TAG, _highlight_line, SyntaxPlusSingleton.CallableLocation.END)
 	
 	EditorInterface.get_resource_filesystem().filesystem_changed.connect(_on_filesystem_changed)
 	
@@ -55,11 +55,11 @@ func _highlight_line(script_editor:CodeEdit, current_line_text:String, line:int,
 	watched_scripts[current_script_path][Keys.INVALID_LINES].erase(line)
 	var valid = _validate_paths_in_line(line)
 	if valid:
-		var valid_dict = SyntaxPlus.get_hl_info_dict(valid_color)
+		var valid_dict = SyntaxPlusSingleton.get_hl_info_dict(valid_color)
 		return {0 : valid_dict}
 	else:
 		watched_scripts[current_script_path][Keys.INVALID_LINES][line] = true
-		var invalid_dict = SyntaxPlus.get_hl_info_dict(invalid_color)
+		var invalid_dict = SyntaxPlusSingleton.get_hl_info_dict(invalid_color)
 		return {0 : invalid_dict}
 
 func _on_validate_script():
@@ -119,7 +119,7 @@ func _invalidate_current():
 	if watched_scripts.has(current_script_path):
 		var script_data = watched_scripts.get(current_script_path)
 		for line in watched_scripts[current_script_path][Keys.LINE_DATA].keys():
-			SyntaxPlus.clear_cache(line)
+			SyntaxPlusSingleton.clear_cache(line)
 		_set_background_colors()
 		watched_scripts.erase(current_script_path)
 

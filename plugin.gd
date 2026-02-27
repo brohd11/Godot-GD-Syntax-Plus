@@ -6,7 +6,6 @@ const TAG_EDITOR = preload("res://addons/syntax_plus/src/ui/tag_editor.tscn") # 
 const PLUGIN_NAME = "SyntaxPlus"
 
 var dock_manager:DockManager
-var syntax_plus:SyntaxPlus
 
 func _get_plugin_name() -> String:
 	return PLUGIN_NAME
@@ -21,13 +20,12 @@ func _make_visible(visible: bool) -> void:
 
 func _enter_tree() -> void:
 	DockManager.hide_main_screen_button(self)
-	syntax_plus = SyntaxPlus.register_node(self)
+	SyntaxPlusSingleton.register_node(self)
 	EditorNodeRef.call_on_ready(_add_tool_menu)
 
 
 func _exit_tree() -> void:
-	if is_instance_valid(syntax_plus):
-		syntax_plus.unregister_node(self)
+	SyntaxPlusSingleton.unregister_node(self)
 	
 	if is_instance_valid(dock_manager):
 		dock_manager.clean_up()

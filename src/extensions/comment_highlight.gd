@@ -16,7 +16,7 @@ var fg_color_indexes:= {}
 var bg_color_indexes:= {}
 
 func _init() -> void:
-	SyntaxPlus.register_highlight_callable("#^", "", _highlight_comment, SyntaxPlus.CallableLocation.ANY)
+	SyntaxPlusSingleton.register_highlight_callable("#^", "", _highlight_comment, SyntaxPlusSingleton.CallableLocation.ANY)
 	
 	ScriptEditorRef.subscribe(ScriptEditorRef.Event.VALIDATE_SCRIPT, _on_validate_script)
 	ScriptEditorRef.subscribe(ScriptEditorRef.Event.TEXT_CHANGED, _on_text_changed)
@@ -44,7 +44,7 @@ func _set_settings():
 	default_bg_darken = ed_settings.get_setting(Settings.DEFAULT_BG)
 	color_pairs = ed_settings.get_setting(Settings.COLOR_PAIRS)
 	
-	comment_color = SyntaxPlus.get_instance().comment_color
+	comment_color = SyntaxPlusSingleton.get_instance().comment_color
 
 
 func syntax_plus_notification(what:int):

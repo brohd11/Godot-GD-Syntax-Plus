@@ -28,11 +28,11 @@ static func set_code_edit() -> void:
 		EditorInterface.get_base_control().remove_child(dummy_code_edit)
 		set_default_text_colors()
 	
-	SyntaxPlus.get_instance().check_code_edit()
+	SyntaxPlusSingleton.get_instance().check_code_edit()
 
 
 static func set_default_text_colors():
-	var ins = SyntaxPlus.get_instance()
+	var ins = SyntaxPlusSingleton.get_instance()
 	ins.set_default_text_colors()
 	default_text_color = ins.default_text_color
 	editor_member_color = ins.editor_member_color
@@ -61,7 +61,7 @@ static func sort_comment_tag_info(hl_info:Dictionary, prefix_color:Color, offset
 
 static func get_comment_tag_info(script_editor:CodeEdit, current_line_text:String, line:int, prefix:String, comment_tag_idx:int, existing_hl_info=null):
 	var tag = current_line_text.get_slice(prefix, 1).strip_edges().get_slice(" ", 0).strip_edges()
-	var callable_data = SyntaxPlus.get_highlight_callables()
+	var callable_data = SyntaxPlusSingleton.get_highlight_callables()
 	if callable_data == null:
 		return
 	var highlight_callables = callable_data.get(prefix, {})
@@ -71,7 +71,7 @@ static func get_comment_tag_info(script_editor:CodeEdit, current_line_text:Strin
 		if not has_tag:
 			tag = ""
 		has_empty = true
-	var prefix_color = SyntaxPlus.get_prefix_color(prefix)
+	var prefix_color = SyntaxPlusSingleton.get_prefix_color(prefix)
 	if prefix_color == null:
 		prefix_color = annotation_color
 	if existing_hl_info == null:
@@ -79,8 +79,8 @@ static func get_comment_tag_info(script_editor:CodeEdit, current_line_text:Strin
 		var custom_callable = false
 		if has_tag or has_empty:
 			var data = highlight_callables.get(tag)
-			var callable_location:SyntaxPlus.CallableLocation = data.get("callable_location")
-			if callable_location != SyntaxPlus.CallableLocation.END:
+			var callable_location:SyntaxPlusSingleton.CallableLocation = data.get("callable_location")
+			if callable_location != SyntaxPlusSingleton.CallableLocation.END:
 				custom_callable = true
 				callable = data.get("callable")
 		
@@ -100,8 +100,8 @@ static func get_comment_tag_info(script_editor:CodeEdit, current_line_text:Strin
 	var custom_callable = false
 	if has_tag or has_empty:
 		var data = highlight_callables.get(tag)
-		var callable_location:SyntaxPlus.CallableLocation = data.get("callable_location")
-		if callable_location != SyntaxPlus.CallableLocation.START:
+		var callable_location:SyntaxPlusSingleton.CallableLocation = data.get("callable_location")
+		if callable_location != SyntaxPlusSingleton.CallableLocation.START:
 			custom_callable = true
 			callable = data.get("callable")
 	
@@ -128,14 +128,14 @@ static func get_comment_tag_info(script_editor:CodeEdit, current_line_text:Strin
 
 
 static func _get_comment_tag_hl_info(current_line_text:String, prefix:String):
-	var all_comment_tags = SyntaxPlus.get_comment_tags()
+	var all_comment_tags = SyntaxPlusSingleton.get_comment_tags()
 	var comment_tags = all_comment_tags.get(prefix, [])
-	var all_comment_tag_data = SyntaxPlus.get_comment_tag_data()
+	var all_comment_tag_data = SyntaxPlusSingleton.get_comment_tag_data()
 	var comment_tag_data = all_comment_tag_data.get(prefix)
 	
 	var temp_hl_info:Dictionary = {}
 	var comment_tag_text = current_line_text.get_slice("#!", 1).replace(".", " ").strip_edges()
-	var new_hl_info = SyntaxPlus.get_instance().get_single_line_highlight(comment_tag_text)
+	var new_hl_info = SyntaxPlusSingleton.get_instance().get_single_line_highlight(comment_tag_text)
 	var words = comment_tag_text.split(" ")
 	for word in words:
 		if word in comment_tags:

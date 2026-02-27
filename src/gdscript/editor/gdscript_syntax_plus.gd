@@ -90,8 +90,8 @@ func _on_editor_script_changed(new_script:Script):
 	if script_editor == EditorInterface.get_script_editor().get_current_editor():
 		if not get_text_edit(): # double check for closing scripts
 			return
-		SyntaxPlus.notify_extensions(1)
-		comment_tag_prefixes = SyntaxPlus.get_prefixes()
+		SyntaxPlusSingleton.notify_extensions(1)
+		comment_tag_prefixes = SyntaxPlusSingleton.get_prefixes()
 		set_class_member_names()
 		GDHelper.set_default_text_colors()
 		GDHelper.set_code_edit()
@@ -127,7 +127,7 @@ func _get_line_syntax_highlighting(line_idx: int) -> Dictionary:
 	var current_line_text: String = text_edit.get_line(line_idx)
 	if not init_scan_done:
 		init_scan_done = true
-		SyntaxPlus.notify_extensions(0)
+		SyntaxPlusSingleton.notify_extensions(0)
 		GDHelper.set_code_edit()
 		GDHelper.dummy_code_edit.text = get_text_edit().text
 		set_class_member_names()
