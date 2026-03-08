@@ -165,7 +165,8 @@ static func get_comment_tags():
 
 #endregion
 
-
+## Register a callable to highlight lines where prefix and tag are found. Callable should take args:
+## (script_editor:CodeEdit, current_line_text:String, line_idx:int, comment_tag_idx:int)
 static func register_highlight_callable(prefix:String, tag:String, callable:Callable, callable_location:=CallableLocation.START):
 	var instance = get_instance()
 	if not instance.highlight_callable_data.has(prefix):
@@ -239,6 +240,56 @@ static func clear_cache(line:=-1):
 
 static func get_hl_info_dict(color:Color) -> Dictionary:
 	return {"color": color}
+
+
+class HLInfo:
+	
+	static func add_color(dict:Dictionary, color:Color, idx:int, end_idx:int=-1, end_color=null, idx_safe:=true):
+		if idx_safe and dict.has(idx):
+			return
+		if end_idx == -1:
+			dict[idx] = {"color": color}
+			return
+		if end_color == null:
+			end_color = SyntaxPlusSingleton.get_instance().comment_color
+		if idx_safe:
+			for i in range(idx, end_idx + 1):
+				if dict.has(i):
+					print("EXIT")
+					return
+		
+		dict[idx] = {"color": color}
+		dict[end_idx] = {"color": end_color}
+	
+	static func contains_idx(dict:Dictionary, start_idx:int, end_idx:int=-1):
+		if end_idx == -1:
+			return dict.has(start_idx)
+		for i in range(start_idx, end_idx + 1):
+			if dict.has(i):
+				return true
+		return false
+	
+	static func highlight_all_occurences(text:String, what:String, color:Color, end_color=null):
+		var hl_info = {}
+		if end_color == null:
+			end_color = SyntaxPlusSingleton.get_instance().default_text_color
+		var regex = RegEx.new()
+		regex.compile("\\b%s\\b" % what)
+		var matches = regex.search_all(text)
+		for m in matches:
+			var start = m.get_start()
+			var end = m.get_end()
+			if not contains_idx(hl_info, start, end):
+				hl_info[start] = {"color": color}
+				hl_info[end] = {"color": end_color}
+		
+		return hl_info
+		
+	
+	
+	static func sort(dict:Dictionary):
+		#GDScriptSyntaxPlus.GDHelper.sort_comment_tag_info()
+		pass
 
 #endregion
 
