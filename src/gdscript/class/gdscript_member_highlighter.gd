@@ -2,6 +2,7 @@
 extends RefCounted
 
 const Utils = preload("res://addons/syntax_plus/src/gdscript/class/syntax_plus_utils.gd") #>import utils.gd
+const UClassDetail = Utils.UClassDetail
 const GDHelper = preload("res://addons/syntax_plus/src/gdscript/editor/gdscript_helper.gd")  #>import gdscript_helper.gd
 
 var script_class_name:String = "No Class"
@@ -12,7 +13,6 @@ var script_member_names: Dictionary = {}
 var script_member_regex: RegEx
 var declaration_regex: RegEx
 
-var member_highlight_mode:Utils.MemberMode = Utils.MemberMode.ALL
 var highlight_color:Color
 var highlight_tag:String = ""
 var overwr:bool = false # I think can get rid of
@@ -21,7 +21,6 @@ func _init(tag, cfg_data) -> void:
 	highlight_tag = tag
 	var keywords:String = cfg_data.get("keyword", "any")
 	
-	member_highlight_mode = cfg_data.get(Utils.Config.member_highlight_mode, Utils.MemberMode.ALL)
 	var color = cfg_data.get("color", Utils.DEFAULT_COLOR_STRING)
 	highlight_color = Color.html(color)
 	var pattern = Utils.get_regex_pattern(keywords, tag)
@@ -35,44 +34,31 @@ func _init(tag, cfg_data) -> void:
 	rebuild_class_member_regex()
 
 func force_class_member_rebuild():
-	script_class_name = Utils.get_current_script_class()
-	var class_member_check = Utils.get_all_class_members()
+	script_class_name = get_current_script_class()
+	var class_member_check = get_all_class_members()
 	class_member_names = class_member_check
 	rebuild_class_member_regex()
 
 func check_class_valid():
-	if script_class_name != Utils.get_current_script_class():
-		script_class_name = Utils.get_current_script_class()
-		var class_member_check = Utils.get_all_class_members()
+	if script_class_name != get_current_script_class():
+		script_class_name = get_current_script_class()
+		var class_member_check = get_all_class_members()
 		if class_member_check.hash() != class_member_names.hash():
 			class_member_names = class_member_check
 			rebuild_class_member_regex()
 
 
 func check_line(hl_info, current_line_text):
-	var check_class:= false
-	var check_script:= false
-	if member_highlight_mode == Utils.MemberMode.NONE:
-		return [hl_info, false]
-	elif member_highlight_mode == Utils.MemberMode.ALL:
-		check_class = true
-		check_script = true
-	elif member_highlight_mode == Utils.MemberMode.INHERITED:
-		check_class = true
-	elif member_highlight_mode == Utils.MemberMode.SCRIPT:
-		check_script = true
-	
 	var t = current_line_text
 	var needs_sort = false
-	if check_script:
-		var check = check_line_hl(hl_info, t, script_member_names, script_member_regex, highlight_color, overwr)
-		hl_info = check[0]
-		needs_sort = check[1]
-	if check_class:
-		var check = check_line_hl(hl_info, t, class_member_names, class_member_regex, highlight_color, overwr)
-		hl_info = check[0]
-		if not needs_sort:
-			needs_sort = check[1]
+	var script_check = check_line_hl(hl_info, t, script_member_names, script_member_regex, highlight_color, overwr)
+	hl_info = script_check[0]
+	needs_sort = script_check[1]
+	
+	var class_check = check_line_hl(hl_info, t, class_member_names, class_member_regex, highlight_color, overwr)
+	hl_info = class_check[0]
+	if not needs_sort:
+		needs_sort = class_check[1]
 	 
 	return [hl_info, needs_sort]
 
@@ -114,3 +100,12 @@ static func check_line_hl(hl_info, current_line_text, name_array, regex, hl_colo
 			hl_info[start_idx] = {"color": hl_color}
 	
 	return [hl_info, needs_sort]
+
+static func get_current_script_class():
+	var script = EditorInterface.get_script_editor().get_current_script()
+	if script != null:
+		return script.get_instance_base_type()
+	else: return ""
+
+static func get_all_class_members(script:GDScript=null):
+	return UClassDetail.class_get_all_members(script).keys()

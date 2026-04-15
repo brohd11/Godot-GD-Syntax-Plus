@@ -47,8 +47,8 @@ func _set_settings():
 	comment_color = SyntaxPlusSingleton.get_instance().comment_color
 
 
-func syntax_plus_notification(what:int):
-	if what == 0:
+func syntax_plus_notification(what:SyntaxPlusSingleton.ExtensionNoti):
+	if what == SyntaxPlusSingleton.ExtensionNoti.TAG_SCAN:
 		return
 		#_read_group_data()
 

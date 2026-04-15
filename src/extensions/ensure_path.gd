@@ -44,8 +44,8 @@ func _unregister_tags():
 	if _completion_tags_added:
 		EditorCodeCompletion.unregister_tag_static(PREFIX, TAG)
 
-func syntax_plus_notification(what:int):
-	if what == 1:
+func syntax_plus_notification(what:SyntaxPlusSingleton.ExtensionNoti):
+	if what == SyntaxPlusSingleton.ExtensionNoti.SCRIPT_CHANGED:
 		_on_editor_script_changed()
 
 func _highlight_line(script_editor:CodeEdit, current_line_text:String, line:int, comment_tag_idx:int):

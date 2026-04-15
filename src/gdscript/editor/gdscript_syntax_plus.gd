@@ -4,6 +4,7 @@ extends EditorSyntaxHighlighter
 const PLUGIN_EXPORTED = false
 
 const Utils = preload("res://addons/syntax_plus/src/gdscript/class/syntax_plus_utils.gd") #>import utils.gd
+const EditorConfig = SyntaxPlusSingleton.EditorConfig
 const GDHelper = preload("res://addons/syntax_plus/src/gdscript/editor/gdscript_helper.gd") #>import gdscript_helper.gd
 const HighlightHelper = preload("res://addons/syntax_plus/src/gdscript/class/gdscript_highlight_helper.gd") #>import gdscript_highlight_helper.gd
 const MemberHighlighter = preload("res://addons/syntax_plus/src/gdscript/class/gdscript_member_highlighter.gd")
@@ -35,6 +36,8 @@ func _init() -> void:
 	EditorInterface.get_script_editor().editor_script_changed.connect(_on_editor_script_changed)
 	create_highlight_helpers()
 
+func reset_highlighter():
+	create_highlight_helpers()
 
 func create_highlight_helpers():
 	init_scan_done = false #^r NOT REDUNDANT
@@ -52,26 +55,30 @@ func create_highlight_helpers():
 		highlight_helpers.append(highlighter)
 		tags.append(tag)
 	
-	if GDHelper.config.get(Utils.Config.const_enable):
+	if GDHelper.config.get(Utils.Settings.CONST_ENABLE):
 		var const_tag_highlighter = HighlightHelper.new("=CONST_HL",Utils.get_const_hl_data())
 		highlight_helpers.append(const_tag_highlighter)
-	if GDHelper.config.get(Utils.Config.pascal_enable, false):
+	if GDHelper.config.get(Utils.Settings.PASCAL_ENABLE, false):
 		var class_tag_highlighter = HighlightHelper.new("=CLASS_HL",Utils.get_pascal_hl_data())
 		highlight_helpers.append(class_tag_highlighter)
-	if GDHelper.config.get(Utils.Config.onready_enable):
+	if GDHelper.config.get(Utils.Settings.ONREADY_ENABLE):
 		var onready_tag_highlighter = HighlightHelper.new("=ONREADY_HL", Utils.get_onready_hl_data())
 		highlight_helpers.append(onready_tag_highlighter)
 	
-	if GDHelper.config.get(Utils.Config.member_enable):
+	if GDHelper.config.get(Utils.Settings.MEMBER_ENABLE):
 		member_highlighter = MemberHighlighter.new("=MEMBER_HL",Utils.get_member_hl_data())
-	tag_highlighter = TagHighlighter.new(tags, editor_tags, GDHelper.config)
+	
+	
+	tag_highlighter = TagHighlighter.new(tags, editor_tags)
+	tag_highlighter.highlight_color = GDHelper.config.get(Utils.Settings.TAG_COLOR)
+	tag_highlighter.tag_enabled = GDHelper.config.get(Utils.Settings.TAG_COLOR_ENABLE)
 
 
 static func read_editor_tags():
-	editor_tags = Utils.get_tags_data()
+	editor_tags = EditorConfig.get_tags_data()
 
 static func load_global_data():
-	GDHelper.config = Utils.get_editor_config()
+	GDHelper.config = EditorConfig.data
 
 func _on_editor_script_changed(new_script:Script):
 	var text_edit = get_text_edit()
@@ -90,7 +97,7 @@ func _on_editor_script_changed(new_script:Script):
 	if script_editor == EditorInterface.get_script_editor().get_current_editor():
 		if not get_text_edit(): # double check for closing scripts
 			return
-		SyntaxPlusSingleton.notify_extensions(1)
+		SyntaxPlusSingleton.notify_extensions(SyntaxPlusSingleton.ExtensionNoti.SCRIPT_CHANGED)
 		comment_tag_prefixes = SyntaxPlusSingleton.get_prefixes()
 		set_class_member_names()
 		GDHelper.set_default_text_colors()
@@ -110,7 +117,6 @@ func invalidate(line:=-1):
 
 func set_class_member_names():
 	if member_highlighter:
-		member_highlighter.member_highlight_mode = Utils._get_editor_setting(Utils.Config.member_highlight_mode)
 		member_highlighter.check_class_valid()
 
 func force_class_member_rebuild():
@@ -127,7 +133,7 @@ func _get_line_syntax_highlighting(line_idx: int) -> Dictionary:
 	var current_line_text: String = text_edit.get_line(line_idx)
 	if not init_scan_done:
 		init_scan_done = true
-		SyntaxPlusSingleton.notify_extensions(0)
+		SyntaxPlusSingleton.notify_extensions(SyntaxPlusSingleton.ExtensionNoti.TAG_SCAN)
 		GDHelper.set_code_edit()
 		GDHelper.dummy_code_edit.text = get_text_edit().text
 		set_class_member_names()
@@ -171,12 +177,12 @@ func _get_line_syntax_highlighting(line_idx: int) -> Dictionary:
 	#^
 	
 	#^ Overide member access color
-	if GDHelper.config.get(Utils.Config.member_access_enable):
+	if GDHelper.config.get(Utils.Settings.MEMBER_ACCESS_ENABLE):
 		for key in hl_info.keys():
 			var data = hl_info.get(key)
 			var og_color = data.get("color")
 			if og_color == GDHelper.editor_member_color:
-				hl_info[key]["color"] = GDHelper.config.get(Utils.Config.member_access_color)
+				hl_info[key]["color"] = GDHelper.config.get(Utils.Settings.MEMBER_ACCESS_COLOR)
 	#^
 	
 	#^ Sort keys, necessary
@@ -212,6 +218,7 @@ func _get_line_syntax_highlighting(line_idx: int) -> Dictionary:
 
 
 func update_tagged_name_list(force_build=false) -> void:
+	var t = ALibRuntime.Utils.UProfile.TimeFunction.new("UPDATE TAGGED")
 	var text_edit_node: CodeEdit = get_text_edit()
 	var current_line_index = text_edit_node.get_caret_line()
 	var current_line_text = text_edit_node.get_line(current_line_index)
@@ -276,12 +283,15 @@ func update_tagged_name_list(force_build=false) -> void:
 			var line_text = text_edit_node.get_line(i)
 			for highlight_helper in highlight_helpers:
 				var declaration_regex = highlight_helper.declaration_regex
-				var _match = declaration_regex.search(line_text)
-				if _match:
-					var tagged_name = _match.get_string(1)
-					new_tagged_data[highlight_helper][tagged_name] = true
-					highlight_helper.tagged_names[tagged_name] = true
-					line_names_found.append(tagged_name)
+				if not is_instance_valid(declaration_regex):
+					print("NOPE::", highlight_helper.highlight_tag)
+				else:
+					var _match = declaration_regex.search(line_text)
+					if _match:
+						var tagged_name = _match.get_string(1)
+						new_tagged_data[highlight_helper][tagged_name] = true
+						highlight_helper.tagged_names[tagged_name] = true
+						line_names_found.append(tagged_name)
 			
 			if member_highlighter:
 				var _match = member_highlighter.declaration_regex.search(line_text)
@@ -308,6 +318,7 @@ func update_tagged_name_list(force_build=false) -> void:
 	last_line_count = text_edit_node.get_line_count()
 	
 	check_newline_buffer()
+	t.stop()
 	#update_cache.call_deferred() ## Needed?
 
 

@@ -5,6 +5,8 @@ const PLUGIN_EXPORT_FLAT = false
 
 const EditorGDTags = preload("res://addons/syntax_plus/src/gdscript/editor/gdscript_syntax_plus.gd") #>import gdscript_tags.gd
 
+const EditorConfig = SyntaxPlusSingleton.EditorConfig
+
 const Utils = preload("res://addons/syntax_plus/src/gdscript/class/syntax_plus_utils.gd") #>import utils.gd
 const GDHelperCode = preload("res://addons/syntax_plus/src/gdscript/code_edit/gdscript_helper_code.gd") #>import gdscript_helper_code.gd
 const TagEntry = preload("res://addons/syntax_plus/src/ui/tag_entry.tscn") #>import tag_entry.tscn
@@ -75,24 +77,23 @@ func is_mb_panel(): # for Modular Browser
 
 
 func _read_json():
-	var editor_config = Utils.get_editor_config()
-	set_all_scripts_check.button_pressed = editor_config.get(Utils.Config.set_as_default_highlighter)
-	class_color.color = editor_config.get(Utils.Config.pascal_color)
-	class_check.button_pressed = editor_config.get(Utils.Config.pascal_enable, true)
-	const_color.color = editor_config.get(Utils.Config.const_color)
-	const_check.button_pressed = editor_config.get(Utils.Config.const_enable, true)
-	onready_color.color = editor_config.get(Utils.Config.onready_color)
-	onready_check.button_pressed = editor_config.get(Utils.Config.onready_enable, false)
-	member_color.color = editor_config.get(Utils.Config.member_color)
-	member_check.button_pressed = editor_config.get(Utils.Config.member_enable, true)
-	member_access_color.color = editor_config.get(Utils.Config.member_access_color)
-	member_access_check.button_pressed = editor_config.get(Utils.Config.member_access_enable)
-	global_tag_color.color = editor_config.get(Utils.Config.tag_color)
-	tag_check.button_pressed = editor_config.get(Utils.Config.tag_color_enable)
+	set_all_scripts_check.button_pressed = EditorConfig.get_setting(EditorConfig.Settings.SET_AS_DEFAULT_HIGHLIGHTER)
+	class_color.color = EditorConfig.get_setting(EditorConfig.Settings.PASCAL_COLOR)
+	class_check.button_pressed = EditorConfig.get_setting(EditorConfig.Settings.PASCAL_ENABLE)
+	const_color.color = EditorConfig.get_setting(EditorConfig.Settings.CONST_COLOR)
+	const_check.button_pressed = EditorConfig.get_setting(EditorConfig.Settings.CONST_ENABLE)
+	onready_color.color = EditorConfig.get_setting(EditorConfig.Settings.ONREADY_COLOR)
+	onready_check.button_pressed = EditorConfig.get_setting(EditorConfig.Settings.ONREADY_ENABLE)
+	member_color.color = EditorConfig.get_setting(EditorConfig.Settings.MEMBER_COLOR)
+	member_check.button_pressed = EditorConfig.get_setting(EditorConfig.Settings.MEMBER_ENABLE)
+	member_access_color.color = EditorConfig.get_setting(EditorConfig.Settings.MEMBER_ACCESS_COLOR)
+	member_access_check.button_pressed = EditorConfig.get_setting(EditorConfig.Settings.MEMBER_ACCESS_ENABLE)
+	global_tag_color.color = EditorConfig.get_setting(EditorConfig.Settings.TAG_COLOR)
+	tag_check.button_pressed = EditorConfig.get_setting(EditorConfig.Settings.TAG_COLOR_ENABLE)
 	
-	GDHelperCode.config = editor_config
+	GDHelperCode.config = EditorConfig.data
 	
-	var editor_tags = Utils.get_tags_data()
+	var editor_tags = EditorConfig.get_tags_data()
 	for tag in editor_tags:
 		var data = editor_tags.get(tag)
 		var new_entry = TagEntry.instantiate()
@@ -128,31 +129,31 @@ func _get_tag_data() -> Dictionary:
 
 func get_config():
 	return {
-	Utils.Config.set_as_default_highlighter: set_all_scripts_check.button_pressed,
-	Utils.Config.const_color: const_color.color,
-	Utils.Config.const_enable: const_check.button_pressed,
-	Utils.Config.pascal_color: class_color.color,
-	Utils.Config.pascal_enable: class_check.button_pressed,
-	Utils.Config.member_color: member_color.color,
-	Utils.Config.member_enable: member_check.button_pressed,
-	Utils.Config.member_access_color: member_access_color.color,
-	Utils.Config.member_access_enable: member_access_check.button_pressed,
-	Utils.Config.onready_color: onready_color.color,
-	Utils.Config.onready_enable: onready_check.button_pressed,
-	Utils.Config.tag_color: global_tag_color.color,
-	Utils.Config.tag_color_enable: tag_check.button_pressed,
+	Utils.Settings.SET_AS_DEFAULT_HIGHLIGHTER: set_all_scripts_check.button_pressed,
+	Utils.Settings.CONST_COLOR: const_color.color,
+	Utils.Settings.CONST_ENABLE: const_check.button_pressed,
+	Utils.Settings.PASCAL_COLOR: class_color.color,
+	Utils.Settings.PASCAL_ENABLE: class_check.button_pressed,
+	Utils.Settings.MEMBER_COLOR: member_color.color,
+	Utils.Settings.MEMBER_ENABLE: member_check.button_pressed,
+	Utils.Settings.MEMBER_ACCESS_COLOR: member_access_color.color,
+	Utils.Settings.MEMBER_ACCESS_ENABLE: member_access_check.button_pressed,
+	Utils.Settings.ONREADY_COLOR: onready_color.color,
+	Utils.Settings.ONREADY_ENABLE: onready_check.button_pressed,
+	Utils.Settings.TAG_COLOR: global_tag_color.color,
+	Utils.Settings.TAG_COLOR_ENABLE: tag_check.button_pressed,
 	}
 
 func _on_save_button_pressed(): 
 	var new_cfg = get_config()
 	for key in new_cfg:
-		Utils._set_editor_setting(key, new_cfg.get(key))
+		EditorInterface.get_editor_settings().set_setting(key, new_cfg.get(key))
 	
-	EditorInterface.get_editor_settings().set_setting(Utils.Config.defined_tags, _get_tag_data())
+	EditorInterface.get_editor_settings().set_setting(Utils.Settings.DEFINED_TAGS, _get_tag_data())
 	
-	GDHelperCode.config = Utils.get_editor_config()
-	EditorGDTags.read_editor_tags()
-	Utils.reset_script_highlighters()
+	GDHelperCode.config = EditorConfig.data
+	EditorGDTags.editor_tags = EditorConfig.get_tags_data()
+	SyntaxPlusSingleton.reset_script_highlighters()
 	
 	
 	var accept = AcceptDialog.new()
@@ -167,9 +168,9 @@ func _on_save_button_pressed():
 	self.close_requested.emit()
 
 func _on_cancel_button_pressed():
-	GDHelperCode.config = Utils.get_editor_config()
+	GDHelperCode.config = EditorConfig.data
 	self.close_requested.emit()
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_PREDELETE:
-		GDHelperCode.config = Utils.get_editor_config()
+		GDHelperCode.config = EditorConfig.data

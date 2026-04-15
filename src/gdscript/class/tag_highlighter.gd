@@ -12,19 +12,14 @@ var tag_enabled = true
 
 var highlight_color:Color
 
-func _init(tags, tag_data, config) -> void:
+func _init(tags, tag_data) -> void:
 	for tag in tags:
 		tagged_names[">"+tag] = true
 	
 	for key in tag_data.keys():
 		var data = tag_data.get(key)
 		var color = data.get("color")
-		tag_colors[">"+key] = Color.html(color)
-	
-	var tc = Utils.Config.tag_color
-	highlight_color = config.get(tc, Utils.Config.default_settings.get(tc))
-	var te = Utils.Config.tag_color_enable
-	tag_enabled = config.get(te, Utils.Config.default_settings.get(te))
+		tag_colors[">"+key] = color
 	
 	rebuild_tagged_name_regex() # Initialize with an empty regex
 

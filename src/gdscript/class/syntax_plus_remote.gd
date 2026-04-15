@@ -6,7 +6,8 @@ const UFile = preload("uid://gs632l1nhxaf") # u_file.gd
 const URegex = preload("uid://cpjnb72qn8bmh") # u_regex.gd
 const UString = preload("res://addons/addon_lib/brohd/alib_runtime/utils/u_string.gd")
 
-const UClassDetail = preload("res://addons/addon_lib/brohd/alib_editor/utils/src/u_class_detail.gd")
+const UGDScript = preload("uid://bqwb564jwff43") #! resolve ALibRuntime.Utils.UGDScript
+const UClassDetail = UGDScript.UClassDetail
 const SettingHelperEditor = preload("res://addons/addon_lib/brohd/alib_editor/settings/setting_helper.gd")
 
 const ConfirmationDialogHandler = preload("uid://bccd38qwc47vu").Handlers.Confirmation # dialog.gd

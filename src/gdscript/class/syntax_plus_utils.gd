@@ -1,4 +1,3 @@
-extends RefCounted
 
 const Remote = preload("res://addons/syntax_plus/src/gdscript/class/syntax_plus_remote.gd")
 const UFile = Remote.UFile #>remote
@@ -6,18 +5,14 @@ const URegex = Remote.URegex #>remote
 const UClassDetail = Remote.UClassDetail
 const ConfirmationDialogHandler = Remote.ConfirmationDialogHandler
 
+const Settings = preload("res://addons/syntax_plus/src/utils/config/settings.gd")
+
+
 const ANY_STRING = "const|var|@onready var|@export var|enum|class|func"
 const TAG_CHAR = "#>"
-const DEFAULT_COLOR_STRING = "35cc9b"
+const DEFAULT_COLOR_STRING = "35cc9b" 
 const DEFAULT_COLOR = Color(DEFAULT_COLOR_STRING)
 
-
-enum MemberMode{
-	NONE,
-	ALL,
-	INHERITED,
-	SCRIPT,
-}
 
 enum RegExTarget{
 	CONST_VAR,
@@ -26,41 +21,6 @@ enum RegExTarget{
 	ENUM,
 	ANY
 }
-
-static func set_script_highlighter(highlighter:="SyntaxPlus"):
-	var pop = EditorNodeRef.get_registered(EditorNodeRef.Nodes.SCRIPT_EDITOR_SYNTAX_POPUP, false)
-	if not is_instance_valid(pop):
-		return
-	var id = -1
-	for i in range(pop.item_count):
-		var text = pop.get_item_text(i)
-		if text != highlighter:
-			pop.set_item_checked(i, false)
-		else:
-			id = pop.get_item_id(i)
-			pop.set_item_checked(i, true)
-	if id == -1:
-		printerr("Error finding highlighter item: %s - \
-Ensure open scripts have been reopened since enabling plugin. (Restart editor is quickest)" % highlighter)
-	else:
-		pop.id_pressed.emit(id)
-
-
-static func reset_script_highlighters():
-	var script_editor = EditorInterface.get_script_editor()
-	var current_syntax = script_editor.get_current_editor().get_base_editor().syntax_highlighter
-	if current_syntax.has_method("load_global_data"):
-		current_syntax.load_global_data()
-		current_syntax.read_editor_tags()
-		current_syntax.create_highlight_helpers()
-		current_syntax.clear_highlighting_cache()
-	
-	for script:ScriptEditorBase in script_editor.get_open_script_editors():
-		var syntax = script.get_base_editor().syntax_highlighter
-		if syntax.has_method("load_global_data"):
-			syntax.read_editor_tags()
-			syntax.create_highlight_helpers()
-			syntax.clear_highlighting_cache()
 
 
 static func sort_keys(hl_info:Dictionary):
@@ -87,17 +47,13 @@ static func check_line_for_rebuild(line_text:String, line_text_last_state:String
 	return false
 
 
-static func get_all_class_members(script:GDScript=null):
-	return UClassDetail.class_get_all_members(script).keys()
 
 
-static func get_current_script_class():
-	var script = EditorInterface.get_script_editor().get_current_script()
-	if script != null:
-		return script.get_instance_base_type()
-	else: return ""
+
 
 static func get_regex_pattern(keywords:String, tag):
+	if tag == "":
+		return "(?!)"
 	#if tag =="=MEMBER_HL":
 		#return "^(?:@onready var|@export var|static var|var|const|class|enum|signal|func|static func)\\s+(\\w+)"
 	if tag =="=MEMBER_HL": #^ new one accounts for exports
@@ -243,68 +199,21 @@ static func _get_editor_setting(setting:String):
 	if ed_s.has_setting(setting):
 		return ed_s.get_setting(setting)
 	else:
-		var default_val = Config.default_settings.get(setting)
+		var default_val = Settings.DEFAULT_SETTINGS.get(setting)
 		if setting.ends_with("color"):
 			default_val = Color.html(default_val)
 		ed_s.set_setting(setting, default_val)
 		return ed_s.get_setting(setting)
 		
 
-static func _set_editor_setting(setting:String, val:Variant):
-	EditorInterface.get_editor_settings().set_setting(setting, val)
-
-static func _unset():
-	for key in Config.default_settings.keys():
-		_set_editor_setting(key, null)
-
-static func set_editor_property_hints():
-	var ed_settings = EditorInterface.get_editor_settings()
-	ed_settings.add_property_info(Config.member_mode_propery_info) # set as enum
-
-static func initial_set_editor_settings():
-	var settings_array = [
-		Config.set_as_default_highlighter,
-		Config.const_color,
-		Config.const_enable,
-		Config.pascal_color,
-		Config.pascal_enable,
-		Config.onready_color,
-		Config.onready_enable,
-		Config.member_color,
-		Config.member_enable,
-		Config.member_highlight_mode,
-		Config.member_access_color,
-		Config.member_access_enable,
-		Config.tag_color,
-		Config.tag_color_enable,
-	]
-	var ed_settings = EditorInterface.get_editor_settings()
-	for setting in settings_array:
-		if ed_settings.has_setting(setting):
-			continue
-		var val = Config.default_settings.get(setting)
-		if setting.ends_with("color"):
-			val = Color.html(val)
-		_set_editor_setting(setting, val)
-	
-
-static func get_tags_data():
-	var ed_settings = EditorInterface.get_editor_settings()
-	if not ed_settings.has_setting(Config.defined_tags):
-		ed_settings.set_setting(Config.defined_tags, Config.default_tags.get("tags"))
-	return ed_settings.get_setting(Config.defined_tags)
 
 
-static func get_editor_config():
-	var config = {}
-	for key in Config.default_settings.keys():
-		config[key] = _get_editor_setting(key)
-	return config
-	
+
+
 
 static func get_pascal_hl_data():
 	return {
-		"color": _get_editor_setting(Config.pascal_color).to_html(),
+		"color": _get_editor_setting(Settings.PASCAL_COLOR).to_html(),
 		"keyword":"const|vars",
 		"menu":"None",
 		"overwrite":false
@@ -312,7 +221,7 @@ static func get_pascal_hl_data():
 
 static func get_const_hl_data():
 	return {
-		"color": _get_editor_setting(Config.const_color).to_html(),
+		"color": _get_editor_setting(Settings.CONST_COLOR).to_html(),
 		"keyword":"const",
 		"menu":"None",
 		"overwrite":false
@@ -320,7 +229,7 @@ static func get_const_hl_data():
 
 static func get_onready_hl_data():
 	return {
-		"color": _get_editor_setting(Config.onready_color).to_html(),
+		"color": _get_editor_setting(Settings.ONREADY_COLOR).to_html(),
 		"keyword":"@onready var",
 		"menu":"None",
 		"overwrite":false 
@@ -329,61 +238,18 @@ static func get_onready_hl_data():
  
 static func get_member_hl_data():
 	return {
-		"color": _get_editor_setting(Config.member_color).to_html(),
-		Config.member_highlight_mode: _get_editor_setting(Config.member_highlight_mode),
+		"color": _get_editor_setting(Settings.MEMBER_COLOR).to_html(),
+		Settings.MEMBER_HIGHLIGHT_MODE: _get_editor_setting(Settings.MEMBER_HIGHLIGHT_MODE),
 		"keyword":"@export var|@onready var|var|const|class",
 		"menu":"None",
 		"overwrite":false 
 	}
 
-class Config:
-	const set_as_default_highlighter = "plugin/syntax_plus/set_as_default_highlighter"
-	const pascal_enable = "plugin/syntax_plus/pascal/pascal_enable"
-	const pascal_color = "plugin/syntax_plus/pascal/pascal_color"
-	const const_enable = "plugin/syntax_plus/constant/constant_enable"
-	const const_color = "plugin/syntax_plus/constant/constant_color"
-	const onready_enable = "plugin/syntax_plus/onready/onready_enable"
-	const onready_color = "plugin/syntax_plus/onready/onready_color"
-	const member_enable = "plugin/syntax_plus/member/member_enable"
-	const member_highlight_mode = "plugin/syntax_plus/member/member_highlight_mode"
-	const member_color = "plugin/syntax_plus/member/member_color"
-	const member_access_enable = "plugin/syntax_plus/member_access/member_access_enable"
-	const member_access_color = "plugin/syntax_plus/member_access/member_access_color"
-	const tag_color = "plugin/syntax_plus/tags/tag_color"
-	const tag_color_enable = "plugin/syntax_plus/tags/tag_color_enable"
-	const defined_tags = "plugin/syntax_plus/tags/defined_tags"
-	
-	const default_settings = {
-		set_as_default_highlighter: false,
-		pascal_enable: false,
-		pascal_color: "28e0caff",
-		const_enable: false,
-		const_color: "2685ab",
-		onready_enable: false,
-		onready_color: "679c53ff",
-		member_enable: true,
-		member_highlight_mode: MemberMode.ALL,
-		member_color: "bce0ff",
-		member_access_enable: false,
-		member_access_color: "91b8c4",
-		tag_color: "5f9d9fff",
-		tag_color_enable: true
+static func get_hl_data(color:Color):
+	return {
+		"color": color,
+		"keyword":"@export var|@onready var|var|const|class",
+		"menu":"None",
+		"overwrite":false
 	}
 	
-	const default_tags = {
-	"tags": {
-		"debug": {
-			"color": "f7ff00",
-			"keyword": "any",
-			"menu": "Submenu",
-			"overwrite": true
-			}
-		}
-	}
-	
-	const member_mode_propery_info = {
-	"name": Config.member_highlight_mode,
-	"type": TYPE_INT,
-	"hint": PROPERTY_HINT_ENUM,
-	"hint_string": "NONE,ALL,INHERITED,SCRIPT"
-}

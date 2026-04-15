@@ -2,6 +2,7 @@
 extends CodeHighlighter
 
 const Utils = preload("res://addons/syntax_plus/src/gdscript/class/syntax_plus_utils.gd") # syntax_plus_utils.gd #>import
+const EditorConfig = SyntaxPlusSingleton.EditorConfig
 const GDHelper = preload("res://addons/syntax_plus/src/gdscript/code_edit/gdscript_helper_code.gd") #>import gdscript_helper_code.gd
 const HighlightHelper = preload("res://addons/syntax_plus/src/gdscript/class/gdscript_highlight_helper.gd") #>import gdscript_highlight_helper.gd
 const TagHighlighter = preload("res://addons/syntax_plus/src/gdscript/class/tag_highlighter.gd")
@@ -29,10 +30,10 @@ func _init(data_overide=null) -> void:
 
 
 func read_editor_tags():
-	editor_tags = Utils.get_tags_data()
+	editor_tags = EditorConfig.get_tags_data()
 
 static func load_global_data():
-	GDHelper.config = Utils.get_editor_config()
+	GDHelper.config = EditorConfig.data
 
 func create_highlight_helpers():
 	for highlight_helper in highlight_helpers:
@@ -51,13 +52,13 @@ func create_highlight_helpers():
 		
 		tags.append(tag)
 	
-	if GDHelper.config.get(Utils.Config.const_enable):
+	if GDHelper.config.get(Utils.Settings.CONST_ENABLE):
 		var const_tag_highlighter = HighlightHelper.new("=CONST_HL",Utils.get_const_hl_data())
 		highlight_helpers.append(const_tag_highlighter)
-	if GDHelper.config.get(Utils.Config.pascal_enable, false):
+	if GDHelper.config.get(Utils.Settings.PASCAL_ENABLE, false):
 		var class_tag_highlighter = HighlightHelper.new("=CLASS_HL",Utils.get_pascal_hl_data())
 		highlight_helpers.append(class_tag_highlighter)
-	if GDHelper.config.get(Utils.Config.onready_enable):
+	if GDHelper.config.get(Utils.Settings.ONREADY_ENABLE):
 		var onready_tag_highlighter = HighlightHelper.new("=ONREADY_HL", Utils.get_onready_hl_data())
 		highlight_helpers.append(onready_tag_highlighter)
 	
@@ -65,7 +66,9 @@ func create_highlight_helpers():
 		#var member_tag_highlighter = HighlightHelper.new("=MEMBER_HL",Utils.get_member_hl_data())
 		#highlight_helpers.append(member_tag_highlighter)
 	
-	tag_highlighter = TagHighlighter.new(tags, editor_tags, GDHelper.config)
+	tag_highlighter = TagHighlighter.new(tags, editor_tags)
+	tag_highlighter.highlight_color = GDHelper.config.get(Utils.Settings.TAG_COLOR)
+	tag_highlighter.tag_enabled = GDHelper.config.get(Utils.Settings.TAG_COLOR_ENABLE)
 
 
 func _on_caret_changed():

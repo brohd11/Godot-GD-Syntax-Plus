@@ -24,8 +24,9 @@ static func set_code_edit() -> void:
 		dummy_code_edit = CodeEdit.new()
 		dummy_code_edit.highlight_current_line = false
 		dummy_code_edit.syntax_highlighter = base_gdscript_highlighter
-		EditorInterface.get_base_control().add_child(dummy_code_edit) 
-		EditorInterface.get_base_control().remove_child(dummy_code_edit)
+		var root = Engine.get_main_loop().root
+		root.add_child(dummy_code_edit) 
+		root.remove_child(dummy_code_edit)
 		set_default_text_colors()
 	
 	SyntaxPlusSingleton.get_instance().check_code_edit()

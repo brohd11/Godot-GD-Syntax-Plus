@@ -4,15 +4,20 @@ const SingletonRefCount = Singleton.RefCount
 
 const SCRIPT = preload("res://addons/syntax_plus/src/syntax_plus_singleton.gd")
 
+const EditorConfig = preload("res://addons/syntax_plus/src/utils/config/editor.gd")
 const Utils = preload("res://addons/syntax_plus/src/gdscript/class/syntax_plus_utils.gd")
+const UClassDetail = Utils.UClassDetail
+
 const GDScriptSyntaxPlus = preload("res://addons/syntax_plus/src/gdscript/editor/gdscript_syntax_plus.gd")
+const EditorHL = preload("res://addons/syntax_plus/src/highlighter/editor_hl.gd")
 
 # deps
 const CONTEXT_PLUGINS = [
 	preload("res://addons/syntax_plus/src/editor_plugins/syntax_tag_context_menu.gd")
 ]
 const SYNTAX_HIGHLIGHTERS = [
-	preload("res://addons/syntax_plus/src/gdscript/editor/gdscript_syntax_plus.gd")
+	preload("res://addons/syntax_plus/src/gdscript/editor/gdscript_syntax_plus.gd"),
+	EditorHL
 ]
 
 const CommentHighlightExt = preload("res://addons/syntax_plus/src/extensions/comment_highlight.gd")
@@ -22,6 +27,11 @@ enum CallableLocation {
 	START,
 	END,
 	ANY,
+}
+
+enum ExtensionNoti {
+	TAG_SCAN,
+	SCRIPT_CHANGED,
 }
 
 
@@ -122,7 +132,7 @@ func _add_extensions():
 	
 	update_comment_tags()
 
-static func notify_extensions(what:int):
+static func notify_extensions(what:ExtensionNoti):
 	var instance = get_instance()
 	for ext in instance.extensions:
 		if ext.has_method("syntax_plus_notification"):
@@ -243,6 +253,7 @@ static func get_hl_info_dict(color:Color) -> Dictionary:
 
 
 class HLInfo:
+	const _BAD_SYM_COLOR = Color.FIREBRICK
 	
 	static func add_color(dict:Dictionary, color:Color, idx:int, end_idx:int=-1, end_color=null, idx_safe:=true):
 		if idx_safe and dict.has(idx):
@@ -290,6 +301,178 @@ class HLInfo:
 	static func sort(dict:Dictionary):
 		#GDScriptSyntaxPlus.GDHelper.sort_comment_tag_info()
 		pass
+	
+	static func strip_prefix(prefix:String, text:String):
+		return text.trim_prefix(prefix + " ") # this may be changed, currently the prefix highlighting is hard coded for pre + space
+	
+	static func get_tag_end_index(prefix:String, tag:String, text:String):
+		if not text.begins_with(prefix):
+			return -1
+		text = strip_prefix(prefix, text)
+		if not text.strip_edges().begins_with(tag):
+			return -1
+		return text.find(tag) + tag.length()
+	
+	
+	static func highlight_tag(tag:String, stripped_text:String, color=null):
+		if color == null:
+			color = SyntaxPlusSingleton.DEFAULT_TAG_COLOR
+		var hl_info = {}
+		var tag_idx = stripped_text.find(tag)
+		add_color(hl_info, color, tag_idx, tag_idx + tag.length())
+		return hl_info
+	
+	
+	static func check_const_path(class_chain:String, current_script:GDScript, start_idx:=0):
+		var sp_ins = SyntaxPlusSingleton.get_instance()
+		var hl_info = {}
+		
+		var current_idx = 0
+		var type_array = [class_chain]
+		if class_chain.contains("."):
+			type_array = class_chain.split(".", false)
+		
+		var script = current_script
+		for i in range(type_array.size()): # iterate parts in chain to make sure they are a valid chain
+			var part = type_array[i]
+			if i > 0:
+				current_idx = class_chain.find(part, current_idx + 1)
+			
+			var adj_idx = start_idx + current_idx
+			var part_color = sp_ins.base_type_color
+			if UClassDetail.get_global_class_path(part) != "":
+				if i == 0:
+					part_color = sp_ins.user_type_color
+				else:
+					part_color = _BAD_SYM_COLOR
+			
+			var member_info = UClassDetail.get_member_info_by_path(script, part)
+			#print("ARG::PART::", part, script, member_info)
+			if member_info == null:
+				if i < type_array.size() - 1: # if not at the end, fail color so we know chain is broken
+					add_color(hl_info, _BAD_SYM_COLOR, adj_idx, adj_idx + part.length(), _BAD_SYM_COLOR)
+				break
+			
+			var end_color = sp_ins.symbol_color
+			if i == type_array.size() - 1:
+				end_color = sp_ins.comment_color
+			add_color(hl_info, part_color, adj_idx, adj_idx + part.length(), end_color)
+			
+			if member_info is GDScript:
+				script = member_info
+			else:
+				break
+		
+		return hl_info
+	
+	static func get_comment_tag_info(script_editor:CodeEdit, current_line_text:String, line:int, prefix:String, comment_tag_idx:int, existing_hl_info=null):
+		var sp_instance = SyntaxPlusSingleton.get_instance()
+		var tag = current_line_text.get_slice(prefix, 1).strip_edges().get_slice(" ", 0).strip_edges()
+		var callable_data = SyntaxPlusSingleton.get_highlight_callables()
+		if callable_data == null:
+			return
+		var highlight_callables = callable_data.get(prefix, {})
+		var has_tag = highlight_callables.has(tag)
+		var has_empty = false
+		if highlight_callables.has(""):
+			if not has_tag:
+				tag = ""
+			has_empty = true
+		var prefix_color = SyntaxPlusSingleton.get_prefix_color(prefix)
+		if prefix_color == null:
+			prefix_color = sp_instance.annotation_color
+		if existing_hl_info == null:
+			var callable = _get_comment_tag_hl_info
+			var custom_callable = false
+			if has_tag or has_empty:
+				var data = highlight_callables.get(tag)
+				var callable_location:SyntaxPlusSingleton.CallableLocation = data.get("callable_location")
+				if callable_location != SyntaxPlusSingleton.CallableLocation.END:
+					custom_callable = true
+					callable = data.get("callable")
+			
+			if callable.get_object() == null:
+				return {}
+			
+			var hl_info:Dictionary
+			if custom_callable:
+				hl_info = callable.call(script_editor, current_line_text, line, comment_tag_idx)
+			else:
+				hl_info = callable.call(current_line_text, prefix)
+			
+			hl_info = sort_comment_tag_info(hl_info, prefix_color, comment_tag_idx)
+			return hl_info
+		
+		var callable = _get_comment_tag_hl_info
+		var custom_callable = false
+		if has_tag or has_empty:
+			var data = highlight_callables.get(tag)
+			var callable_location:SyntaxPlusSingleton.CallableLocation = data.get("callable_location")
+			if callable_location != SyntaxPlusSingleton.CallableLocation.START:
+				custom_callable = true
+				callable = data.get("callable")
+		
+		if callable.get_object() == null:
+			return existing_hl_info
+		
+		var new_hl_info:Dictionary
+		if custom_callable:
+			new_hl_info = callable.call(script_editor, current_line_text, line, comment_tag_idx)
+		else:
+			new_hl_info = callable.call(current_line_text, prefix)
+		
+		#new_hl_info = sort_comment_tag_info(new_hl_info, prefix_color)
+		new_hl_info = sort_comment_tag_info(new_hl_info, prefix_color, comment_tag_idx)
+		existing_hl_info.merge(new_hl_info)
+		
+		var hl_info = {}
+		var existing_keys = existing_hl_info.keys()
+		existing_keys.sort()
+		for key in existing_keys:
+			hl_info[key] = existing_hl_info[key]
+		
+		return hl_info
+
+
+	static func _get_comment_tag_hl_info(current_line_text:String, prefix:String):
+		var sp_ins = SyntaxPlusSingleton.get_instance()
+		var all_comment_tags = SyntaxPlusSingleton.get_comment_tags()
+		var comment_tags = all_comment_tags.get(prefix, [])
+		var all_comment_tag_data = SyntaxPlusSingleton.get_comment_tag_data()
+		var comment_tag_data = all_comment_tag_data.get(prefix)
+		
+		var temp_hl_info:Dictionary = {}
+		var comment_tag_text = current_line_text.get_slice("#!", 1).replace(".", " ").strip_edges()
+		var new_hl_info = SyntaxPlusSingleton.get_instance().get_single_line_highlight(comment_tag_text)
+		var words = comment_tag_text.split(" ")
+		for word in words:
+			if word in comment_tags:
+				var idx = comment_tag_text.find(word) - 1
+				temp_hl_info[idx] = comment_tag_data.get(word)
+				idx += 1
+				while idx < word.length():
+					temp_hl_info.erase(idx)
+					idx += 1
+				temp_hl_info[word.length()] = {"color":sp_ins.comment_color}
+		return temp_hl_info
+	
+	static func sort_comment_tag_info(hl_info:Dictionary, prefix_color:Color, offset=0):
+		var sp_ins = SyntaxPlusSingleton.get_instance()
+		var key_adjusted_data = {}
+		key_adjusted_data[offset] = {"color": sp_ins.comment_color}
+		key_adjusted_data[offset + 1] = {"color": prefix_color}
+		key_adjusted_data[offset + 2] = {"color": sp_ins.comment_color}
+		var hl_keys = hl_info.keys()
+		hl_keys.sort()
+		for key in hl_keys:
+			#var new_key = key + offset + 3
+			var new_key = key + offset + 3
+			key_adjusted_data[new_key] = hl_info[key]
+		
+		return key_adjusted_data
+	
+	
+	
 
 #endregion
 
@@ -300,15 +483,15 @@ func _all_unregistered_callback():
 		editor_plugin_manager.plugin.queue_free()
 
 func _init(node) -> void:
-	Utils.initial_set_editor_settings()
-	Utils.set_editor_property_hints()
-	_set_editor_description.call_deferred()
+	EditorConfig.initialize()
 
 func _ready() -> void:
+	EditorHL.set_hl_logic_settings()
 	EditorNodeRef.call_on_ready(_connect_on_editor_node_ref_ready)
+	EditorInterface.get_editor_settings().settings_changed.connect(_on_editor_settings_changed, 1)
 
 func _connect_on_editor_node_ref_ready():
-	ScriptEditorRef.get_instance().editor_script_changed.connect(_on_editor_script_changed)
+	ScriptEditorRef.get_instance().editor_script_changed.connect(_on_editor_script_changed, 1)
 	_add_plugins()
 	_add_extensions.call_deferred()
 
@@ -321,15 +504,6 @@ func _add_plugins():
 	editor_plugin_manager.add_plugins.call_deferred()
 
 
-func _set_editor_description():
-	var member_mode = \
-"Choose which members will be highlighted:
-	0 = None
-	1 = All (4.5 style)
-	2 = Inherited (<=4.4 style)
-	3 = Script"
-	#EditorSettingsDescription.set_editor_setting_desc(Utils.Config.member_highlight_mode, member_mode)
-
 
 func _on_editor_script_changed(script:Script) -> void:
 	if script == null:
@@ -338,7 +512,45 @@ func _on_editor_script_changed(script:Script) -> void:
 		return
 	if EditorInterface.get_script_editor().get_current_editor() == null:
 		return
-	var code_edit = ScriptEditorRef.get_current_code_edit()
-	if Utils._get_editor_setting(Utils.Config.set_as_default_highlighter):
-		if code_edit.syntax_highlighter is not GDScriptSyntaxPlus:
-			Utils.set_script_highlighter()
+	if EditorConfig.get_setting(EditorConfig.Settings.SET_AS_DEFAULT_HIGHLIGHTER):
+		var code_edit = ScriptEditorRef.get_current_code_edit()
+		if code_edit.syntax_highlighter is not EditorHL:
+			set_script_highlighter()
+
+func _on_editor_settings_changed():
+	reset_script_highlighters()
+
+
+static func set_script_highlighter(highlighter:="SyntaxPlus"):
+	var pop = EditorNodeRef.get_registered(EditorNodeRef.Nodes.SCRIPT_EDITOR_SYNTAX_POPUP, false)
+	if not is_instance_valid(pop):
+		return
+	var id = -1
+	for i in range(pop.item_count):
+		var text = pop.get_item_text(i)
+		if text != highlighter:
+			pop.set_item_checked(i, false)
+		else:
+			id = pop.get_item_id(i)
+			pop.set_item_checked(i, true)
+	if id == -1:
+		printerr("Error finding highlighter item: %s - \
+Ensure open scripts have been reopened since enabling plugin. (Restart editor is quickest)" % highlighter)
+	else:
+		pop.id_pressed.emit(id)
+
+
+static func reset_script_highlighters():
+	EditorHL.set_hl_logic_settings()
+	
+	var script_editor = EditorInterface.get_script_editor()
+	#var current_syntax = script_editor.get_current_editor().get_base_editor().syntax_highlighter
+	#if current_syntax.has_method("load_global_data"):
+		#current_syntax.create_highlight_helpers()
+		##current_syntax.clear_highlighting_cache()
+	#
+	for script:ScriptEditorBase in script_editor.get_open_script_editors():
+		var syntax = script.get_base_editor().syntax_highlighter
+		if syntax is EditorHL or syntax is GDScriptSyntaxPlus:
+			syntax.reset_highlighter()
+			#syntax.clear_highlighting_cache()

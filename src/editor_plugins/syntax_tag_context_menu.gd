@@ -8,6 +8,7 @@ const _UID_INVALID = _UID + "<invalid>"
 const UtilsRemote = preload("res://addons/syntax_plus/src/gdscript/class/syntax_plus_remote.gd")
 const PopupWrapper = UtilsRemote.PopupWrapper
 const Params = PopupWrapper.ItemParams
+const EditorConfig = SyntaxPlusSingleton.EditorConfig
 
 const Utils = preload("res://addons/syntax_plus/src/gdscript/class/syntax_plus_utils.gd") #>import utils.gd
 #const GDHelper = preload("res://addons/syntax_plus/src/gdscript/editor/gdscript_helper.gd") #>import gdscript_helper.gd
@@ -25,7 +26,7 @@ func _on_context_pressed(se, popup_path):
 		clear_cache()
 		return
 	elif popup_path == "Syntax Plus/Reset All":
-		Utils.reset_script_highlighters()
+		SyntaxPlusSingleton.reset_script_highlighters()
 		return
 	
 	write_tag(se, popup_path.get_file())
@@ -41,7 +42,7 @@ static func get_valid_items(script_editor) -> Dictionary:
 	var submenu_tags = {}
 	tags = []
 	tags.clear()
-	var editor_tags = Utils.get_tags_data()
+	var editor_tags = EditorConfig.get_tags_data()
 	for tag in editor_tags.keys():
 		var data = editor_tags.get(tag)
 		var menu = data.get("menu", "Submenu")
@@ -74,8 +75,8 @@ static func get_valid_items(script_editor) -> Dictionary:
 		if not valid:
 			continue
 		
-		var color:String = data.get("color", "ffffff")
-		var color_obj = Color.html(color)
+		var color = data.get("color", "ffffff")
+		var color_obj = Color.html(color) if color is String else color
 		
 		var img = Image.create(16,16,false, Image.FORMAT_RGBA8)
 		img.fill(color_obj)

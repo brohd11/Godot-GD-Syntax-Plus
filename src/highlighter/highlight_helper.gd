@@ -4,45 +4,40 @@ extends RefCounted
 const Utils = preload("res://addons/syntax_plus/src/gdscript/class/syntax_plus_utils.gd") #>import utils.gd
 const GDHelper = preload("res://addons/syntax_plus/src/gdscript/editor/gdscript_helper.gd")  #>import gdscript_helper.gd
 
-var tagged_names: Dictionary = {} # Stores the names of consts marked for special highlighting
-var _tagged_name_regex: RegEx # Dynamically built regex for these names
+var highlight_words:= {}
+var _last_words_hash:int = -1
+var _highlight_word_regex: RegEx # Dynamically built regex for these names
 var declaration_regex: RegEx # To find "const NAME = xxx #import"
 
 var highlight_color:Color
 var highlight_tag:String = ""
 var overwrite_color:bool = false
 
-func _init(tag, tag_data) -> void:
+func _init(color:Color, tag:="", tag_data:={}) -> void:
 	highlight_tag = tag
-	var keywords:String = tag_data.get("keyword", "any")
-	
-	var color = tag_data.get("color", Utils.DEFAULT_COLOR)
-	
 	highlight_color = color
 	
 	var overwrite = tag_data.get("overwrite", false)
 	if overwrite is String:
-		overwrite = overwrite.to_lower()
-		if overwrite == "true":
-			overwrite = true
-		else:
-			overwrite = false
+		overwrite = overwrite.to_lower() == "true"
 	overwrite_color = overwrite
 	
-	var pattern = Utils.get_regex_pattern(keywords, tag)
-	declaration_regex = RegEx.new()
-	var err = declaration_regex.compile(pattern)
-	if err != OK:
-		printerr("CustomHighlighter: Regex compilation error for declaration_regex")
-		declaration_regex.compile("(?!)")
+	if highlight_tag != "":
+		var keywords:String = tag_data.get("keyword", "any")
+		var pattern = Utils.get_regex_pattern(keywords, tag)
+		declaration_regex = RegEx.new()
+		var err = declaration_regex.compile(pattern)
+		if err != OK:
+			printerr("CustomHighlighter: Regex compilation error for declaration_regex")
+			declaration_regex.compile("(?!)")
 	
 	rebuild_tagged_name_regex() # Initialize with an empty regex
 
 
 func check_line(hl_info, current_line_text): 
 	var needs_sort = false
-	if not tagged_names.is_empty() and is_instance_valid(_tagged_name_regex):
-		var _matches = _tagged_name_regex.search_all(current_line_text)
+	if not highlight_words.is_empty() and is_instance_valid(_highlight_word_regex):
+		var _matches = _highlight_word_regex.search_all(current_line_text)
 		for _match in _matches:
 			var start_idx = _match.get_start(1)
 			if not overwrite_color:
@@ -72,5 +67,15 @@ func check_line(hl_info, current_line_text):
 	
 	return [hl_info, needs_sort]
 
-func rebuild_tagged_name_regex():
-	_tagged_name_regex = Utils.build_name_regex(tagged_names.keys())
+func set_highlight_words(new_words:Dictionary) -> bool:
+	#var new_hash = new_words.hash()
+	var words_changed = new_words != highlight_words
+	if words_changed:
+		highlight_words = new_words
+		rebuild_tagged_name_regex()
+	
+	#_last_words_hash = new_hash
+	return words_changed 
+
+func rebuild_tagged_name_regex() -> void:
+	_highlight_word_regex = Utils.build_name_regex(highlight_words.keys())
