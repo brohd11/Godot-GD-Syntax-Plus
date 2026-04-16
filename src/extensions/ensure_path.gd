@@ -119,7 +119,7 @@ func _invalidate_current():
 	if watched_scripts.has(current_script_path):
 		var script_data = watched_scripts.get(current_script_path)
 		for line in watched_scripts[current_script_path][Keys.LINE_DATA].keys():
-			SyntaxPlusSingleton.clear_cache(line)
+			SyntaxPlusSingleton.invalidate_line(line)
 		_set_background_colors()
 		watched_scripts.erase(current_script_path)
 

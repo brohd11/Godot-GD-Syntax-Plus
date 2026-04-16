@@ -14,14 +14,11 @@ const Utils = preload("res://addons/syntax_plus/src/utils/utils.gd")
 
 const EditorHL = SPClasses.EditorHL
 
-const GDScriptSyntaxPlus = preload("res://addons/syntax_plus/src/gdscript/editor/gdscript_syntax_plus.gd")
-
 # deps
 const CONTEXT_PLUGINS = [
 	preload("res://addons/syntax_plus/src/editor_plugins/syntax_tag_context_menu.gd")
 ]
 const SYNTAX_HIGHLIGHTERS = [
-	preload("res://addons/syntax_plus/src/gdscript/editor/gdscript_syntax_plus.gd"),
 	EditorHL
 ]
 
@@ -248,10 +245,10 @@ static func update_comment_tags():
 #region Misc Api
 
 
-static func clear_cache(line:=-1):
+static func invalidate_line(line:=-1):
 	var hl = ScriptEditorRef.get_current_code_edit().syntax_highlighter
-	if hl.has_method("invalidate"):
-		hl.invalidate(line)
+	if hl is EditorHL:
+		hl.hl_logic.invalidate(line)
 
 static func get_hl_info_dict(color:Color) -> Dictionary:
 	return {"color": color}
@@ -497,6 +494,7 @@ func _ready() -> void:
 
 func _connect_on_editor_node_ref_ready():
 	ScriptEditorRef.get_instance().editor_script_changed.connect(_on_editor_script_changed, 1)
+	set_default_text_colors()
 	_add_plugins()
 	_add_extensions.call_deferred()
 
@@ -520,7 +518,7 @@ func _on_editor_script_changed(script:Script) -> void:
 	if EditorConfig.get_setting(EditorConfig.Settings.SET_AS_DEFAULT_HIGHLIGHTER):
 		var code_edit = ScriptEditorRef.get_current_code_edit()
 		if code_edit.syntax_highlighter is not EditorHL:
-			set_script_highlighter("SyntaxPlusV2")
+			set_script_highlighter()
 
 func _on_editor_settings_changed():
 	reset_script_highlighters()
@@ -556,6 +554,6 @@ static func reset_script_highlighters():
 	#
 	for script:ScriptEditorBase in script_editor.get_open_script_editors():
 		var syntax = script.get_base_editor().syntax_highlighter
-		if syntax is EditorHL or syntax is GDScriptSyntaxPlus:
+		if syntax is EditorHL:
 			syntax.reset_highlighter()
 			#syntax.clear_highlighting_cache()

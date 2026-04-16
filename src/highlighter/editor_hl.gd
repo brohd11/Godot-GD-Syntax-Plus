@@ -18,7 +18,7 @@ var hl_logic:HighlightLogic
 var active_code_edit:= false
 
 func _get_name() -> String:
-	return "SyntaxPlusV2"
+	return "SyntaxPlus"
 
 func _init() -> void:
 	hl_logic = HighlightLogic.new()
