@@ -1,6 +1,6 @@
 extends RefCounted
 
-const UtilsRemote = preload("res://addons/syntax_plus/src/gdscript/class/syntax_plus_remote.gd")
+const UtilsRemote = preload("res://addons/syntax_plus/src/utils/utils_remote.gd")
 
 const UString = UtilsRemote.UString
 const SettingHelperEditor = UtilsRemote.SettingHelperEditor

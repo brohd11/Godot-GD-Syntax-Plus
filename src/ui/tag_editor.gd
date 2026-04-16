@@ -3,11 +3,12 @@ extends Control
 
 const PLUGIN_EXPORT_FLAT = false
 
+const SPClasses = preload("res://addons/syntax_plus/src/utils/classes.gd")
+const Utils = SPClasses.Utils
+const Settings = SPClasses.Settings
+const EditorConfig = SPClasses.EditorConfig
+
 const EditorGDTags = preload("res://addons/syntax_plus/src/gdscript/editor/gdscript_syntax_plus.gd") #>import gdscript_tags.gd
-
-const EditorConfig = SyntaxPlusSingleton.EditorConfig
-
-const Utils = preload("res://addons/syntax_plus/src/gdscript/class/syntax_plus_utils.gd") #>import utils.gd
 const GDHelperCode = preload("res://addons/syntax_plus/src/gdscript/code_edit/gdscript_helper_code.gd") #>import gdscript_helper_code.gd
 const TagEntry = preload("res://addons/syntax_plus/src/ui/tag_entry.tscn") #>import tag_entry.tscn
 
@@ -129,19 +130,19 @@ func _get_tag_data() -> Dictionary:
 
 func get_config():
 	return {
-	Utils.Settings.SET_AS_DEFAULT_HIGHLIGHTER: set_all_scripts_check.button_pressed,
-	Utils.Settings.CONST_COLOR: const_color.color,
-	Utils.Settings.CONST_ENABLE: const_check.button_pressed,
-	Utils.Settings.PASCAL_COLOR: class_color.color,
-	Utils.Settings.PASCAL_ENABLE: class_check.button_pressed,
-	Utils.Settings.MEMBER_COLOR: member_color.color,
-	Utils.Settings.MEMBER_ENABLE: member_check.button_pressed,
-	Utils.Settings.MEMBER_ACCESS_COLOR: member_access_color.color,
-	Utils.Settings.MEMBER_ACCESS_ENABLE: member_access_check.button_pressed,
-	Utils.Settings.ONREADY_COLOR: onready_color.color,
-	Utils.Settings.ONREADY_ENABLE: onready_check.button_pressed,
-	Utils.Settings.TAG_COLOR: global_tag_color.color,
-	Utils.Settings.TAG_COLOR_ENABLE: tag_check.button_pressed,
+	Settings.SET_AS_DEFAULT_HIGHLIGHTER: set_all_scripts_check.button_pressed,
+	Settings.CONST_COLOR: const_color.color,
+	Settings.CONST_ENABLE: const_check.button_pressed,
+	Settings.PASCAL_COLOR: class_color.color,
+	Settings.PASCAL_ENABLE: class_check.button_pressed,
+	Settings.MEMBER_COLOR: member_color.color,
+	Settings.MEMBER_ENABLE: member_check.button_pressed,
+	Settings.MEMBER_ACCESS_COLOR: member_access_color.color,
+	Settings.MEMBER_ACCESS_ENABLE: member_access_check.button_pressed,
+	Settings.ONREADY_COLOR: onready_color.color,
+	Settings.ONREADY_ENABLE: onready_check.button_pressed,
+	Settings.TAG_COLOR: global_tag_color.color,
+	Settings.TAG_COLOR_ENABLE: tag_check.button_pressed,
 	}
 
 func _on_save_button_pressed(): 
@@ -149,7 +150,7 @@ func _on_save_button_pressed():
 	for key in new_cfg:
 		EditorInterface.get_editor_settings().set_setting(key, new_cfg.get(key))
 	
-	EditorInterface.get_editor_settings().set_setting(Utils.Settings.DEFINED_TAGS, _get_tag_data())
+	EditorInterface.get_editor_settings().set_setting(Settings.DEFINED_TAGS, _get_tag_data())
 	
 	GDHelperCode.config = EditorConfig.data
 	EditorGDTags.editor_tags = EditorConfig.get_tags_data()

@@ -1,7 +1,8 @@
 @tool
 extends RefCounted
 
-const Utils = preload("res://addons/syntax_plus/src/gdscript/class/syntax_plus_utils.gd") #>import utils.gd
+
+const OldUtils = preload("res://addons/syntax_plus/src/gdscript/class/syntax_plus_utils.gd") #>import utils.gd
 const GDHelper = preload("res://addons/syntax_plus/src/gdscript/editor/gdscript_helper.gd")  #>import gdscript_helper.gd
 
 var tagged_names: Dictionary = {} # Stores the names of consts marked for special highlighting
@@ -16,7 +17,7 @@ func _init(tag, tag_data) -> void:
 	highlight_tag = tag
 	var keywords:String = tag_data.get("keyword", "any")
 	
-	var color = tag_data.get("color", Utils.DEFAULT_COLOR)
+	var color = tag_data.get("color", OldUtils.DEFAULT_COLOR)
 	
 	highlight_color = color
 	
@@ -29,7 +30,7 @@ func _init(tag, tag_data) -> void:
 			overwrite = false
 	overwrite_color = overwrite
 	
-	var pattern = Utils.get_regex_pattern(keywords, tag)
+	var pattern = OldUtils.get_regex_pattern(keywords, tag)
 	declaration_regex = RegEx.new()
 	var err = declaration_regex.compile(pattern)
 	if err != OK:
@@ -73,4 +74,4 @@ func check_line(hl_info, current_line_text):
 	return [hl_info, needs_sort]
 
 func rebuild_tagged_name_regex():
-	_tagged_name_regex = Utils.build_name_regex(tagged_names.keys())
+	_tagged_name_regex = OldUtils.build_name_regex(tagged_names.keys())

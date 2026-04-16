@@ -1,12 +1,18 @@
-@tool # hl
+@tool
 extends EditorSyntaxHighlighter
 
-const EditorGDScriptParser = preload("res://addons/addon_lib/brohd/alib_editor/misc/parser/editor_parser.gd") #! resolve ALibEditor.Singletons.EditorGDScriptParser
+const SPClasses = preload("res://addons/syntax_plus/src/utils/classes.gd")
 
-const Utils = preload("res://addons/syntax_plus/src/gdscript/class/syntax_plus_utils.gd")
-const EditorConfig = SyntaxPlusSingleton.EditorConfig
+const UtilsRemote = SPClasses.UtilsRemote
+const EditorGDScriptParser = UtilsRemote.EditorGDScriptParser
+const ScriptListManager = UtilsRemote.ScriptListManager
 
-const HighlightLogic = preload("res://addons/syntax_plus/src/highlighter/highlighter_logic.gd")
+const EditorConfig = SPClasses.EditorConfig
+const HighlightLogic = SPClasses.HighlightLogic
+
+const CACHE_SIZE = 20
+
+static var highlighter_history := {}
 
 var hl_logic:HighlightLogic
 var active_code_edit:= false
@@ -15,93 +21,91 @@ func _get_name() -> String:
 	return "SyntaxPlusV2"
 
 func _init() -> void:
-	print("INIT")
-	print(get_text_edit())
 	hl_logic = HighlightLogic.new()
 	hl_logic.scanning_tags.connect(_on_scanning_tags)
 	
-	EditorGDScriptParser.get_instance().editor_script_changed.connect(_on_editor_script_changed)
+	ScriptEditorRef.subscribe(ScriptEditorRef.Event.EDITOR_SCRIPT_CHANGED, _on_editor_script_changed)
 	EditorGDScriptParser.get_instance().parse_completed.connect(_on_parse_completed)
-
-
-func _on_editor_script_changed(new_script:Script):
-	active_code_edit = false
-	if not is_instance_valid(new_script):
-		return
-	
-	active_code_edit = _is_current_code_edit()
-	if not active_code_edit:
-		return
-	
-	SyntaxPlusSingleton.notify_extensions(SyntaxPlusSingleton.ExtensionNoti.SCRIPT_CHANGED)
-	_hl_logic_setup()
-
-func _on_scanning_tags():
-	SyntaxPlusSingleton.notify_extensions(SyntaxPlusSingleton.ExtensionNoti.TAG_SCAN) # SHOULD MOVE THIS OUT
 
 func reset_highlighter():
 	hl_logic.gdscript_parser.get_code_edit_parser().cache_dirty = true
 	hl_logic.create_highlight_helpers()
 
-func ensure_hl_logic_setup():
-	if not is_instance_valid(hl_logic._text_edit):
-		_hl_logic_setup()
+func _on_scanning_tags():
+	SyntaxPlusSingleton.notify_extensions(SyntaxPlusSingleton.ExtensionNoti.TAG_SCAN) # SHOULD MOVE THIS OUT
+
+func _on_editor_script_changed(new_script:Script):
+	active_code_edit = false
+	if not is_instance_valid(new_script):
+		return
+	active_code_edit = _is_current_code_edit()
+	if not active_code_edit:
+		return
+	
+	_add_to_highlighter_history()
+	
+	SyntaxPlusSingleton.notify_extensions(SyntaxPlusSingleton.ExtensionNoti.SCRIPT_CHANGED)
+	_hl_logic_setup()
+	_clear_parser_cache()
+
 
 func _hl_logic_setup():
+	if hl_logic.default_text_color == Color.BLACK:
+		print("YES BLACK")
+		set_hl_logic_settings() # TEMP
 	print("&*&*&*&*&*& ------- ")
 	
-	var current_script = ScriptEditorRef.get_current_script()
-	hl_logic.script_resource = current_script # for creating a new one for each highlighter.
-	# may be a good idea to do so it can run unhindered by the validating?
-	
-	var current_script_path = current_script.resource_path
-	var gdscript_parser = EditorGDScriptParser.get_parser(current_script_path)
-	hl_logic.set_gdscript_parser(gdscript_parser)
-	
-	
-	var text_edit = get_text_edit()
-	hl_logic.set_text_edit(text_edit)
-	
-	hl_logic.DummyHelper.set_code_edit()
-	hl_logic.comment_tag_prefixes = SyntaxPlusSingleton.get_prefixes()
 	SyntaxPlusSingleton.check_code_edit()
-	hl_logic.init_scan_done = false
+	HighlightLogic.DummyHelper.set_code_edit()
+	
+	hl_logic.set_text_edit(get_text_edit())
+	hl_logic.script_resource = _get_current_script()
+	hl_logic.comment_tag_prefixes = SyntaxPlusSingleton.get_prefixes()
+	
+	#hl_logic.init_scan_done = false
 
-
-
-
-func get_gdscript_parser():
-	return EditorGDScriptParser.get_parser()
 
 func _on_parse_completed():
 	if not active_code_edit:
 		return
 	#return
 	hl_logic.update_class_members(true)
-	print("&&& END &&&")
+
+func update_highlighter():
+	hl_logic.update_tagged_name_list(true)
 
 func _get_line_syntax_highlighting(line_idx: int) -> Dictionary:
+	if not is_instance_valid(hl_logic._text_edit):
+		_hl_logic_setup()
 	return hl_logic.get_line_syntax_highlighting(line_idx)
 
 
+func _add_to_highlighter_history():
+	if highlighter_history == null:
+		highlighter_history = {}
+	for ref in highlighter_history.keys():
+		var ins = ref.get_ref()
+		if not is_instance_valid(ins):
+			highlighter_history.erase(ref)
+			continue
+		if ins == self:
+			highlighter_history.erase(ref)
+			break
+	highlighter_history[weakref(self)] = true
 
-
-
-
-
-
-
-func _clear_highlighting_cache() -> void:
-	#return
-	#print("VIRTUAL CLEAR::", get_text_edit().get_line(0))
-	return
-	hl_logic.clear_highlighting_cache()
-
-func _update_cache() -> void:
-	if not _is_current_code_edit():
+func _clear_parser_cache():
+	var current_size = highlighter_history.size()
+	if current_size <= CACHE_SIZE:
 		return
-	ensure_hl_logic_setup()
-	#print("VIRTUAL CACHE::", get_text_edit().get_line(0))
+	
+	var refs = highlighter_history.keys()
+	var erased = 0
+	while current_size - erased > CACHE_SIZE:
+		var ref = refs.pop_front()
+		var ins = ref.get_ref()
+		ins.hl_logic.set_inactive()
+		highlighter_history.erase(ref)
+		erased += 1
 
 
 func _is_current_code_edit() -> bool:
@@ -111,6 +115,20 @@ func _is_current_code_edit() -> bool:
 	var current_code_edit = ScriptEditorRef.get_current_code_edit()
 	return current_code_edit == text_edit
 
+func _get_current_script():
+	return ScriptEditorRef.get_current_script()
+	#var slm = ScriptListManager.get_instance()
+	#var text_edit = get_text_edit()
+	#var script_path = slm.script_editor_map.get(text_edit, "") as String
+	#var current_script:GDScript # this whole thing may be unnecessary, get_current_script seems fine
+	#if script_path == "":
+		#current_script = ScriptEditorRef.get_current_script()
+	#elif script_path.get_extension() == "gd":
+		#current_script = load(script_path)
+	#else:
+		#printerr("ATTEMPT TO LOAD NON GD FILE WITH SYNTAXPLUS")
+		#return
+	#return current_script
 
 static func set_hl_logic_settings():
 	EditorConfig.load_data()

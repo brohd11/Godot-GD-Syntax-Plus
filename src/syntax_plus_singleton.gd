@@ -4,12 +4,17 @@ const SingletonRefCount = Singleton.RefCount
 
 const SCRIPT = preload("res://addons/syntax_plus/src/syntax_plus_singleton.gd")
 
-const EditorConfig = preload("res://addons/syntax_plus/src/utils/config/editor.gd")
-const Utils = preload("res://addons/syntax_plus/src/gdscript/class/syntax_plus_utils.gd")
-const UClassDetail = Utils.UClassDetail
+const SPClasses = preload("res://addons/syntax_plus/src/utils/classes.gd")
+
+const EditorConfig = SPClasses.EditorConfig
+const UtilsRemote = SPClasses.UtilsRemote
+const UClassDetail = UtilsRemote.UClassDetail
+
+const Utils = preload("res://addons/syntax_plus/src/utils/utils.gd")
+
+const EditorHL = SPClasses.EditorHL
 
 const GDScriptSyntaxPlus = preload("res://addons/syntax_plus/src/gdscript/editor/gdscript_syntax_plus.gd")
-const EditorHL = preload("res://addons/syntax_plus/src/highlighter/editor_hl.gd")
 
 # deps
 const CONTEXT_PLUGINS = [
@@ -79,23 +84,23 @@ var single_line_gdscript_highlighter: GDScriptSyntaxHighlighter
 static func set_default_text_colors():
 	var instance = get_instance()
 	var editor_settings = EditorInterface.get_editor_settings()
-	instance.default_text_color = editor_settings.get("text_editor/theme/highlighting/text_color")
-	instance.editor_member_color = editor_settings.get('text_editor/theme/highlighting/member_variable_color')
-	instance.comment_color = editor_settings.get_setting("text_editor/theme/highlighting/comment_color")
-	instance.annotation_color = editor_settings.get_setting("text_editor/theme/highlighting/gdscript/annotation_color")
-	instance.symbol_color = editor_settings.get_setting("text_editor/theme/highlighting/symbol_color")
-	instance.number_color = editor_settings.get_setting("text_editor/theme/highlighting/number_color")
-	instance.keyword_color = editor_settings.get_setting("text_editor/theme/highlighting/keyword_color")
-	instance.control_flow_color = editor_settings.get_setting("text_editor/theme/highlighting/control_flow_keyword_color")
-	instance.function_color = editor_settings.get_setting("text_editor/theme/highlighting/function_color")
-	instance.global_function_color = editor_settings.get_setting("text_editor/theme/highlighting/gdscript/global_function_color")
-	instance.base_type_color = editor_settings.get_setting("text_editor/theme/highlighting/base_type_color")
-	instance.engine_type_color = editor_settings.get_setting("text_editor/theme/highlighting/engine_type_color")
-	instance.user_type_color = editor_settings.get_setting("text_editor/theme/highlighting/user_type_color")
-	instance.string_color = editor_settings.get_setting("text_editor/theme/highlighting/string_color")
-	instance.string_name_color = editor_settings.get_setting("text_editor/theme/highlighting/gdscript/string_name_color")
-	instance.node_path_color = editor_settings.get_setting("text_editor/theme/highlighting/gdscript/node_path_color")
-	instance.node_reference_color = editor_settings.get_setting("text_editor/theme/highlighting/gdscript/node_reference_color")
+	instance.default_text_color = editor_settings.get(&"text_editor/theme/highlighting/text_color")
+	instance.editor_member_color = editor_settings.get(&"text_editor/theme/highlighting/member_variable_color")
+	instance.comment_color = editor_settings.get_setting(&"text_editor/theme/highlighting/comment_color")
+	instance.annotation_color = editor_settings.get_setting(&"text_editor/theme/highlighting/gdscript/annotation_color")
+	instance.symbol_color = editor_settings.get_setting(&"text_editor/theme/highlighting/symbol_color")
+	instance.number_color = editor_settings.get_setting(&"text_editor/theme/highlighting/number_color")
+	instance.keyword_color = editor_settings.get_setting(&"text_editor/theme/highlighting/keyword_color")
+	instance.control_flow_color = editor_settings.get_setting(&"text_editor/theme/highlighting/control_flow_keyword_color")
+	instance.function_color = editor_settings.get_setting(&"text_editor/theme/highlighting/function_color")
+	instance.global_function_color = editor_settings.get_setting(&"text_editor/theme/highlighting/gdscript/global_function_color")
+	instance.base_type_color = editor_settings.get_setting(&"text_editor/theme/highlighting/base_type_color")
+	instance.engine_type_color = editor_settings.get_setting(&"text_editor/theme/highlighting/engine_type_color")
+	instance.user_type_color = editor_settings.get_setting(&"text_editor/theme/highlighting/user_type_color")
+	instance.string_color = editor_settings.get_setting(&"text_editor/theme/highlighting/string_color")
+	instance.string_name_color = editor_settings.get_setting(&"text_editor/theme/highlighting/gdscript/string_name_color")
+	instance.node_path_color = editor_settings.get_setting(&"text_editor/theme/highlighting/gdscript/node_path_color")
+	instance.node_reference_color = editor_settings.get_setting(&"text_editor/theme/highlighting/gdscript/node_reference_color")
 
 static func check_code_edit():
 	var instance = get_instance()
@@ -515,7 +520,7 @@ func _on_editor_script_changed(script:Script) -> void:
 	if EditorConfig.get_setting(EditorConfig.Settings.SET_AS_DEFAULT_HIGHLIGHTER):
 		var code_edit = ScriptEditorRef.get_current_code_edit()
 		if code_edit.syntax_highlighter is not EditorHL:
-			set_script_highlighter()
+			set_script_highlighter("SyntaxPlusV2")
 
 func _on_editor_settings_changed():
 	reset_script_highlighters()

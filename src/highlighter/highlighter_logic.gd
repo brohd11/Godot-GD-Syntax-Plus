@@ -1,14 +1,18 @@
 # HL
 const PLUGIN_EXPORTED = false
+const CAN_INVALIDATE = true
+const ADD_NEW_MEMBER = false
 
-const GDScriptParser = ALibRuntime.Utils.UGDScript.Parser
+const SPClasses = preload("res://addons/syntax_plus/src/utils/classes.gd")
 
-const Utils = preload("res://addons/syntax_plus/src/gdscript/class/syntax_plus_utils.gd")
-const UClassDetail = Utils.UClassDetail
+const UtilsRemote = SPClasses.UtilsRemote
+const GDScriptParser = UtilsRemote.GDScriptParser
+const UClassDetail = UtilsRemote.UClassDetail
 
-const DummyHelper = preload("res://addons/syntax_plus/src/highlighter/dummy_helper.gd")
-const HighlightHelper = preload("res://addons/syntax_plus/src/highlighter/highlight_helper.gd")
-const TagHighlighter = preload("res://addons/syntax_plus/src/gdscript/class/tag_highlighter.gd")
+const DummyHelper = SPClasses.DummyHelper
+const HighlightHelper = SPClasses.HighlightHelper
+const TagHighlighter = SPClasses.TagHighlighter
+const Utils = SPClasses.Utils
 
 static var default_text_color:Color
 static var editor_member_color:Color
@@ -156,6 +160,7 @@ func get_line_syntax_highlighting(line_idx: int) -> Dictionary:
 		if line_idx == text_edit.get_caret_line():
 			update_tagged_name_list()
 	
+	
 	#^ is comment in string
 	var comment_index = current_line_text.find("#")
 	while comment_index != -1:
@@ -239,22 +244,16 @@ func update_tagged_name_list(force_build=false) -> void:
 	var current_line_text = text_edit_node.get_line(current_line_index)
 	var current_line_count = text_edit_node.get_line_count()
 	
-	var full_rebuild = force_build
-	#if abs(current_line_count - last_line_count) > 1:
-		#full_rebuild = true ## NOT SURE OF THIS CHECK
-	
 	#^ new copy of data to compare to old if tagged removed or added to current line
 	var new_tagged_data: Dictionary = {}
 	for highlight_helper in highlight_helpers:
 		var old_data = tagged_data.get(highlight_helper, {})
 		new_tagged_data[highlight_helper] = old_data.duplicate()
-	
 	#^
-	
 	
 	#^ if flags found, check for changes in current line
 	var check = Utils.check_line_for_rebuild(current_line_text, current_line_last_state)
-	if check and not full_rebuild:
+	if check and not force_build:
 		var found_name = false
 		for highlight_helper in highlight_helpers:
 			var declaration_regex = highlight_helper.declaration_regex
@@ -272,7 +271,8 @@ func update_tagged_name_list(force_build=false) -> void:
 					found_name = true
 					break
 		
-		if member_highlighter and not found_name:
+		#^ update members found in current line
+		if ADD_NEW_MEMBER and is_instance_valid(member_highlighter) and not found_name:
 			var _match = member_highlighter.declaration_regex.search(current_line_text) #>debu
 			if _match == null:
 				_temp_member_dict.clear()
@@ -286,16 +286,13 @@ func update_tagged_name_list(force_build=false) -> void:
 					_update_current_line_dec(_last_match_dec, false)
 	#^
 	
-	prints("UPDATE FULL::", full_rebuild, tagged_data.hash() != new_tagged_data.hash())
+	prints("UPDATE FULL::", force_build, tagged_data.hash() != new_tagged_data.hash())
 	#^ Full scan of doc for valid highlights
-	if full_rebuild or tagged_data.hash() != new_tagged_data.hash():
-		print("HAS TAG", highlight_helpers)
-		var has_tag = false
+	if force_build or tagged_data.hash() != new_tagged_data.hash():
+		var tt = ALibRuntime.Utils.UProfile.TimeFunction.new("UPDATE TAGS") #>debu
+		
 		for highlight_helper in highlight_helpers:
 			new_tagged_data[highlight_helper].clear()
-			#if not has_tag:
-				#has_tag = text_edit_node.text.contains(Utils.TAG_CHAR + highlight_helper.highlight_tag)
-				#print("HAS TAG::", has_tag, "::", highlight_helper.highlight_tag)
 		
 		for i in range(current_line_count):
 			var line_names_found = [] # anything not in arary may be added to member regex
@@ -308,6 +305,8 @@ func update_tagged_name_list(force_build=false) -> void:
 					new_tagged_data[highlight_helper][tagged_name] = true
 					line_names_found.append(tagged_name)
 		
+		tt.stop()
+		
 		tagged_data = new_tagged_data
 		
 		var has_changed_tag = false
@@ -318,12 +317,14 @@ func update_tagged_name_list(force_build=false) -> void:
 			if chg:
 				has_changed_tag = true
 		
-		
+		var changed = update_class_members()
+		if changed:
+			has_changed_tag = true
 		
 		if has_changed_tag: # fairly slow, would be nice to check if needed, any instances of word above
 			invalidate_all() # for this PC it's not really a big deal...
 	
-	#update_class_members()
+	
 	#^
 	
 	#^ Set state
@@ -331,9 +332,6 @@ func update_tagged_name_list(force_build=false) -> void:
 	last_line_count = text_edit_node.get_line_count()
 	t.stop()
 	check_newline_buffer()
-	
-	
-	#update_cache.call_deferred() ## Needed?
 
 
 func _update_current_line_dec(current_line_dec:String, add:bool):
@@ -341,46 +339,40 @@ func _update_current_line_dec(current_line_dec:String, add:bool):
 	if not add and not _temp_member_dict.has(dec_name):
 		return
 	
-	var target_hl = member_highlighter
-	if _is_static_declaration(current_line_dec):
-		if _is_const(dec_name):
-			target_hl = const_highlighter
-		elif _is_pascal(dec_name):
-			target_hl = pascal_highlighter
-	
-	var word_dict = target_hl.highlight_words.duplicate()
+	var word_dict = member_highlighter.highlight_words.duplicate()
 	if add:
-		#if word_dict.has(dec_name):
-			#return
+		if word_dict.has(dec_name):
+			return
 		word_dict[dec_name] = true
 		_temp_member_dict[dec_name] = true
 	else:
 		word_dict.erase(dec_name)
 		_temp_member_dict.erase(dec_name)
 	
-	target_hl.set_highlight_words(word_dict)
-
+	member_highlighter.set_highlight_words(word_dict)
 
 
 func update_class_members(allow_invalidate:=false):
+	if script_member_highlighters.is_empty():
+		return
 	var t = ALibRuntime.Utils.UProfile.TimeFunction.new("UPDATE CLASS MEMBERS")
+	var mem
 	if not is_instance_valid(gdscript_parser):
+		mem = ALibRuntime.Utils.UProfile.Memory.new()
 		gdscript_parser = GDScriptParser.new()
 		gdscript_parser.set_current_script(script_resource)
 		gdscript_parser.set_code_edit(get_text_edit())
 		gdscript_parser.set_parser_cache_size(0)
 	
-	print("CACHE DIRTY::", gdscript_parser.get_code_edit_parser().cache_dirty)
+	#print("CACHE DIRTY::", gdscript_parser.get_code_edit_parser().cache_dirty)
 	if not gdscript_parser.get_code_edit_parser().cache_dirty:
-		print("EARLY EXIT")
 		return
-	
 	gdscript_parser.parse()
-	print(gdscript_parser)
-	print("UPDATING CLASS MEMBERS")
+	if is_instance_valid(mem):
+		mem.stop()
+	
 	_initialize_regexes()
-	#var parser = get_gdscript_parser()
-	var parser = gdscript_parser
+	var members_changed:= false
 	
 	var new_const_words:= {}
 	var new_pasc_words:= {}
@@ -388,21 +380,27 @@ func update_class_members(allow_invalidate:=false):
 	var new_inh_member_words:= {}
 	var inner_class_member_words:= {}
 	
-	print("UPDATE PARSER::", parser.get_current_script())
-	print(get_text_edit().get_line(0))
+	print("UPDATE PARSER::", gdscript_parser.get_current_script())
 	
-	var main_class_obj = parser.get_class_object() as GDScriptParser.ParserClass
+	var main_class_obj = gdscript_parser.get_class_object() as GDScriptParser.ParserClass
 	for m in main_class_obj.get_inherited_members():
-		new_inh_member_words[m] = true
+		if true:
+			_check_word(m, new_const_words, new_pasc_words, new_inh_member_words)
+		else:
+			new_inh_member_words[m] = true
 	
-	var i_chg := inherited_member_highlighter.set_highlight_words(new_inh_member_words)
+	if is_instance_valid(inherited_member_highlighter):
+		var i_chg:= inherited_member_highlighter.set_highlight_words(new_inh_member_words)
+		members_changed = maxi(members_changed, i_chg)
 	
-	var new_base_type_members = UClassDetail.get_members_of_base_type(main_class_obj.script_base_type)
-	var cl_chg := class_member_highlighter.set_highlight_words(new_base_type_members)
+	if is_instance_valid(class_member_highlighter):
+		var new_base_type_members = UClassDetail.get_members_of_base_type(main_class_obj.script_base_type)
+		var cl_chg := class_member_highlighter.set_highlight_words(new_base_type_members)
+		members_changed = maxi(members_changed, cl_chg)
 	
 	
-	for access_name in parser.get_classes():
-		var class_obj = parser.get_class_object(access_name) as GDScriptParser.ParserClass
+	for access_name in gdscript_parser.get_classes():
+		var class_obj = gdscript_parser.get_class_object(access_name) as GDScriptParser.ParserClass
 		
 		for c:String in class_obj.constants:
 			_check_word(c, new_const_words, new_pasc_words, new_member_words)
@@ -423,16 +421,29 @@ func update_class_members(allow_invalidate:=false):
 	#print(new_member_words.size())
 	#print(new_member_words.keys())
 	
-	var c_chg := const_highlighter.set_highlight_words(new_const_words)
-	var p_chg := pascal_highlighter.set_highlight_words(new_pasc_words)
-	var m_chg := member_highlighter.set_highlight_words(new_member_words)
-	var ic_chg := inner_class_member_highlighter.set_highlight_words(inner_class_member_words)
-	if allow_invalidate and (i_chg or cl_chg or c_chg or p_chg or m_chg or ic_chg):
-		prints("INVAL ON CLASS::",i_chg , cl_chg , c_chg , p_chg , m_chg , ic_chg)
+	if is_instance_valid(const_highlighter):
+		var c_chg := const_highlighter.set_highlight_words(new_const_words)
+		members_changed = maxi(members_changed, c_chg)
+	
+	if is_instance_valid(pascal_highlighter):
+		var p_chg := pascal_highlighter.set_highlight_words(new_pasc_words)
+		members_changed = maxi(members_changed, p_chg)
+	
+	if is_instance_valid(member_highlighter):
+		var m_chg := member_highlighter.set_highlight_words(new_member_words)
+		members_changed = maxi(members_changed, m_chg)
+	
+	if is_instance_valid(inner_class_member_highlighter):
+		var ic_chg := inner_class_member_highlighter.set_highlight_words(inner_class_member_words)
+		members_changed = maxi(members_changed, ic_chg)
+	
+	print("CLASS::","CAN INVAL::%s::" % allow_invalidate,members_changed)
+	
+	if allow_invalidate and members_changed:
 		invalidate_all()
 	
 	t.stop()
-
+	return members_changed
 
 
 func check_newline_buffer():
@@ -449,17 +460,6 @@ func check_newline_buffer():
 		DummyHelper.dummy_code_edit.text = text_edit.text
 	elif buffer_health < 15:
 		DummyHelper.dummy_code_edit.text += "\n".repeat(buffer_size)
-
-
-func clear_highlighting_cache() -> void:
-	if is_instance_valid(dummy_helper.base_gdscript_highlighter): # do I need this?
-		dummy_helper.base_gdscript_highlighter.clear_highlighting_cache()
-	
-	return
-	if is_instance_valid(get_text_edit()):
-		var text_edit = get_text_edit()
-		if not text_edit.caret_changed.is_connected(_on_caret_changed):
-			text_edit.caret_changed.connect(_on_caret_changed)
 
 
 func _notification(what: int) -> void:
@@ -493,27 +493,28 @@ func _initialize_regexes():
 		_pascal_regex.compile("\\b([A-Z]\\w*[a-z]\\w*)\\b")
 		
 
+func set_inactive():
+	gdscript_parser = null
+	for hl in script_member_highlighters:
+		hl.set_highlight_words({})
 
 func invalidate_all():
 	_invalidate_all.call_deferred()
 
 func _invalidate_all():
-	#clear_highlighting_cache()
-	#return
-	#init_scan_done = false # should be good to ignore this now that setting dummy_code_edit
+	if not CAN_INVALIDATE:
+		return
+	print("INVALIDATING::", script_resource)
+	
 	var text_edit = get_text_edit()
 	var text_changed_signal_list = text_edit.get_signal_connection_list("text_changed")
 	for data in text_changed_signal_list:
 		var callable = data.get("callable")
 		text_edit.text_changed.disconnect(callable)
-	#print(text_changed_signal_list)
-	
 	
 	var scroll_pos = text_edit.get_v_scroll_bar().value # get current pos and reset after, changing text causes a scroll action
-	print("INVALIDATING::", text_edit.get_line(0))
 	
 	var current_line = text_edit.get_caret_line()
-	#text_edit.start_action(TextEdit.ACTION_TYPING)
 	for i in range(text_edit.get_line_count()):
 		if i == current_line:
 			continue
@@ -521,9 +522,6 @@ func _invalidate_all():
 		DummyHelper.dummy_code_edit.set_line(i, text)
 		text_edit.set_line(i, text)
 		text_edit.undo()
-	
-	#text_edit.end_action()
-	#text_edit.undo()
 	
 	text_edit.get_v_scroll_bar().set_value_no_signal(scroll_pos)
 	text_edit.queue_redraw()
@@ -536,7 +534,9 @@ func _invalidate_all():
 		text_edit.text_changed.connect(callable, flags)
 
 func invalidate(line:=-1):
-	#init_scan_done = false
+	if not CAN_INVALIDATE:
+		return
+	
 	var text_edit = get_text_edit()
 	if line == -1 or line > text_edit.get_line_count():
 		line = text_edit.get_caret_line()

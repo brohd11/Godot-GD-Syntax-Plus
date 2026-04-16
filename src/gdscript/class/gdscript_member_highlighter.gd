@@ -1,8 +1,10 @@
 @tool
 extends RefCounted
 
-const Utils = preload("res://addons/syntax_plus/src/gdscript/class/syntax_plus_utils.gd") #>import utils.gd
-const UClassDetail = Utils.UClassDetail
+const SPClasses = preload("res://addons/syntax_plus/src/utils/classes.gd")
+const UClassDetail = SPClasses.UtilsRemote.UClassDetail
+
+const OldUtils = preload("res://addons/syntax_plus/src/gdscript/class/syntax_plus_utils.gd") #>import utils.gd
 const GDHelper = preload("res://addons/syntax_plus/src/gdscript/editor/gdscript_helper.gd")  #>import gdscript_helper.gd
 
 var script_class_name:String = "No Class"
@@ -21,9 +23,9 @@ func _init(tag, cfg_data) -> void:
 	highlight_tag = tag
 	var keywords:String = cfg_data.get("keyword", "any")
 	
-	var color = cfg_data.get("color", Utils.DEFAULT_COLOR_STRING)
+	var color = cfg_data.get("color", OldUtils.DEFAULT_COLOR_STRING)
 	highlight_color = Color.html(color)
-	var pattern = Utils.get_regex_pattern(keywords, tag)
+	var pattern = OldUtils.get_regex_pattern(keywords, tag)
 	declaration_regex = RegEx.new()
 	var err = declaration_regex.compile(pattern)
 	if err != OK:
@@ -35,14 +37,14 @@ func _init(tag, cfg_data) -> void:
 
 func force_class_member_rebuild():
 	script_class_name = get_current_script_class()
-	var class_member_check = get_all_class_members()
+	var class_member_check = get_all_class_members(ScriptEditorRef.get_current_script())
 	class_member_names = class_member_check
 	rebuild_class_member_regex()
 
 func check_class_valid():
 	if script_class_name != get_current_script_class():
 		script_class_name = get_current_script_class()
-		var class_member_check = get_all_class_members()
+		var class_member_check = get_all_class_members(ScriptEditorRef.get_current_script())
 		if class_member_check.hash() != class_member_names.hash():
 			class_member_names = class_member_check
 			rebuild_class_member_regex()
@@ -64,10 +66,10 @@ func check_line(hl_info, current_line_text):
 
 
 func rebuild_script_member_regex():
-	script_member_regex = Utils.build_name_regex(script_member_names.keys())
+	script_member_regex = OldUtils.build_name_regex(script_member_names.keys())
 
 func rebuild_class_member_regex():
-	class_member_regex = Utils.build_name_regex(class_member_names)
+	class_member_regex = OldUtils.build_name_regex(class_member_names)
 
 static func check_line_hl(hl_info, current_line_text, name_array, regex, hl_color, overwrite):
 	var needs_sort = false

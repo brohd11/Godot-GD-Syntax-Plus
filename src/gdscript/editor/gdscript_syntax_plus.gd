@@ -3,12 +3,14 @@ extends EditorSyntaxHighlighter
 
 const PLUGIN_EXPORTED = false
 
-const Utils = preload("res://addons/syntax_plus/src/gdscript/class/syntax_plus_utils.gd") #>import utils.gd
-const EditorConfig = SyntaxPlusSingleton.EditorConfig
+const SPClasses = preload("res://addons/syntax_plus/src/utils/classes.gd")
+const EditorConfig = SPClasses.EditorConfig
+const TagHighlighter = SPClasses.TagHighlighter
+
+const OldUtils = preload("res://addons/syntax_plus/src/gdscript/class/syntax_plus_utils.gd") #>import utils.gd
 const GDHelper = preload("res://addons/syntax_plus/src/gdscript/editor/gdscript_helper.gd") #>import gdscript_helper.gd
 const HighlightHelper = preload("res://addons/syntax_plus/src/gdscript/class/gdscript_highlight_helper.gd") #>import gdscript_highlight_helper.gd
 const MemberHighlighter = preload("res://addons/syntax_plus/src/gdscript/class/gdscript_member_highlighter.gd")
-const TagHighlighter = preload("res://addons/syntax_plus/src/gdscript/class/tag_highlighter.gd") #>import tag_highlighter.gd
 
 var gd_helper: GDHelper
 var highlight_helpers:Array[HighlightHelper] = []
@@ -55,23 +57,23 @@ func create_highlight_helpers():
 		highlight_helpers.append(highlighter)
 		tags.append(tag)
 	
-	if GDHelper.config.get(Utils.Settings.CONST_ENABLE):
-		var const_tag_highlighter = HighlightHelper.new("=CONST_HL",Utils.get_const_hl_data())
+	if GDHelper.config.get(OldUtils.Settings.CONST_ENABLE):
+		var const_tag_highlighter = HighlightHelper.new("=CONST_HL",OldUtils.get_const_hl_data())
 		highlight_helpers.append(const_tag_highlighter)
-	if GDHelper.config.get(Utils.Settings.PASCAL_ENABLE, false):
-		var class_tag_highlighter = HighlightHelper.new("=CLASS_HL",Utils.get_pascal_hl_data())
+	if GDHelper.config.get(OldUtils.Settings.PASCAL_ENABLE, false):
+		var class_tag_highlighter = HighlightHelper.new("=CLASS_HL",OldUtils.get_pascal_hl_data())
 		highlight_helpers.append(class_tag_highlighter)
-	if GDHelper.config.get(Utils.Settings.ONREADY_ENABLE):
-		var onready_tag_highlighter = HighlightHelper.new("=ONREADY_HL", Utils.get_onready_hl_data())
+	if GDHelper.config.get(OldUtils.Settings.ONREADY_ENABLE):
+		var onready_tag_highlighter = HighlightHelper.new("=ONREADY_HL", OldUtils.get_onready_hl_data())
 		highlight_helpers.append(onready_tag_highlighter)
 	
-	if GDHelper.config.get(Utils.Settings.MEMBER_ENABLE):
-		member_highlighter = MemberHighlighter.new("=MEMBER_HL",Utils.get_member_hl_data())
+	if GDHelper.config.get(OldUtils.Settings.MEMBER_ENABLE):
+		member_highlighter = MemberHighlighter.new("=MEMBER_HL",OldUtils.get_member_hl_data())
 	
 	
 	tag_highlighter = TagHighlighter.new(tags, editor_tags)
-	tag_highlighter.highlight_color = GDHelper.config.get(Utils.Settings.TAG_COLOR)
-	tag_highlighter.tag_enabled = GDHelper.config.get(Utils.Settings.TAG_COLOR_ENABLE)
+	tag_highlighter.highlight_color = GDHelper.config.get(OldUtils.Settings.TAG_COLOR)
+	tag_highlighter.tag_enabled = GDHelper.config.get(OldUtils.Settings.TAG_COLOR_ENABLE)
 
 
 static func read_editor_tags():
@@ -177,12 +179,12 @@ func _get_line_syntax_highlighting(line_idx: int) -> Dictionary:
 	#^
 	
 	#^ Overide member access color
-	if GDHelper.config.get(Utils.Settings.MEMBER_ACCESS_ENABLE):
+	if GDHelper.config.get(OldUtils.Settings.MEMBER_ACCESS_ENABLE):
 		for key in hl_info.keys():
 			var data = hl_info.get(key)
 			var og_color = data.get("color")
 			if og_color == GDHelper.editor_member_color:
-				hl_info[key]["color"] = GDHelper.config.get(Utils.Settings.MEMBER_ACCESS_COLOR)
+				hl_info[key]["color"] = GDHelper.config.get(OldUtils.Settings.MEMBER_ACCESS_COLOR)
 	#^
 	
 	#^ Sort keys, necessary
@@ -213,7 +215,7 @@ func _get_line_syntax_highlighting(line_idx: int) -> Dictionary:
 		hl_info = GDHelper.get_comment_tag_info(text_edit, current_line_text, line_idx, comment_tag_prefix, comment_tag_index, hl_info)
 	
 	if needs_sort:
-		hl_info = Utils.sort_keys(hl_info)
+		hl_info = OldUtils.sort_keys(hl_info)
 	return hl_info
 
 
@@ -239,7 +241,7 @@ func update_tagged_name_list(force_build=false) -> void:
 	#^
 	
 	#^ if flags found, check for changes in current line
-	var check = Utils.check_line_for_rebuild(current_line_text, current_line_last_state)
+	var check = OldUtils.check_line_for_rebuild(current_line_text, current_line_last_state)
 	if check and not full_rebuild:
 		var found_name = false
 		for highlight_helper in highlight_helpers:

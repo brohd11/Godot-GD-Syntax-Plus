@@ -3,7 +3,7 @@ extends VBoxContainer
 
 const GDSynTags = preload("res://addons/syntax_plus/src/gdscript/code_edit/gdscript_syntax_plus_code.gd") #>import gdscript_tags_code.gd
 const GDHelper = preload("res://addons/syntax_plus/src/gdscript/code_edit/gdscript_helper_code.gd") #>import gdscript_helper_code.gd
-const Utils = GDSynTags.Utils #>import
+const Utils = preload("res://addons/syntax_plus/src/utils/utils.gd")
 
 
 @onready var code_edit: CodeEdit = %CodeEdit

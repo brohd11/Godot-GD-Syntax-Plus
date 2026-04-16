@@ -1,8 +1,10 @@
 @tool
 extends RefCounted
 
-const Utils = preload("res://addons/syntax_plus/src/gdscript/class/syntax_plus_utils.gd") #>import utils.gd
-const GDHelper = preload("res://addons/syntax_plus/src/gdscript/editor/gdscript_helper.gd")  #>import gdscript_helper.gd
+const SPClasses = preload("res://addons/syntax_plus/src/utils/classes.gd")
+const Utils = SPClasses.Utils
+const HighlightLogic = SPClasses.HighlightLogic
+
 
 var highlight_words:= {}
 var _last_words_hash:int = -1
@@ -45,7 +47,7 @@ func check_line(hl_info, current_line_text):
 				if index_data == null:
 					continue
 				var existing_color = hl_info.get(start_idx, {}).get("color")
-				if existing_color != GDHelper.default_text_color:
+				if existing_color != HighlightLogic.default_text_color:
 					continue
 			else:
 				

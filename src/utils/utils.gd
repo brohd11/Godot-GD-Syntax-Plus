@@ -1,11 +1,6 @@
-
-const Remote = preload("res://addons/syntax_plus/src/utils/utils_remote.gd")
-const UFile = Remote.UFile #>remote
-const URegex = Remote.URegex #>remote
-const UClassDetail = Remote.UClassDetail
-const ConfirmationDialogHandler = Remote.ConfirmationDialogHandler
-
-const Settings = preload("res://addons/syntax_plus/src/utils/config/settings.gd")
+const SPClasses = preload("res://addons/syntax_plus/src/utils/classes.gd")
+const UtilsRemote = preload("res://addons/syntax_plus/src/utils/utils_remote.gd")
+const URegex = UtilsRemote.URegex #>remote
 
 
 const ANY_STRING = "const|var|@onready var|@export var|enum|class|func"
@@ -46,7 +41,32 @@ static func check_line_for_rebuild(line_text:String, line_text_last_state:String
 	
 	return false
 
-
+static func build_name_regex(name_array:Array, tag_hl:=false):
+	var regex = RegEx.new()
+	if name_array.is_empty():
+		if is_instance_valid(regex): # Check if already created
+			regex.compile("(?!)") # Non-matching regex
+		else:
+			regex = RegEx.new()
+			regex.compile("(?!)")
+		return
+	
+	var pattern_parts = []
+	for name in name_array:
+		pattern_parts.append(URegex.escape_regex_meta_characters(str(name))) # Escape the name
+	
+	if not is_instance_valid(regex):
+		regex = RegEx.new()
+	var err
+	if tag_hl:
+		err = regex.compile("(?:#)?(" + "|".join(pattern_parts) + ")\\b")
+	else:
+		err = regex.compile("\\b(" + "|".join(pattern_parts) + ")\\b")
+	if err != OK:
+		printerr("CustomHighlighter: Regex compilation error: %s - Names:\n%s" % [err, " ".join(name_array)])
+		regex.compile("(?!)")
+	
+	return regex
 
 
 static func get_regex_pattern(keywords:String, tag):
@@ -164,89 +184,3 @@ static func get_regex_pattern(keywords:String, tag):
 			)
 	
 	return pattern
-
-static func build_name_regex(name_array:Array, tag_hl:=false):
-	var regex = RegEx.new()
-	if name_array.is_empty():
-		if is_instance_valid(regex): # Check if already created
-			regex.compile("(?!)") # Non-matching regex
-		else:
-			regex = RegEx.new()
-			regex.compile("(?!)")
-		return
-	
-	var pattern_parts = []
-	for name in name_array:
-		pattern_parts.append(URegex.escape_regex_meta_characters(str(name))) # Escape the name
-	
-	if not is_instance_valid(regex):
-		regex = RegEx.new()
-	var err
-	if tag_hl:
-		err = regex.compile("(?:#)?(" + "|".join(pattern_parts) + ")\\b")
-	else:
-		err = regex.compile("\\b(" + "|".join(pattern_parts) + ")\\b")
-	if err != OK:
-		printerr("CustomHighlighter: Regex compilation error: %s - Names:\n%s" % [err, " ".join(name_array)])
-		regex.compile("(?!)")
-	
-	return regex
-
-static func _get_editor_setting(setting:String):
-	var ed_s = EditorInterface.get_editor_settings()
-	if ed_s.has_setting(setting):
-		return ed_s.get_setting(setting)
-	else:
-		var default_val = Settings.DEFAULT_SETTINGS.get(setting)
-		if setting.ends_with("color"):
-			default_val = Color.html(default_val)
-		ed_s.set_setting(setting, default_val)
-		return ed_s.get_setting(setting)
-		
-
-
-
-
-
-
-static func get_pascal_hl_data():
-	return {
-		"color": _get_editor_setting(Settings.PASCAL_COLOR).to_html(),
-		"keyword":"const|vars",
-		"menu":"None",
-		"overwrite":false
-	}
-
-static func get_const_hl_data():
-	return {
-		"color": _get_editor_setting(Settings.CONST_COLOR).to_html(),
-		"keyword":"const",
-		"menu":"None",
-		"overwrite":false
-	}
-
-static func get_onready_hl_data():
-	return {
-		"color": _get_editor_setting(Settings.ONREADY_COLOR).to_html(),
-		"keyword":"@onready var",
-		"menu":"None",
-		"overwrite":false 
-	}
-	
- 
-static func get_member_hl_data():
-	return {
-		"color": _get_editor_setting(Settings.MEMBER_COLOR).to_html(),
-		"keyword":"@export var|@onready var|var|const|class",
-		"menu":"None",
-		"overwrite":false 
-	}
-
-static func get_hl_data(color:Color):
-	return {
-		"color": color,
-		"keyword":"@export var|@onready var|var|const|class",
-		"menu":"None",
-		"overwrite":false
-	}
-	

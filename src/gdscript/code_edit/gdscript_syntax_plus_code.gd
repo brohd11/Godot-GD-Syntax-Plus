@@ -1,11 +1,14 @@
 @tool
 extends CodeHighlighter
 
-const Utils = preload("res://addons/syntax_plus/src/gdscript/class/syntax_plus_utils.gd") # syntax_plus_utils.gd #>import
-const EditorConfig = SyntaxPlusSingleton.EditorConfig
+const SPClasses = preload("res://addons/syntax_plus/src/utils/classes.gd")
+const EditorConfig = SPClasses.EditorConfig
+const TagHighlighter = SPClasses.TagHighlighter
+
+const OldUtils = preload("res://addons/syntax_plus/src/gdscript/class/syntax_plus_utils.gd") # syntax_plus_utils.gd #>import
 const GDHelper = preload("res://addons/syntax_plus/src/gdscript/code_edit/gdscript_helper_code.gd") #>import gdscript_helper_code.gd
 const HighlightHelper = preload("res://addons/syntax_plus/src/gdscript/class/gdscript_highlight_helper.gd") #>import gdscript_highlight_helper.gd
-const TagHighlighter = preload("res://addons/syntax_plus/src/gdscript/class/tag_highlighter.gd")
+
 
 var gd_helper: GDHelper
 var highlight_helpers:Array[HighlightHelper] = []
@@ -52,23 +55,23 @@ func create_highlight_helpers():
 		
 		tags.append(tag)
 	
-	if GDHelper.config.get(Utils.Settings.CONST_ENABLE):
-		var const_tag_highlighter = HighlightHelper.new("=CONST_HL",Utils.get_const_hl_data())
+	if GDHelper.config.get(OldUtils.Settings.CONST_ENABLE):
+		var const_tag_highlighter = HighlightHelper.new("=CONST_HL",OldUtils.get_const_hl_data())
 		highlight_helpers.append(const_tag_highlighter)
-	if GDHelper.config.get(Utils.Settings.PASCAL_ENABLE, false):
-		var class_tag_highlighter = HighlightHelper.new("=CLASS_HL",Utils.get_pascal_hl_data())
+	if GDHelper.config.get(OldUtils.Settings.PASCAL_ENABLE, false):
+		var class_tag_highlighter = HighlightHelper.new("=CLASS_HL",OldUtils.get_pascal_hl_data())
 		highlight_helpers.append(class_tag_highlighter)
-	if GDHelper.config.get(Utils.Settings.ONREADY_ENABLE):
-		var onready_tag_highlighter = HighlightHelper.new("=ONREADY_HL", Utils.get_onready_hl_data())
+	if GDHelper.config.get(OldUtils.Settings.ONREADY_ENABLE):
+		var onready_tag_highlighter = HighlightHelper.new("=ONREADY_HL", OldUtils.get_onready_hl_data())
 		highlight_helpers.append(onready_tag_highlighter)
 	
-	#if GDHelper.config.get(Utils.Config.member_enable, true):
-		#var member_tag_highlighter = HighlightHelper.new("=MEMBER_HL",Utils.get_member_hl_data())
+	#if GDHelper.config.get(OldUtils.Config.member_enable, true):
+		#var member_tag_highlighter = HighlightHelper.new("=MEMBER_HL",OldUtils.get_member_hl_data())
 		#highlight_helpers.append(member_tag_highlighter)
 	
 	tag_highlighter = TagHighlighter.new(tags, editor_tags)
-	tag_highlighter.highlight_color = GDHelper.config.get(Utils.Settings.TAG_COLOR)
-	tag_highlighter.tag_enabled = GDHelper.config.get(Utils.Settings.TAG_COLOR_ENABLE)
+	tag_highlighter.highlight_color = GDHelper.config.get(OldUtils.Settings.TAG_COLOR)
+	tag_highlighter.tag_enabled = GDHelper.config.get(OldUtils.Settings.TAG_COLOR_ENABLE)
 
 
 func _on_caret_changed():
@@ -101,7 +104,7 @@ func _get_line_syntax_highlighting(line_idx: int) -> Dictionary:
 		needs_sort = check[1]
 	
 	if needs_sort:
-		hl_info = Utils.sort_keys(hl_info)
+		hl_info = OldUtils.sort_keys(hl_info)
 	
 	if line_idx == get_text_edit().get_line_count() - 1:
 		clear_highlighting_cache() #forces update.. i think
@@ -136,7 +139,7 @@ func update_tagged_name_list(force_build=false) -> void:
 		var old_data = tagged_data.get(highlight_helper, {})
 		new_tagged_data[highlight_helper] = old_data.duplicate()
 	
-	var check = Utils.check_line_for_rebuild(current_line_text, current_line_last_state)
+	var check = OldUtils.check_line_for_rebuild(current_line_text, current_line_last_state)
 	if check and not full_rebuild: # if not pound sign, no need to check. If blank, check if tag deleted
 		for highlight_helper:HighlightHelper in highlight_helpers:
 			var declaration_regex = highlight_helper.declaration_regex
