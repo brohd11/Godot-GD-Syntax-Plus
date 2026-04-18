@@ -42,6 +42,9 @@ static var _pascal_regex:RegEx
 
 var _gdscript_parser:WeakRef
 var gdscript_parser:GDScriptParser # maybe could have it's own?
+var _members_hash:int = -1
+var _script_extended #:GDScript
+var _script_base_type:String
 var script_resource:GDScript
 
 var dummy_helper:DummyHelper
@@ -232,7 +235,6 @@ func get_line_syntax_highlighting(line_idx: int) -> Dictionary:
 	return hl_info
 
 
-
 func update_tagged_name_list(force_build=false) -> void:
 	_initialize_regexes()
 	var t = ALibRuntime.Utils.UProfile.TimeFunction.new("UPDATE TAGGED NEW")
@@ -317,9 +319,9 @@ func update_tagged_name_list(force_build=false) -> void:
 			if chg:
 				has_changed_tag = true
 		
-		var changed = update_class_members()
-		if changed:
-			has_changed_tag = true
+		#var changed = update_class_members()
+		#if changed:
+			#has_changed_tag = true
 		
 		if has_changed_tag: # fairly slow, would be nice to check if needed, any instances of word above
 			invalidate_all() # for this PC it's not really a big deal...
@@ -356,20 +358,36 @@ func update_class_members(allow_invalidate:=false):
 	if script_member_highlighters.is_empty():
 		return
 	var t = ALibRuntime.Utils.UProfile.TimeFunction.new("UPDATE CLASS MEMBERS")
-	var mem
 	if not is_instance_valid(gdscript_parser):
-		mem = ALibRuntime.Utils.UProfile.Memory.new()
 		gdscript_parser = GDScriptParser.new()
 		gdscript_parser.set_current_script(script_resource)
 		gdscript_parser.set_code_edit(get_text_edit())
 		gdscript_parser.set_parser_cache_size(0)
 	
-	#print("CACHE DIRTY::", gdscript_parser.get_code_edit_parser().cache_dirty)
-	if not gdscript_parser.get_code_edit_parser().cache_dirty:
-		return
+	
 	gdscript_parser.parse()
-	if is_instance_valid(mem):
-		mem.stop()
+	var main_class_obj = gdscript_parser.get_class_object() as GDScriptParser.ParserClass
+	var parser_script_res = main_class_obj.script_resource
+	
+	var parser_hash = gdscript_parser.get_members_hash()
+	var member_hash_ok = parser_hash == _members_hash
+	_members_hash = parser_hash
+	
+	var base_type = parser_script_res.get_instance_base_type()
+	var base_ok = base_type == _script_base_type
+	_script_base_type = base_type
+	
+	if _script_extended is String:
+		_script_extended = null
+	var extended = parser_script_res.get_base_script()
+	var extended_ok = extended == _script_extended
+	_script_extended = extended
+	
+	prints("CHECK::", member_hash_ok, extended_ok, base_ok, _script_base_type)
+	if member_hash_ok and extended_ok and base_ok:
+		print("EXIT")
+		t.stop()
+		return
 	
 	_initialize_regexes()
 	var members_changed:= false
@@ -382,7 +400,11 @@ func update_class_members(allow_invalidate:=false):
 	
 	print("UPDATE PARSER::", gdscript_parser.get_current_script())
 	
-	var main_class_obj = gdscript_parser.get_class_object() as GDScriptParser.ParserClass
+	if is_instance_valid(class_member_highlighter):
+		var new_base_type_members = UClassDetail.get_members_of_base_type(_script_base_type)
+		var cl_chg := class_member_highlighter.set_highlight_words(new_base_type_members)
+		members_changed = maxi(members_changed, cl_chg)
+	
 	for m in main_class_obj.get_inherited_members():
 		if true:
 			_check_word(m, new_const_words, new_pasc_words, new_inh_member_words)
@@ -392,12 +414,6 @@ func update_class_members(allow_invalidate:=false):
 	if is_instance_valid(inherited_member_highlighter):
 		var i_chg:= inherited_member_highlighter.set_highlight_words(new_inh_member_words)
 		members_changed = maxi(members_changed, i_chg)
-	
-	if is_instance_valid(class_member_highlighter):
-		var new_base_type_members = UClassDetail.get_members_of_base_type(main_class_obj.script_base_type)
-		var cl_chg := class_member_highlighter.set_highlight_words(new_base_type_members)
-		members_changed = maxi(members_changed, cl_chg)
-	
 	
 	for access_name in gdscript_parser.get_classes():
 		var class_obj = gdscript_parser.get_class_object(access_name) as GDScriptParser.ParserClass
@@ -415,12 +431,6 @@ func update_class_members(allow_invalidate:=false):
 			for m:String in class_obj.members:
 				inner_class_member_words[m] = true
 	
-	
-	#print(member_highlighter.highlight_words.size())
-	#print(member_highlighter.highlight_words.keys())
-	#print(new_member_words.size())
-	#print(new_member_words.keys())
-	
 	if is_instance_valid(const_highlighter):
 		var c_chg := const_highlighter.set_highlight_words(new_const_words)
 		members_changed = maxi(members_changed, c_chg)
@@ -436,6 +446,11 @@ func update_class_members(allow_invalidate:=false):
 	if is_instance_valid(inner_class_member_highlighter):
 		var ic_chg := inner_class_member_highlighter.set_highlight_words(inner_class_member_words)
 		members_changed = maxi(members_changed, ic_chg)
+	
+	#print(member_highlighter.highlight_words.size())
+	#print(member_highlighter.highlight_words.keys())
+	#print(new_member_words.size())
+	#print(new_member_words.keys())
 	
 	print("CLASS::","CAN INVAL::%s::" % allow_invalidate,members_changed)
 	
@@ -487,7 +502,7 @@ func _is_pascal(text:String):
 func _initialize_regexes():
 	if not is_instance_valid(_const_regex):
 		_const_regex = RegEx.new()
-		_const_regex.compile("\\b([A-Z][A-Z_0-9]*)\\b")
+		_const_regex.compile("\\b([A-Z_][A-Z_0-9]*)\\b") # allows to start with '_', wanted?
 	if not is_instance_valid(_pascal_regex):
 		_pascal_regex = RegEx.new()
 		_pascal_regex.compile("\\b([A-Z]\\w*[a-z]\\w*)\\b")
@@ -529,9 +544,12 @@ func _invalidate_all():
 	await text_edit.get_tree().process_frame
 	
 	for data in text_changed_signal_list:
-		var callable = data.get("callable")
+		var callable = data.get("callable") as Callable
 		var flags = data.get("flags")
-		text_edit.text_changed.connect(callable, flags)
+		if not text_edit.text_changed.is_connected(callable):
+			text_edit.text_changed.connect(callable, flags)
+		else:
+			prints(callable.get_object(), callable.get_method())
 
 func invalidate(line:=-1):
 	if not CAN_INVALIDATE:

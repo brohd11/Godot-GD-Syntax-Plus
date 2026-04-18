@@ -4,6 +4,8 @@ const UtilsRemote = preload("res://addons/syntax_plus/src/utils/utils_remote.gd"
 const EditorConfig = preload("res://addons/syntax_plus/src/utils/config/editor.gd")
 const Settings = preload("res://addons/syntax_plus/src/utils/config/settings.gd")
 
+const HLInfo = preload("res://addons/syntax_plus/src/utils/hl_info.gd")
+
 const EditorHL = preload("res://addons/syntax_plus/src/highlighter/editor_hl.gd")
 
 const DummyHelper = preload("res://addons/syntax_plus/src/highlighter/dummy_helper.gd")

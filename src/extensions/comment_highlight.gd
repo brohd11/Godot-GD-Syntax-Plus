@@ -1,5 +1,7 @@
 extends RefCounted
 
+const HLInfo = SyntaxPlusSingleton.HLInfo
+
 const UNCOLORED_BG = Color(0,0,0,0)
 
 #^ settings
@@ -69,25 +71,35 @@ func _on_validate_script():
 func set_backgrounds():
 	_set_background_colors()
 
+#^{[r]
+#^ 
+
+#^r{[g/b] dsdsds 
+#^ fkslklsdd
+#^{[b/r]
+#^ fdklfdkl
+
+#^r}}} fdfddsdsf
+
 func _highlight_comment(script_editor:CodeEdit, current_line_text:String, line:int, comment_tag_idx:int):
 	#if group_data.is_empty(): #^r would be nice to only run once
 		#_read_group_data()
+	var sp_ins = SyntaxPlusSingleton.get_instance()
 	
-	var substr = current_line_text.substr(comment_tag_idx + 2)
-	var first_word = substr.get_slice(" ", 0)
+	var comment_text = current_line_text.substr(comment_tag_idx)# + 2)
+	var stripped = comment_text.substr(2)
+	var first_word = stripped.get_slice(" ", 0)
 	
-	var has_open_brack = false
-	var has_close_brack = false
-	var open_brack_i = first_word.find("{")
-	var close_brack_i = first_word.find("}")
-	if open_brack_i > -1:
-		has_open_brack = true
-		first_word = first_word.substr(0, open_brack_i)
-		open_brack_i = open_brack_i - 1 # set this to - 1 to hl the bracket
-	if close_brack_i > -1:
-		has_close_brack = true
-		first_word = first_word.substr(0, close_brack_i)
-		close_brack_i = close_brack_i - 1 # set this to - 1 to hl the bracket
+	var has_open_brack = first_word.contains("{")
+	var has_close_brack = first_word.contains("}")
+	var open_brack_i = -1
+	var close_brack_i = -1
+	if has_open_brack:
+		open_brack_i = comment_text.find("{")
+		first_word = first_word.substr(0, first_word.find("{"))
+	if has_close_brack:
+		close_brack_i = comment_text.find("}")
+		first_word = first_word.substr(0, first_word.find("}"))
 	
 	if has_open_brack or has_close_brack:
 		_read_group_data()
@@ -114,30 +126,35 @@ func _highlight_comment(script_editor:CodeEdit, current_line_text:String, line:i
 	
 	var hl_info = {}
 	#^ start of line hl overide
-	hl_info[-2] = _hl_info_color_dict(hl_color)
-	hl_info[-1] = _hl_info_color_dict(hl_color)
+	hl_info[0] = HLInfo.get_color_dict(sp_ins.comment_color)
+	hl_info[1] = HLInfo.get_color_dict(hl_color)
+	hl_info[2] = HLInfo.get_color_dict(hl_color)
 	
 	#^ Open Bracket
 	if has_open_brack:
-		hl_info[open_brack_i] = _hl_info_color_dict(bg_color)
-		var open_sq_i = substr.find("[")
-		var close_sq_i = substr.find("]")
+		hl_info[open_brack_i] = HLInfo.get_color_dict(bg_color)
+		var open_sq_i = comment_text.find("[")
+		var close_sq_i = comment_text.find("]")
 		if open_sq_i > -1 and close_sq_i > -1:
-			hl_info[open_sq_i - 1] = _hl_info_color_dict(fg_color)
-			var split_i = substr.find("/")
+			hl_info[open_sq_i] = HLInfo.get_color_dict(fg_color)
+			var split_i = comment_text.find("/")
 			if split_i > -1:
-				hl_info[split_i] = _hl_info_color_dict(bg_color)
-				hl_info[close_sq_i - 1] = _hl_info_color_dict(fg_color)
+				hl_info[split_i] = HLInfo.get_color_dict(bg_color)
+			elif open_sq_i + 1 < close_sq_i: # not empty but no slash, color it as bg
+				hl_info[close_sq_i - 1] = HLInfo.get_color_dict(bg_color)
+			
+			hl_info[close_sq_i] = HLInfo.get_color_dict(fg_color)
+			
 			if has_close_brack:
-				hl_info[close_sq_i] = _hl_info_color_dict(bg_color)
-				hl_info[close_brack_i + 1] = _hl_info_color_dict(hl_color)
+				hl_info[close_sq_i] = HLInfo.get_color_dict(bg_color)
+				hl_info[close_brack_i + 1] = HLInfo.get_color_dict(fg_color)
 			else:
-				hl_info[close_sq_i + 1] = _hl_info_color_dict(hl_color)
+				hl_info[close_sq_i + 1] = HLInfo.get_color_dict(hl_color)
 		else:
 			if has_close_brack:
-				hl_info[close_brack_i + 1] = _hl_info_color_dict(hl_color)
+				hl_info[close_brack_i + 1] = HLInfo.get_color_dict(hl_color)
 			else:
-				hl_info[open_brack_i + 1] = _hl_info_color_dict(hl_color)
+				hl_info[open_brack_i + 1] = HLInfo.get_color_dict(hl_color)
 	
 	#^ Close Bracket
 	if has_close_brack and not has_open_brack:
@@ -146,24 +163,24 @@ func _highlight_comment(script_editor:CodeEdit, current_line_text:String, line:i
 			multi_bracket_end = misc_data["multi_bracket_ends"][line]
 			pass
 		if multi_bracket_end == null:
-			hl_info[close_brack_i] = _hl_info_color_dict(bg_color)
+			hl_info[close_brack_i] = HLInfo.get_color_dict(bg_color)
 		else:
 			var i = 0
-			while i < substr.length() and multi_bracket_end.size() > 0:
-				var char = substr[i]
-				if char == "}":
+			while i < comment_text.length() and multi_bracket_end.size() > 0:
+				var _char = comment_text[i]
+				if _char == "}":
 					var color = multi_bracket_end.pop_front()
 					if color == null:
 						color = comment_color
-					hl_info[close_brack_i + i] = _hl_info_color_dict(color)
+					hl_info[i] = HLInfo.get_color_dict(color)
 				
 				if multi_bracket_end.is_empty():
-					close_brack_i += i # set this to i so that we can set it proper below
+					close_brack_i = i # set this to i so that we can set it proper below
 					break
 				
 				i += 1
 		#^ apply to both cases
-		hl_info[close_brack_i + 1] = _hl_info_color_dict(hl_color)
+		hl_info[close_brack_i + 1] = HLInfo.get_color_dict(hl_color)
 	
 	return hl_info
 

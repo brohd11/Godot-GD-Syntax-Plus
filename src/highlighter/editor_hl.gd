@@ -28,7 +28,8 @@ func _init() -> void:
 	EditorGDScriptParser.get_instance().parse_completed.connect(_on_parse_completed)
 
 func reset_highlighter():
-	hl_logic.gdscript_parser.get_code_edit_parser().cache_dirty = true
+	if is_instance_valid(hl_logic.gdscript_parser):
+		hl_logic.gdscript_parser.get_code_edit_parser().cache_dirty = true
 	hl_logic.create_highlight_helpers()
 
 func _on_scanning_tags():
