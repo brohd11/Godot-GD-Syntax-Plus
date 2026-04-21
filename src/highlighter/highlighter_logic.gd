@@ -3,6 +3,8 @@ const PLUGIN_EXPORTED = false
 const CAN_INVALIDATE = true
 const ADD_NEW_MEMBER = false
 
+const HLInfo = SyntaxPlusSingleton.HLInfo
+
 const SPClasses = preload("res://addons/syntax_plus/src/utils/classes.gd")
 
 const UtilsRemote = SPClasses.UtilsRemote
@@ -30,6 +32,7 @@ static var pascal_enable:bool
 static var member_enable:bool
 static var member_access_enable:bool
 static var inh_member_enable:bool
+static var inh_member_respect_case:bool
 static var base_type_member_enable:bool
 static var inner_class_member_enable:bool
 
@@ -102,12 +105,11 @@ func create_highlight_helpers():
 	tag_highlighter = null # clear when reseting
 	tagged_data.clear()
 	highlight_helpers.clear()
-	var tags = []
+	
 	for tag in editor_tags:
 		var data = editor_tags.get(tag)
 		var highlighter = HighlightHelper.new(data.get("color"), tag, data)
 		highlight_helpers.append(highlighter)
-		tags.append(tag)
 	
 	script_member_highlighters.clear()
 	if const_enable:
@@ -134,7 +136,7 @@ func create_highlight_helpers():
 		inner_class_member_highlighter = HighlightHelper.new(inner_class_member_color)
 		script_member_highlighters.append(inner_class_member_highlighter)
 	
-	tag_highlighter = TagHighlighter.new(tags, editor_tags)
+	tag_highlighter = TagHighlighter.new(editor_tags)
 	tag_highlighter.tag_enabled = tag_enable
 	tag_highlighter.highlight_color = tag_color
 
@@ -182,7 +184,7 @@ func get_line_syntax_highlighting(line_idx: int) -> Dictionary:
 				comment_tag_index = current_line_text.find(prefix)
 				comment_tag_prefix = prefix
 				if comment_index == 0:
-					return SyntaxPlusSingleton.HLInfo.get_comment_tag_info(text_edit, current_line_text, line_idx, comment_tag_prefix, comment_tag_index)
+					return HLInfo.get_comment_tag_info(text_edit, current_line_text, line_idx, comment_tag_prefix, comment_tag_index)
 				break
 	
 	#^ Not 100% sure duplicate is neces
@@ -228,16 +230,15 @@ func get_line_syntax_highlighting(line_idx: int) -> Dictionary:
 	#^
 	
 	if comment_tag_prefix != "":
-		hl_info = SyntaxPlusSingleton.HLInfo.get_comment_tag_info(text_edit, current_line_text, line_idx, comment_tag_prefix, comment_tag_index, hl_info)
+		hl_info = HLInfo.get_comment_tag_info(text_edit, current_line_text, line_idx, comment_tag_prefix, comment_tag_index, hl_info)
 	
 	if needs_sort:
-		hl_info = Utils.sort_keys(hl_info)
+		hl_info = HLInfo.sort_keys(hl_info)
 	return hl_info
-
 
 func update_tagged_name_list(force_build=false) -> void:
 	_initialize_regexes()
-	var t = ALibRuntime.Utils.UProfile.TimeFunction.new("UPDATE TAGGED NEW")
+	#var t = ALibRuntime.Utils.UProfile.TimeFunction.new("UPDATE TAGGED NEW")
 	var text_edit_node: CodeEdit = get_text_edit()
 	if not text_edit_node.caret_changed.is_connected(_on_caret_changed):
 		text_edit_node.caret_changed.connect(_on_caret_changed)
@@ -254,7 +255,7 @@ func update_tagged_name_list(force_build=false) -> void:
 	#^
 	
 	#^ if flags found, check for changes in current line
-	var check = Utils.check_line_for_rebuild(current_line_text, current_line_last_state)
+	var check = check_line_for_rebuild(current_line_text, current_line_last_state)
 	if check and not force_build:
 		var found_name = false
 		for highlight_helper in highlight_helpers:
@@ -288,10 +289,16 @@ func update_tagged_name_list(force_build=false) -> void:
 					_update_current_line_dec(_last_match_dec, false)
 	#^
 	
-	prints("UPDATE FULL::", force_build, tagged_data.hash() != new_tagged_data.hash())
+	#prints("UPDATE FULL::", force_build, tagged_data.hash() != new_tagged_data.hash(), script_resource)
+	
+	var inval = false
 	#^ Full scan of doc for valid highlights
 	if force_build or tagged_data.hash() != new_tagged_data.hash():
-		var tt = ALibRuntime.Utils.UProfile.TimeFunction.new("UPDATE TAGS") #>debu
+		#^ this can be pretty slow, 2+ ms on small files. On the other hand, gdscript parser
+		#^ is about half the runtime. If that also stored comments, it could speed this up
+		#^ could store comment to idx key, then loop through them
+		#^c IF i want to retain this. at this point, I barely use the tags...
+		#var update_tags = ALibRuntime.Utils.UProfile.TimeFunction.new("UPDATE TAGS")
 		
 		for highlight_helper in highlight_helpers:
 			new_tagged_data[highlight_helper].clear()
@@ -307,32 +314,31 @@ func update_tagged_name_list(force_build=false) -> void:
 					new_tagged_data[highlight_helper][tagged_name] = true
 					line_names_found.append(tagged_name)
 		
-		tt.stop()
+		#update_tags.stop()
 		
 		tagged_data = new_tagged_data
 		
-		var has_changed_tag = false
 		for highlight_helper in highlight_helpers:
 			var highlight_data = new_tagged_data[highlight_helper]
-			print("TAG CHANGED::",highlight_helper.highlight_words.keys(), highlight_data.keys())
 			var chg = highlight_helper.set_highlight_words(highlight_data)
 			if chg:
-				has_changed_tag = true
-		
-		#var changed = update_class_members()
-		#if changed:
-			#has_changed_tag = true
-		
-		if has_changed_tag: # fairly slow, would be nice to check if needed, any instances of word above
-			invalidate_all() # for this PC it's not really a big deal...
+				inval = true
 	
+	if not is_instance_valid(gdscript_parser): # if it hasn't been initialized, run it
+		var changed = update_class_members()
+		if changed: # not sure if this is necessary.
+			inval = true
 	
-	#^
+	if inval: # fairly slow, would be nice to check if needed, any instances of word above
+		#invalidate_all() # for this PC it's not really a big deal...
+		invalidate(current_line_index)
+	
 	
 	#^ Set state
 	current_line_last_state = text_edit_node.get_line(current_line_index)
 	last_line_count = text_edit_node.get_line_count()
-	t.stop()
+	
+	#t.stop()
 	check_newline_buffer()
 
 
@@ -354,10 +360,10 @@ func _update_current_line_dec(current_line_dec:String, add:bool):
 	member_highlighter.set_highlight_words(word_dict)
 
 
-func update_class_members(allow_invalidate:=false):
+func update_class_members(allow_invalidate:=false) -> bool:
 	if script_member_highlighters.is_empty():
-		return
-	var t = ALibRuntime.Utils.UProfile.TimeFunction.new("UPDATE CLASS MEMBERS")
+		return false
+	#var t = ALibRuntime.Utils.UProfile.TimeFunction.new("UPDATE CLASS MEMBERS")
 	if not is_instance_valid(gdscript_parser):
 		gdscript_parser = GDScriptParser.new()
 		gdscript_parser.set_current_script(script_resource)
@@ -383,11 +389,11 @@ func update_class_members(allow_invalidate:=false):
 	var extended_ok = extended == _script_extended
 	_script_extended = extended
 	
-	prints("CHECK::", member_hash_ok, extended_ok, base_ok, _script_base_type)
+	#print("UPDATE PARSER::", gdscript_parser.get_current_script())
+	#prints("CHECK::", member_hash_ok, extended_ok, base_ok, _script_base_type)
 	if member_hash_ok and extended_ok and base_ok:
-		print("EXIT")
-		t.stop()
-		return
+		#t.stop("UPDATE CLASS MEMBERS::EXIT")
+		return false
 	
 	_initialize_regexes()
 	var members_changed:= false
@@ -398,15 +404,13 @@ func update_class_members(allow_invalidate:=false):
 	var new_inh_member_words:= {}
 	var inner_class_member_words:= {}
 	
-	print("UPDATE PARSER::", gdscript_parser.get_current_script())
-	
 	if is_instance_valid(class_member_highlighter):
 		var new_base_type_members = UClassDetail.get_members_of_base_type(_script_base_type)
 		var cl_chg := class_member_highlighter.set_highlight_words(new_base_type_members)
 		members_changed = maxi(members_changed, cl_chg)
 	
 	for m in main_class_obj.get_inherited_members():
-		if true:
+		if inh_member_respect_case:
 			_check_word(m, new_const_words, new_pasc_words, new_inh_member_words)
 		else:
 			new_inh_member_words[m] = true
@@ -452,12 +456,11 @@ func update_class_members(allow_invalidate:=false):
 	#print(new_member_words.size())
 	#print(new_member_words.keys())
 	
-	print("CLASS::","CAN INVAL::%s::" % allow_invalidate,members_changed)
-	
+	#print("CLASS::","CAN INVAL::%s::" % allow_invalidate,members_changed)
 	if allow_invalidate and members_changed:
 		invalidate_all()
 	
-	t.stop()
+	#t.stop()
 	return members_changed
 
 
@@ -506,7 +509,22 @@ func _initialize_regexes():
 	if not is_instance_valid(_pascal_regex):
 		_pascal_regex = RegEx.new()
 		_pascal_regex.compile("\\b([A-Z]\\w*[a-z]\\w*)\\b")
-		
+
+static func check_line_for_rebuild(line_text:String, line_text_last_state:String):
+	if line_text.strip_edges(false, true) == "": # unsure of this with args
+		return true
+	if line_text.find(Utils.FULL_TAG_CHAR) > -1:
+		return true
+	if line_text_last_state.find(Utils.FULL_TAG_CHAR) > -1:
+		return true
+	if ADD_NEW_MEMBER:
+		var check_triggers = ["const ", "var ", "class ", "enum ", "func ", "signal ", "static "]
+		for trigger in check_triggers: ## Space at end for declaration
+			if trigger in line_text:
+				return true
+	
+	return false
+
 
 func set_inactive():
 	gdscript_parser = null
@@ -519,7 +537,7 @@ func invalidate_all():
 func _invalidate_all():
 	if not CAN_INVALIDATE:
 		return
-	print("INVALIDATING::", script_resource)
+	#print("INVALIDATING::", script_resource)
 	
 	var text_edit = get_text_edit()
 	var text_changed_signal_list = text_edit.get_signal_connection_list("text_changed")
@@ -549,7 +567,7 @@ func _invalidate_all():
 		if not text_edit.text_changed.is_connected(callable):
 			text_edit.text_changed.connect(callable, flags)
 		else:
-			prints(callable.get_object(), callable.get_method())
+			print("SIGNAL ALREADY CONNECTED::",callable.get_object(), "::", callable.get_method())
 
 func invalidate(line:=-1):
 	if not CAN_INVALIDATE:

@@ -8,29 +8,28 @@ var tagged_names: Dictionary = {} # Stores the names of consts marked for specia
 var _tagged_name_regex: RegEx # Dynamically built regex for these names
 var declaration_regex: RegEx # To find "const NAME = xxx #import"
 
-var tag_colors = {}
-var tag_enabled = true
+var tag_colors:Dictionary = {}
+var tag_enabled:bool = true
 
 var highlight_color:Color
 
-func _init(tags, tag_data) -> void:
-	for tag in tags:
-		tagged_names[">"+tag] = true
-	
+func _init(tag_data) -> void:
 	for key in tag_data.keys():
 		var data = tag_data.get(key)
 		var color = data.get("color")
-		tag_colors[">"+key] = color
+		tagged_names[Utils.TAG_CHAR + key] = true
+		tag_colors[Utils.TAG_CHAR + key] = color
 	
 	rebuild_tagged_name_regex() # Initialize with an empty regex
 
-func rebuild_tagged_name_regex():
+func rebuild_tagged_name_regex() -> void:
 	_tagged_name_regex = Utils.build_name_regex(tagged_names.keys(), true)
 
-func check_line(hl_info, current_line_text):
+
+func check_line(hl_info:Dictionary, current_line_text:String) -> Array:
 	if not tag_enabled:
 		return [hl_info, false]
-	if current_line_text.find("#>") == -1:
+	if current_line_text.find(Utils.FULL_TAG_CHAR) == -1:
 		return [hl_info, false]
 	var needs_sort = false
 	if not tagged_names.is_empty() and is_instance_valid(_tagged_name_regex):
@@ -52,5 +51,5 @@ func check_line(hl_info, current_line_text):
 			
 			needs_sort = true
 			hl_info[start_idx] = {"color": highlight_color}
-	##
+	
 	return [hl_info, needs_sort]

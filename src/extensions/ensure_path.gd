@@ -6,6 +6,9 @@ const UString = UtilsRemote.UString
 const SettingHelperEditor = UtilsRemote.SettingHelperEditor
 const UNCOLORED_BG = Color(0,0,0,0)
 
+const Test = preload(Path)
+const Path = "res://addons/syntax_plus/src/utils/utils_remote.gd" #! ensure-path
+
 const PREFIX = "#!"
 const TAG = "ensure-path"
 const FULL_TAG = PREFIX + " " + TAG
@@ -52,15 +55,18 @@ func _highlight_line(script_editor:CodeEdit, current_line_text:String, line:int,
 	if not watched_scripts.has(current_script_path):
 		watched_scripts[current_script_path] = {Keys.INVALID_LINES:{}, Keys.LINE_DATA:{}}
 	
+	var comment_text = current_line_text.substr(comment_tag_idx)
+	var hl_info = SyntaxPlusSingleton.HLInfo.highlight_prefix(PREFIX, comment_text)
+	
 	watched_scripts[current_script_path][Keys.INVALID_LINES].erase(line)
 	var valid = _validate_paths_in_line(line)
 	if valid:
-		var valid_dict = SyntaxPlusSingleton.get_hl_info_dict(valid_color)
-		return {0 : valid_dict}
+		hl_info.merge(SyntaxPlusSingleton.HLInfo.highlight_tag(TAG, comment_text, valid_color))
+		return hl_info
 	else:
 		watched_scripts[current_script_path][Keys.INVALID_LINES][line] = true
-		var invalid_dict = SyntaxPlusSingleton.get_hl_info_dict(invalid_color)
-		return {0 : invalid_dict}
+		hl_info.merge(SyntaxPlusSingleton.HLInfo.highlight_tag(TAG, comment_text, invalid_color))
+		return hl_info
 
 func _on_validate_script():
 	_set_background_colors()

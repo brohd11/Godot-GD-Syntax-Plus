@@ -27,6 +27,9 @@ func _init() -> void:
 	ScriptEditorRef.subscribe(ScriptEditorRef.Event.EDITOR_SCRIPT_CHANGED, _on_editor_script_changed)
 	EditorGDScriptParser.get_instance().parse_completed.connect(_on_parse_completed)
 
+func update_highlighter():
+	hl_logic.update_tagged_name_list(true)
+
 func reset_highlighter():
 	if is_instance_valid(hl_logic.gdscript_parser):
 		hl_logic.gdscript_parser.get_code_edit_parser().cache_dirty = true
@@ -49,12 +52,9 @@ func _on_editor_script_changed(new_script:Script):
 	_hl_logic_setup()
 	_clear_parser_cache()
 
-
 func _hl_logic_setup():
 	if hl_logic.default_text_color == Color.BLACK:
-		print("YES BLACK")
-		set_hl_logic_settings() # TEMP
-	print("&*&*&*&*&*& ------- ")
+		set_hl_logic_settings()
 	
 	SyntaxPlusSingleton.check_code_edit()
 	HighlightLogic.DummyHelper.set_code_edit()
@@ -63,7 +63,7 @@ func _hl_logic_setup():
 	hl_logic.script_resource = _get_current_script()
 	hl_logic.comment_tag_prefixes = SyntaxPlusSingleton.get_prefixes()
 	
-	#hl_logic.init_scan_done = false
+	#hl_logic.init_scan_done = false # doesn't seem to be necessary
 
 
 func _on_parse_completed():
@@ -72,8 +72,7 @@ func _on_parse_completed():
 	#return
 	hl_logic.update_class_members(true)
 
-func update_highlighter():
-	hl_logic.update_tagged_name_list(true)
+
 
 func _get_line_syntax_highlighting(line_idx: int) -> Dictionary:
 	if not is_instance_valid(hl_logic._text_edit):
@@ -147,6 +146,7 @@ static func set_hl_logic_settings():
 	HighlightLogic.member_access_enable = EditorConfig.get_setting(EditorConfig.Settings.MEMBER_ACCESS_ENABLE)
 	HighlightLogic.member_access_color = EditorConfig.get_setting(EditorConfig.Settings.MEMBER_ACCESS_COLOR)
 	HighlightLogic.inh_member_enable = EditorConfig.get_setting(EditorConfig.Settings.INHERITED_MEMBER_ENABLE)
+	HighlightLogic.inh_member_respect_case = EditorConfig.get_setting(EditorConfig.Settings.INHERITED_MEMBER_RESPECT_CASE)
 	HighlightLogic.inh_member_color = EditorConfig.get_setting(EditorConfig.Settings.INHERITED_MEMBER_COLOR)
 	HighlightLogic.base_type_member_enable = EditorConfig.get_setting(EditorConfig.Settings.BASE_TYPE_MEMBER_ENABLE)
 	HighlightLogic.base_type_member_color = EditorConfig.get_setting(EditorConfig.Settings.BASE_TYPE_MEMBER_COLOR)

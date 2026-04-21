@@ -81,7 +81,7 @@ func set_backgrounds():
 
 #^r}}} fdfddsdsf
 
-func _highlight_comment(script_editor:CodeEdit, current_line_text:String, line:int, comment_tag_idx:int):
+func _highlight_comment(_script_editor:CodeEdit, current_line_text:String, line:int, comment_tag_idx:int):
 	#if group_data.is_empty(): #^r would be nice to only run once
 		#_read_group_data()
 	var sp_ins = SyntaxPlusSingleton.get_instance()

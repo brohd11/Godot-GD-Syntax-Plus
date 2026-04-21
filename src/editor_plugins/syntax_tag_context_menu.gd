@@ -47,7 +47,7 @@ static func get_valid_items(script_editor) -> Dictionary:
 		var menu = data.get("menu", "Submenu")
 		if menu.to_lower() == "none":
 			continue
-		var full_tag = Utils.TAG_CHAR + tag
+		var full_tag = Utils.FULL_TAG_CHAR + tag
 		tags.append(full_tag)
 		if current_line_text.find(full_tag) > -1:
 			continue
@@ -109,7 +109,7 @@ static func clear_cache():
 static func write_tag(script_editor:CodeEdit, tag:String) -> void:
 	var current_line = script_editor.get_caret_line()
 	var line_text = script_editor.get_line(current_line)
-	var full_tag = Utils.TAG_CHAR + tag
+	var full_tag = Utils.FULL_TAG_CHAR + tag
 	
 	var full_tag_set = false
 	for _tag in tags:
@@ -123,7 +123,7 @@ static func write_tag(script_editor:CodeEdit, tag:String) -> void:
 	
 	if not full_tag_set:
 		line_text = line_text.strip_edges(false)
-		var delim_index = line_text.find(Utils.TAG_CHAR)
+		var delim_index = line_text.find(Utils.FULL_TAG_CHAR)
 		if delim_index > -1:
 			line_text = line_text.erase(delim_index, line_text.length() - delim_index)
 		else:

@@ -2,7 +2,7 @@ const SPClasses = preload("res://addons/syntax_plus/src/utils/classes.gd")
 const UtilsRemote = SPClasses.UtilsRemote
 const UClassDetail = UtilsRemote.UClassDetail
 
-const _BAD_SYM_COLOR = Color.FIREBRICK
+const _BAD_SYM_COLOR:Color = Color.FIREBRICK
 
 static func get_color_dict(color):
 	return {"color": color}
@@ -47,12 +47,6 @@ static func highlight_all_occurences(text:String, what:String, color:Color, end_
 			hl_info[end] = {"color": end_color}
 	
 	return hl_info
-	
-
-
-static func sort(dict:Dictionary):
-	#GDScriptSyntaxPlus.GDHelper.sort_comment_tag_info()
-	pass
 
 static func strip_prefix(prefix:String, text:String):
 	return text.trim_prefix(prefix + " ") # this may be changed, currently the prefix highlighting is hard coded for pre + space
@@ -233,4 +227,11 @@ static func sort_comment_tag_info(hl_info:Dictionary, _prefix_color:Color, offse
 		key_adjusted_data[new_key] = hl_info[key]
 	
 	return key_adjusted_data
-	
+
+static func sort_keys(hl_info:Dictionary):
+	var sorted_keys = hl_info.keys()
+	sorted_keys.sort()
+	var temp_dict = {}
+	for key in sorted_keys:
+		temp_dict[key] = hl_info.get(key)
+	return temp_dict

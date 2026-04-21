@@ -4,9 +4,9 @@ const URegex = UtilsRemote.URegex #>remote
 
 
 const ANY_STRING = "const|var|@onready var|@export var|enum|class|func"
-const TAG_CHAR = "#>"
-const DEFAULT_COLOR_STRING = "35cc9b" 
-const DEFAULT_COLOR = Color(DEFAULT_COLOR_STRING)
+const TAG_CHAR = ">"
+const FULL_TAG_CHAR = "#" + TAG_CHAR
+const DEFAULT_COLOR = Color("35cc9b")
 
 
 enum RegExTarget{
@@ -16,30 +16,6 @@ enum RegExTarget{
 	ENUM,
 	ANY
 }
-
-
-static func sort_keys(hl_info:Dictionary):
-	var sorted_keys = hl_info.keys()
-	sorted_keys.sort()
-	var temp_dict = {}
-	for key in sorted_keys:
-		temp_dict[key] = hl_info.get(key)
-	return temp_dict
-
-
-static func check_line_for_rebuild(line_text:String, line_text_last_state:String):
-	if line_text.strip_edges(false, true) == "": # unsure of this with args
-		return true
-	if line_text.find(TAG_CHAR) > -1:
-		return true
-	if line_text_last_state.find(TAG_CHAR) > -1:
-		return true
-	var check_triggers = ["const ", "var ", "class ", "enum ", "func "]
-	for trigger in check_triggers: ## Space at end for declaration
-		if trigger in line_text:
-			return true
-	
-	return false
 
 static func build_name_regex(name_array:Array, tag_hl:=false):
 	var regex = RegEx.new()
@@ -72,16 +48,12 @@ static func build_name_regex(name_array:Array, tag_hl:=false):
 static func get_regex_pattern(keywords:String, tag):
 	if tag == "":
 		return "(?!)"
-	#if tag =="=MEMBER_HL":
-		#return "^(?:@onready var|@export var|static var|var|const|class|enum|signal|func|static func)\\s+(\\w+)"
 	if tag =="=MEMBER_HL": #^ new one accounts for exports
 		return "^(?:@onready var|@export.*?\\s*var|static var|var|const|class|enum|signal|func|static func)\\s+(\\w+)"
 	elif tag == "=CONST_HL":
 		return "(?:const)\\s+([A-Z_0-9]+)\\s*[=:]" # const
 	elif tag == "=CLASS_HL":
 		return "(?:class|const|var)\\s+(?=[A-Z_0-9]*[a-z].*?[:=])([A-Z]\\w*)" # class
-		# "(?:class|const|var)\\s+(?![A-Z_0-9]+\\s*[=:])([A-Z].*?)\\s*[=:]" #^ original
-		# "(?:class|const|var)\\s+(?=[A-Z_0-9]*[a-z])([A-Z]\\w*)"
 	elif tag == "=ONREADY_HL":
 		return "(?:@onready var)\\s+([a-z_].*?)\\s*[=:]"
 	
@@ -135,7 +107,7 @@ static func get_regex_pattern(keywords:String, tag):
 	else:
 		combined_keywords_pattern = "(?:" + "|".join(escaped_keywords_parts) + ")"
 	
-	var escaped_tag_char = URegex.escape_regex_meta_characters(TAG_CHAR)
+	var escaped_tag_char = URegex.escape_regex_meta_characters(FULL_TAG_CHAR)
 	var escaped_tag = URegex.escape_regex_meta_characters(tag)
 	
 	var pattern = "(?!)" # (?:#\\s*) == allows to see tags in comments
