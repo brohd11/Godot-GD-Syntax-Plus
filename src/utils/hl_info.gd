@@ -1,3 +1,5 @@
+const CallableLocation = SyntaxPlusSingleton.CallableLocation
+
 const SPClasses = preload("res://addons/syntax_plus/src/utils/classes.gd")
 const UtilsRemote = SPClasses.UtilsRemote
 const UClassDetail = UtilsRemote.UClassDetail
@@ -18,11 +20,11 @@ static func add_color(dict:Dictionary, color:Color, idx:int, end_idx:int=-1, end
 	if idx_safe:
 		for i in range(idx, end_idx + 1):
 			if dict.has(i):
-				print("EXIT")
 				return
 	
 	dict[idx] = {"color": color}
 	dict[end_idx] = {"color": end_color}
+
 
 static func contains_idx(dict:Dictionary, start_idx:int, end_idx:int=-1):
 	if end_idx == -1:
@@ -47,6 +49,7 @@ static func highlight_all_occurences(text:String, what:String, color:Color, end_
 			hl_info[end] = {"color": end_color}
 	
 	return hl_info
+
 
 static func strip_prefix(prefix:String, text:String):
 	return text.trim_prefix(prefix + " ") # this may be changed, currently the prefix highlighting is hard coded for pre + space
@@ -139,20 +142,23 @@ static func get_comment_tag_info(script_editor:CodeEdit, current_line_text:Strin
 	var prefix_color = SyntaxPlusSingleton.get_prefix_color(prefix)
 	if prefix_color == null:
 		prefix_color = sp_instance.annotation_color
+	
+	var callable = _get_comment_tag_hl_info # both branches use these defaults
+	var custom_callable = false
+	var hl_info:Dictionary = {}
+	
 	if existing_hl_info == null:
-		var callable = _get_comment_tag_hl_info
-		var custom_callable = false
 		if has_tag or has_empty:
 			var data = highlight_callables.get(tag)
-			var callable_location:SyntaxPlusSingleton.CallableLocation = data.get("callable_location")
-			if callable_location != SyntaxPlusSingleton.CallableLocation.END:
+			var callable_location:CallableLocation = data.get("callable_location")
+			if callable_location != CallableLocation.END:
 				custom_callable = true
 				callable = data.get("callable")
 		
 		if callable.get_object() == null:
 			return {}
 		
-		var hl_info:Dictionary
+		
 		if custom_callable:
 			hl_info = callable.call(script_editor, current_line_text, line, comment_tag_idx)
 		else:
@@ -161,12 +167,11 @@ static func get_comment_tag_info(script_editor:CodeEdit, current_line_text:Strin
 		hl_info = sort_comment_tag_info(hl_info, prefix_color, comment_tag_idx)
 		return hl_info
 	
-	var callable = _get_comment_tag_hl_info
-	var custom_callable = false
+	
 	if has_tag or has_empty:
 		var data = highlight_callables.get(tag)
-		var callable_location:SyntaxPlusSingleton.CallableLocation = data.get("callable_location")
-		if callable_location != SyntaxPlusSingleton.CallableLocation.START:
+		var callable_location:CallableLocation = data.get("callable_location")
+		if callable_location != CallableLocation.START:
 			custom_callable = true
 			callable = data.get("callable")
 	
@@ -179,11 +184,9 @@ static func get_comment_tag_info(script_editor:CodeEdit, current_line_text:Strin
 	else:
 		new_hl_info = callable.call(current_line_text, prefix, prefix_color)
 	
-	#new_hl_info = sort_comment_tag_info(new_hl_info, prefix_color)
 	new_hl_info = sort_comment_tag_info(new_hl_info, prefix_color, comment_tag_idx)
 	existing_hl_info.merge(new_hl_info)
 	
-	var hl_info = {}
 	var existing_keys = existing_hl_info.keys()
 	existing_keys.sort()
 	for key in existing_keys:
@@ -204,7 +207,7 @@ static func _get_comment_tag_hl_info(current_line_text:String, prefix:String, pr
 	
 	var temp_hl_info:Dictionary = highlight_prefix(prefix, stripped, prefix_color)
 	var comment_tag_text = stripped.replace(".", " ").strip_edges()
-	#var new_hl_info = SyntaxPlusSingleton.get_instance().get_single_line_highlight(comment_tag_text)
+	
 	var words = comment_tag_text.split(" ")
 	for word in words:
 		if word in comment_tags:
@@ -217,8 +220,8 @@ static func _get_comment_tag_hl_info(current_line_text:String, prefix:String, pr
 	
 	return temp_hl_info
 
+
 static func sort_comment_tag_info(hl_info:Dictionary, _prefix_color:Color, offset=0):
-	#var sp_ins = SyntaxPlusSingleton.get_instance()
 	var key_adjusted_data = {}
 	var hl_keys = hl_info.keys()
 	hl_keys.sort()
@@ -227,6 +230,7 @@ static func sort_comment_tag_info(hl_info:Dictionary, _prefix_color:Color, offse
 		key_adjusted_data[new_key] = hl_info[key]
 	
 	return key_adjusted_data
+
 
 static func sort_keys(hl_info:Dictionary):
 	var sorted_keys = hl_info.keys()

@@ -7,7 +7,6 @@ const HighlightLogic = SPClasses.HighlightLogic
 
 
 var highlight_words:= {}
-var _last_words_hash:int = -1
 var _highlight_word_regex: RegEx # Dynamically built regex for these names
 var declaration_regex: RegEx # To find "const NAME = xxx #import"
 
@@ -46,11 +45,9 @@ func check_line(hl_info, current_line_text):
 				var index_data = hl_info.get(start_idx)
 				if index_data == null:
 					continue
-				var existing_color = hl_info.get(start_idx, {}).get("color")
-				if existing_color != HighlightLogic.default_text_color:
-					continue
+				if index_data.get("color") != HighlightLogic.default_text_color:
+					continue # existing color not default color, skip this match
 			else:
-				
 				if not start_idx in hl_info:
 					var end_idx = _match.get_end(1)
 					if end_idx != current_line_text.length():
@@ -58,8 +55,9 @@ func check_line(hl_info, current_line_text):
 						while idx >= 0:
 							var index_data = hl_info.get(idx)
 							if index_data:
-								var existing_color = index_data.get("color")
-								hl_info[end_idx] = {"color": existing_color}
+								# reach an index with color, set the end idx to that color.
+								# this allows the overwriting inside a string for example
+								hl_info[end_idx] = {"color": index_data.get("color")}
 								break
 							
 							idx -= 1
@@ -69,14 +67,15 @@ func check_line(hl_info, current_line_text):
 	
 	return [hl_info, needs_sort]
 
+
 func set_highlight_words(new_words:Dictionary) -> bool:
-	#var new_hash = new_words.hash()
+	# previously used hashes, now comparing dicts with operator, which is non order dependent
+	# If this behaviour changes, will need to change something
 	var words_changed = new_words != highlight_words
 	if words_changed:
 		highlight_words = new_words
 		rebuild_tagged_name_regex()
 	
-	#_last_words_hash = new_hash
 	return words_changed 
 
 func rebuild_tagged_name_regex() -> void:
