@@ -302,6 +302,7 @@ func _on_editor_script_changed(script:Script) -> void:
 			set_script_highlighter()
 
 func _on_editor_settings_changed():
+	EditorConfig.load_data()
 	reset_script_highlighters()
 
 

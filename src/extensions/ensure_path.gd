@@ -7,10 +7,10 @@ const SettingHelperEditor = UtilsRemote.SettingHelperEditor
 const UNCOLORED_BG = Color(0,0,0,0)
 
 const Test = preload(Path)
-const Path = "res://addons/syntax_plus/src/utils/utils_remote.gd" #! ensure-path
+const Path = "res://addons/syntax_plus/src/utils/utils_remote.gd" #! ensure_path
 
 const PREFIX = "#!"
-const TAG = "ensure-path"
+const TAG = "ensure_path"
 const FULL_TAG = PREFIX + " " + TAG
 
 var settings_helper:SettingHelperEditor

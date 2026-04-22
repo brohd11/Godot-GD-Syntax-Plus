@@ -100,18 +100,25 @@ func get_gdscript_parser() -> GDScriptParser:
 func create_highlight_helpers():
 	init_scan_done = false #^r NOT REDUNDANT
 	
+	# clear when reseting
 	for highlight_helper in highlight_helpers:
 		highlight_helper = null
-	tag_highlighter = null # clear when reseting
+	tag_highlighter = null
 	tagged_data.clear()
 	highlight_helpers.clear()
+	script_member_highlighters.clear()
+	
+	_script_extended = null
+	_members_hash = -1
+	_script_base_type = ""
+	# /clear
 	
 	for tag in editor_tags:
 		var data = editor_tags.get(tag)
 		var highlighter = HighlightHelper.new(data.get("color"), tag, data)
 		highlight_helpers.append(highlighter)
 	
-	script_member_highlighters.clear()
+	
 	if const_enable:
 		const_highlighter = HighlightHelper.new(const_color)
 		script_member_highlighters.append(const_highlighter)
@@ -324,7 +331,8 @@ func update_tagged_name_list(force_build=false) -> void:
 			if chg:
 				inval = true
 	
-	if not is_instance_valid(gdscript_parser): # if it hasn't been initialized, run it
+	 # if it hasn't been initialized, run it
+	if not is_instance_valid(gdscript_parser):# or not init_scan_done: # not sure if init scan done flag needed, for when resetting highlighters
 		var changed = update_class_members()
 		if changed: # not sure if this is necessary.
 			inval = true
@@ -363,7 +371,7 @@ func _update_current_line_dec(current_line_dec:String, add:bool):
 func update_class_members(allow_invalidate:=false) -> bool:
 	if script_member_highlighters.is_empty():
 		return false
-	#var t = ALibRuntime.Utils.UProfile.TimeFunction.new("UPDATE CLASS MEMBERS")
+	var t = ALibRuntime.Utils.UProfile.TimeFunction.new("UPDATE CLASS MEMBERS")
 	if not is_instance_valid(gdscript_parser):
 		gdscript_parser = GDScriptParser.new()
 		gdscript_parser.set_current_script(script_resource)
@@ -374,6 +382,7 @@ func update_class_members(allow_invalidate:=false) -> bool:
 	gdscript_parser.parse()
 	var main_class_obj = gdscript_parser.get_class_object() as GDScriptParser.ParserClass
 	var parser_script_res = main_class_obj.script_resource
+	
 	
 	var parser_hash = gdscript_parser.get_members_hash()
 	var member_hash_ok = parser_hash == _members_hash

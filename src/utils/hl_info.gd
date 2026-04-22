@@ -3,6 +3,9 @@ const CallableLocation = SyntaxPlusSingleton.CallableLocation
 const SPClasses = preload("res://addons/syntax_plus/src/utils/classes.gd")
 const UtilsRemote = SPClasses.UtilsRemote
 const UClassDetail = UtilsRemote.UClassDetail
+const UString = UtilsRemote.UString
+const GDScriptParser = UtilsRemote.GDScriptParser
+const ParserClass = GDScriptParser.ParserClass
 
 const _BAD_SYM_COLOR:Color = Color.FIREBRICK
 
@@ -83,8 +86,7 @@ static func highlight_tag(tag:String, stripped_text:String, color=null):
 	add_color(hl_info, color, tag_idx, tag_idx + tag.length())
 	return hl_info
 
-
-static func check_const_path(class_chain:String, current_script:GDScript, start_idx:=0):
+static func check_const_path(class_chain:String, current_class_path:String, start_idx:=0):
 	var sp_ins = SyntaxPlusSingleton.get_instance()
 	var hl_info = {}
 	
@@ -93,7 +95,34 @@ static func check_const_path(class_chain:String, current_script:GDScript, start_
 	if class_chain.contains("."):
 		type_array = class_chain.split(".", false)
 	
-	var script = current_script
+	var script_data = UString.get_script_path_and_suffix(current_class_path)
+	var main_script_path = script_data[0]
+	var class_access_path = script_data[1] as String
+	
+	var main_script = load(main_script_path)
+	var valid_scripts = {main_script: ""}
+	var current_script = main_script
+	var working_path = ""
+	for part in class_access_path.split(".", false):
+		working_path = UString.dot_join(working_path, part)
+		var info = UClassDetail.get_member_info_by_path(current_script, working_path)
+		if info is GDScript:
+			valid_scripts[info] = working_path
+		else:
+			break
+	
+	var script_array = valid_scripts.keys()
+	script_array.reverse() # inner most first
+	
+	var script:GDScript
+	var first_part = type_array[0]
+	for in_scope_script in script_array: # find script where the first part is. Work way back from inner most class if not found
+		var info = UClassDetail.get_member_info_by_path(in_scope_script, first_part)
+		if info != null:
+			script = in_scope_script
+			break
+	
+	
 	for i in range(type_array.size()): # iterate parts in chain to make sure they are a valid chain
 		var part = type_array[i]
 		if i > 0:
@@ -107,8 +136,9 @@ static func check_const_path(class_chain:String, current_script:GDScript, start_
 			else:
 				part_color = _BAD_SYM_COLOR
 		
+		
 		var member_info = UClassDetail.get_member_info_by_path(script, part)
-		#print("ARG::PART::", part, script, member_info)
+		#print("ARG::PART::", part, "::",script, "::",member_info)
 		if member_info == null:
 			if i < type_array.size() - 1: # if not at the end, fail color so we know chain is broken
 				add_color(hl_info, _BAD_SYM_COLOR, adj_idx, adj_idx + part.length(), _BAD_SYM_COLOR)
@@ -125,6 +155,8 @@ static func check_const_path(class_chain:String, current_script:GDScript, start_
 			break
 	
 	return hl_info
+
+
 
 static func get_comment_tag_info(script_editor:CodeEdit, current_line_text:String, line:int, prefix:String, comment_tag_idx:int, existing_hl_info=null):
 	var sp_instance = SyntaxPlusSingleton.get_instance()
@@ -157,7 +189,6 @@ static func get_comment_tag_info(script_editor:CodeEdit, current_line_text:Strin
 		
 		if callable.get_object() == null:
 			return {}
-		
 		
 		if custom_callable:
 			hl_info = callable.call(script_editor, current_line_text, line, comment_tag_idx)
