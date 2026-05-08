@@ -18,6 +18,7 @@ const Utils = SPClasses.Utils
 
 static var default_text_color:Color
 static var editor_member_color:Color
+static var string_color:Color
 
 static var const_color:Color
 static var pascal_color:Color
@@ -155,8 +156,6 @@ func _on_caret_changed():
 
 func get_line_syntax_highlighting(line_idx: int) -> Dictionary:
 	var text_edit = get_text_edit() as CodeEdit
-	#if not is_instance_valid(text_edit):
-		#return {}
 	var current_line_text: String = text_edit.get_line(line_idx)
 	if not init_scan_done:
 		init_scan_done = true
@@ -190,12 +189,19 @@ func get_line_syntax_highlighting(line_idx: int) -> Dictionary:
 			if comment_substr.find(prefix) > -1:
 				comment_tag_index = current_line_text.find(prefix)
 				comment_tag_prefix = prefix
-				if comment_index == 0:
+				#if comment_index == 0:
+				if current_line_text.strip_edges(true, false).begins_with("#"):
 					return HLInfo.get_comment_tag_info(text_edit, current_line_text, line_idx, comment_tag_prefix, comment_tag_index)
 				break
 	
 	#^ Not 100% sure duplicate is neces
 	var hl_info:Dictionary = dummy_helper.base_gdscript_highlighter.get_line_syntax_highlighting(line_idx)
+	if hl_info.has(0):
+		var color = hl_info.get(0).get("color")
+		if color == string_color and text_edit.is_in_string(line_idx) == -1:
+			print("STRING::NEW HL")
+			DummyHelper.instance_highlighter() # this will fire once per frame max
+			hl_info = dummy_helper.base_gdscript_highlighter.get_line_syntax_highlighting(line_idx)
 	
 	#^ clear signal member color, set via regex
 	var stripped_line_text = current_line_text.strip_edges()
@@ -241,6 +247,7 @@ func get_line_syntax_highlighting(line_idx: int) -> Dictionary:
 	
 	if needs_sort:
 		hl_info = HLInfo.sort_keys(hl_info)
+	
 	return hl_info
 
 func update_tagged_name_list(force_build=false) -> void:
@@ -546,16 +553,13 @@ func invalidate_all():
 func _invalidate_all():
 	if not CAN_INVALIDATE:
 		return
-	#print("INVALIDATING::", script_resource)
 	
+	print("INVALIDATING::", script_resource)
 	var text_edit = get_text_edit()
-	var text_changed_signal_list = text_edit.get_signal_connection_list("text_changed")
-	for data in text_changed_signal_list:
-		var callable = data.get("callable")
-		text_edit.text_changed.disconnect(callable)
+	var text_changed_signal_list = disconnect_signals(text_edit)
+	DummyHelper.instance_highlighter()
 	
 	var scroll_pos = text_edit.get_v_scroll_bar().value # get current pos and reset after, changing text causes a scroll action
-	
 	var current_line = text_edit.get_caret_line()
 	for i in range(text_edit.get_line_count()):
 		if i == current_line:
@@ -569,23 +573,37 @@ func _invalidate_all():
 	text_edit.queue_redraw()
 	
 	await text_edit.get_tree().process_frame
-	
-	for data in text_changed_signal_list:
-		var callable = data.get("callable") as Callable
-		var flags = data.get("flags")
-		if not text_edit.text_changed.is_connected(callable):
-			text_edit.text_changed.connect(callable, flags)
-		else:
-			print("SIGNAL ALREADY CONNECTED::",callable.get_object(), "::", callable.get_method())
+	connect_signals(text_edit, text_changed_signal_list)
 
 func invalidate(line:=-1):
 	if not CAN_INVALIDATE:
 		return
 	
 	var text_edit = get_text_edit()
+	var text_changed_signal_list = disconnect_signals(text_edit)
+	
 	if line == -1 or line > text_edit.get_line_count():
 		line = text_edit.get_caret_line()
 	var text = text_edit.get_line(line)
 	DummyHelper.dummy_code_edit.set_line(line, text)
 	text_edit.set_line(line, text)
 	text_edit.undo()
+	
+	connect_signals(text_edit, text_changed_signal_list)
+
+
+func disconnect_signals(text_edit:CodeEdit, signal_name:="text_changed"):
+	var text_changed_signal_list = text_edit.get_signal_connection_list(signal_name)
+	for data in text_changed_signal_list:
+		var callable = data.get("callable")
+		text_edit.text_changed.disconnect(callable)
+	return text_changed_signal_list
+
+func connect_signals(text_edit:CodeEdit, text_changed_signal_list):
+	for data in text_changed_signal_list:
+		var callable = data.get("callable") as Callable
+		var flags = data.get("flags")
+		if not text_edit.text_changed.is_connected(callable):
+			text_edit.text_changed.connect(callable, flags)
+		else:
+			printerr("SIGNAL ALREADY CONNECTED::",callable.get_object(), "::", callable.get_method())

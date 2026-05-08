@@ -35,6 +35,9 @@ func reset_highlighter():
 		hl_logic.gdscript_parser.get_code_edit_parser().cache_dirty = true
 	hl_logic.create_highlight_helpers()
 
+func invalidate_cache():
+	hl_logic.invalidate_all()
+
 func _on_scanning_tags():
 	SyntaxPlusSingleton.notify_extensions(SyntaxPlusSingleton.ExtensionNoti.TAG_SCAN) # SHOULD MOVE THIS OUT
 
@@ -134,8 +137,9 @@ static func set_hl_logic_settings():
 	EditorConfig.load_data()
 	
 	var editor_settings = EditorInterface.get_editor_settings()
-	HighlightLogic.default_text_color = editor_settings.get("text_editor/theme/highlighting/text_color")
-	HighlightLogic.editor_member_color = editor_settings.get('text_editor/theme/highlighting/member_variable_color')
+	HighlightLogic.default_text_color = editor_settings.get(&"text_editor/theme/highlighting/text_color")
+	HighlightLogic.editor_member_color = editor_settings.get(&"text_editor/theme/highlighting/member_variable_color")
+	HighlightLogic.string_color = editor_settings.get(&"text_editor/theme/highlighting/string_color")
 	
 	HighlightLogic.const_enable = EditorConfig.get_setting(EditorConfig.Settings.CONST_ENABLE)
 	HighlightLogic.const_color = EditorConfig.get_setting(EditorConfig.Settings.CONST_COLOR)

@@ -36,6 +36,7 @@ enum ExtensionNoti {
 	SCRIPT_CHANGED,
 }
 
+static var invalidating:=false
 
 static func get_singleton_name() -> String:
 	return "SyntaxPlusSingleton"
@@ -253,8 +254,10 @@ static func invalidate_line(line:=-1):
 static func get_hl_info_dict(color:Color) -> Dictionary:
 	return {"color": color}
 
-
-
+static func get_gdscript_parser():
+	var hl = ScriptEditorRef.get_current_code_edit().syntax_highlighter
+	if hl is EditorHL:
+		return hl.hl_logic.get_gdscript_parser()
 	
 
 #endregion
@@ -329,7 +332,7 @@ static func reset_script_highlighters():
 	EditorHL.set_hl_logic_settings()
 	
 	var script_editor = EditorInterface.get_script_editor()
-	#var current_syntax = script_editor.get_current_editor().get_base_editor().syntax_highlighter
+	
 	#if current_syntax.has_method("load_global_data"):
 		#current_syntax.create_highlight_helpers()
 		##current_syntax.clear_highlighting_cache()
@@ -339,3 +342,7 @@ static func reset_script_highlighters():
 		if syntax is EditorHL:
 			syntax.reset_highlighter()
 			#syntax.clear_highlighting_cache()
+	
+	var current_syntax = script_editor.get_current_editor().get_base_editor().syntax_highlighter
+	if current_syntax is EditorHL:
+		current_syntax.invalidate_cache()

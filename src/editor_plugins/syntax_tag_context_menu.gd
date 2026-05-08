@@ -104,6 +104,7 @@ static func clear_cache():
 	var syntax = ScriptEditorRef.get_current_code_edit().syntax_highlighter
 	if syntax is EditorHL:
 		syntax.update_highlighter()
+		syntax.invalidate_cache()
 
 
 static func write_tag(script_editor:CodeEdit, tag:String) -> void:

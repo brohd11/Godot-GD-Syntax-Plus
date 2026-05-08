@@ -85,6 +85,11 @@ func _highlight_comment(_script_editor:CodeEdit, current_line_text:String, line:
 	#if group_data.is_empty(): #^r would be nice to only run once
 		#_read_group_data()
 	var sp_ins = SyntaxPlusSingleton.get_instance()
+	 
+	if _script_editor.is_in_string(line) != -1:
+		return {}
+	
+	
 	
 	var comment_text = current_line_text.substr(comment_tag_idx)# + 2)
 	var stripped = comment_text.substr(2)
@@ -126,6 +131,8 @@ func _highlight_comment(_script_editor:CodeEdit, current_line_text:String, line:
 	
 	var hl_info = {}
 	#^ start of line hl overide
+	var offset = current_line_text.find("#") - comment_tag_idx
+	hl_info[offset] = HLInfo.get_color_dict(sp_ins.comment_color) # this will make a negative one at the first comment that will be offset automatically
 	hl_info[0] = HLInfo.get_color_dict(sp_ins.comment_color)
 	hl_info[1] = HLInfo.get_color_dict(hl_color)
 	hl_info[2] = HLInfo.get_color_dict(hl_color)
@@ -357,8 +364,6 @@ func _get_bg_darken(color_string:String=""):
 		return color_data.get("bg", default_bg_darken)
 	return default_bg_darken
 
-func _hl_info_color_dict(color):
-	return {"color": color}
 
 
 static func _reset_settings():

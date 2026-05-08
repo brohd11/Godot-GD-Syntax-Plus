@@ -122,6 +122,9 @@ static func check_const_path(class_chain:String, current_class_path:String, star
 			script = in_scope_script
 			break
 	
+	#if not is_instance_valid(script):
+		#add_color(hl_info, _BAD_SYM_COLOR, start_idx)
+		#return hl_info
 	
 	for i in range(type_array.size()): # iterate parts in chain to make sure they are a valid chain
 		var part = type_array[i]
@@ -137,7 +140,9 @@ static func check_const_path(class_chain:String, current_class_path:String, star
 				part_color = _BAD_SYM_COLOR
 		
 		
-		var member_info = UClassDetail.get_member_info_by_path(script, part)
+		var member_info
+		if is_instance_valid(script):
+			member_info = UClassDetail.get_member_info_by_path(script, part)
 		#print("ARG::PART::", part, "::",script, "::",member_info)
 		if member_info == null:
 			if i < type_array.size() - 1: # if not at the end, fail color so we know chain is broken
