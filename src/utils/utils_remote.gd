@@ -8,6 +8,7 @@ const PopupHelper = preload("uid://bb13ihrvdkjdj") #! resolve PopupWrapper.Popup
 const UFile = preload("uid://gs632l1nhxaf") #! resolve ALibRuntime.Utils.UFile
 const URegex = preload("uid://cpjnb72qn8bmh")  #! resolve ALibRuntime.Utils.URegex
 const UString = preload("uid://cwootkivqiwq1") #! resolve ALibRuntime.Utils.UString
+const UObject = preload("uid://b6w3produe5fn") #! resolve ALibRuntime.Utils.UObject
 
 const UGDScript = preload("uid://bqwb564jwff43") #! resolve ALibRuntime.Utils.UGDScript
 const UClassDetail = UGDScript.UClassDetail

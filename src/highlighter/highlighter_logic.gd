@@ -10,6 +10,7 @@ const SPClasses = preload("res://addons/syntax_plus/src/utils/classes.gd")
 const UtilsRemote = SPClasses.UtilsRemote
 const GDScriptParser = UtilsRemote.GDScriptParser
 const UClassDetail = UtilsRemote.UClassDetail
+const UObject = UtilsRemote.UObject
 
 const DummyHelper = SPClasses.DummyHelper
 const HighlightHelper = SPClasses.HighlightHelper
@@ -556,7 +557,7 @@ func _invalidate_all():
 	
 	print("INVALIDATING::", script_resource)
 	var text_edit = get_text_edit()
-	var text_changed_signal_list = disconnect_signals(text_edit)
+	var text_changed_signal_list = UObject.disconnect_signals_of_name(text_edit, "text_changed")
 	DummyHelper.instance_highlighter()
 	
 	var scroll_pos = text_edit.get_v_scroll_bar().value # get current pos and reset after, changing text causes a scroll action
@@ -573,14 +574,14 @@ func _invalidate_all():
 	text_edit.queue_redraw()
 	
 	await text_edit.get_tree().process_frame
-	connect_signals(text_edit, text_changed_signal_list)
+	UObject.connect_signals_from_list(text_edit, text_changed_signal_list)
 
 func invalidate(line:=-1):
 	if not CAN_INVALIDATE:
 		return
 	
 	var text_edit = get_text_edit()
-	var text_changed_signal_list = disconnect_signals(text_edit)
+	var text_changed_signal_list = UObject.disconnect_signals_of_name(text_edit, "text_changed")
 	
 	if line == -1 or line > text_edit.get_line_count():
 		line = text_edit.get_caret_line()
@@ -589,21 +590,4 @@ func invalidate(line:=-1):
 	text_edit.set_line(line, text)
 	text_edit.undo()
 	
-	connect_signals(text_edit, text_changed_signal_list)
-
-
-func disconnect_signals(text_edit:CodeEdit, signal_name:="text_changed"):
-	var text_changed_signal_list = text_edit.get_signal_connection_list(signal_name)
-	for data in text_changed_signal_list:
-		var callable = data.get("callable")
-		text_edit.text_changed.disconnect(callable)
-	return text_changed_signal_list
-
-func connect_signals(text_edit:CodeEdit, text_changed_signal_list):
-	for data in text_changed_signal_list:
-		var callable = data.get("callable") as Callable
-		var flags = data.get("flags")
-		if not text_edit.text_changed.is_connected(callable):
-			text_edit.text_changed.connect(callable, flags)
-		else:
-			printerr("SIGNAL ALREADY CONNECTED::",callable.get_object(), "::", callable.get_method())
+	UObject.connect_signals_from_list(text_edit, text_changed_signal_list)
