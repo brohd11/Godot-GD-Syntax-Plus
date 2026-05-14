@@ -45,8 +45,7 @@ static var editor_tags:Dictionary = {}
 static var _const_regex:RegEx
 static var _pascal_regex:RegEx
 
-var _gdscript_parser:WeakRef
-var gdscript_parser:GDScriptParser # maybe could have it's own?
+var gdscript_parser:GDScriptParser
 var _members_hash:int = -1
 var _script_extended #:GDScript
 var _script_base_type:String
@@ -92,11 +91,9 @@ func set_text_edit(text_edit:TextEdit):
 func get_text_edit():
 	return _text_edit
 
-func set_gdscript_parser(parser:GDScriptParser):
-	_gdscript_parser = weakref(parser)
 
 func get_gdscript_parser() -> GDScriptParser:
-	return _gdscript_parser.get_ref()
+	return gdscript_parser
 
 
 func create_highlight_helpers():
@@ -200,7 +197,6 @@ func get_line_syntax_highlighting(line_idx: int) -> Dictionary:
 	if hl_info.has(0):
 		var color = hl_info.get(0).get("color")
 		if color == string_color and text_edit.is_in_string(line_idx) == -1:
-			print("STRING::NEW HL")
 			DummyHelper.instance_highlighter() # this will fire once per frame max
 			hl_info = dummy_helper.base_gdscript_highlighter.get_line_syntax_highlighting(line_idx)
 	

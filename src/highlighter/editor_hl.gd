@@ -5,7 +5,6 @@ const SPClasses = preload("res://addons/syntax_plus/src/utils/classes.gd")
 
 const UtilsRemote = SPClasses.UtilsRemote
 const EditorGDScriptParser = UtilsRemote.EditorGDScriptParser
-const ScriptListManager = UtilsRemote.ScriptListManager
 
 const EditorConfig = SPClasses.EditorConfig
 const HighlightLogic = SPClasses.HighlightLogic
@@ -120,18 +119,6 @@ func _is_current_code_edit() -> bool:
 
 func _get_current_script():
 	return ScriptEditorRef.get_current_script()
-	#var slm = ScriptListManager.get_instance()
-	#var text_edit = get_text_edit()
-	#var script_path = slm.script_editor_map.get(text_edit, "") as String
-	#var current_script:GDScript # this whole thing may be unnecessary, get_current_script seems fine
-	#if script_path == "":
-		#current_script = ScriptEditorRef.get_current_script()
-	#elif script_path.get_extension() == "gd":
-		#current_script = load(script_path)
-	#else:
-		#printerr("ATTEMPT TO LOAD NON GD FILE WITH SYNTAXPLUS")
-		#return
-	#return current_script
 
 static func set_hl_logic_settings():
 	EditorConfig.load_data()

@@ -238,10 +238,17 @@ static func _get_comment_tag_hl_info(current_line_text:String, prefix:String, pr
 	var all_comment_tag_data = SyntaxPlusSingleton.get_comment_tag_data()
 	var comment_tag_data = all_comment_tag_data.get(prefix)
 	
-	var comment_tag_idx = current_line_text.find(prefix)
+	var string_map = UString.get_string_map(current_line_text)
+	var comment_tag_idx = UString.string_safe_find(current_line_text, prefix, 0, string_map)
+	var comment_idx = UString.string_safe_find(current_line_text, "#", 0, string_map)
+	
 	var stripped = current_line_text.substr(comment_tag_idx)
 	
-	var temp_hl_info:Dictionary = highlight_prefix(prefix, stripped, prefix_color)
+	var temp_hl_info:Dictionary = (highlight_prefix(prefix, stripped, prefix_color))
+	
+	if comment_idx < comment_tag_idx: # ensure the first comment is highlighted
+		temp_hl_info[comment_idx - comment_tag_idx] = {"color":sp_ins.comment_color}
+	
 	var comment_tag_text = stripped.replace(".", " ").strip_edges()
 	
 	var words = comment_tag_text.split(" ")
