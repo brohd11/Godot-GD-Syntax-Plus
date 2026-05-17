@@ -1,6 +1,6 @@
 class_name SyntaxPlusSingleton
 extends SingletonRefCount
-const SingletonRefCount = Singleton.RefCount
+const SingletonRefCount = Singletons.RefCount
 
 const SCRIPT = preload("res://addons/syntax_plus/src/syntax_plus_singleton.gd")
 

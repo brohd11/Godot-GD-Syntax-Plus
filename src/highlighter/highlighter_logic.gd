@@ -196,7 +196,7 @@ func get_line_syntax_highlighting(line_idx: int) -> Dictionary:
 	var hl_info:Dictionary = dummy_helper.base_gdscript_highlighter.get_line_syntax_highlighting(line_idx)
 	if hl_info.has(0):
 		var color = hl_info.get(0).get("color")
-		if color == string_color and text_edit.is_in_string(line_idx) == -1:
+		if color == string_color and text_edit.is_in_string(line_idx, 0) == -1:
 			DummyHelper.instance_highlighter() # this will fire once per frame max
 			hl_info = dummy_helper.base_gdscript_highlighter.get_line_syntax_highlighting(line_idx)
 	
