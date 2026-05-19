@@ -17,6 +17,8 @@ const INNER_CLASS_MEMBER_ENABLE = &"plugin/syntax_plus/inner_class/inner_class_m
 const INNER_CLASS_MEMBER_COLOR = &"plugin/syntax_plus/inner_class/inner_class_member_color"
 const MEMBER_ACCESS_ENABLE = &"plugin/syntax_plus/member_access/member_access_enable"
 const MEMBER_ACCESS_COLOR = &"plugin/syntax_plus/member_access/member_access_color"
+const ARGUMENT_ENABLE = &"plugin/syntax_plus/function/argument_enable"
+const ARGUMENT_COLOR = &"plugin/syntax_plus/function/argument_color"
 const TAG_COLOR = &"plugin/syntax_plus/tags/tag_color"
 const TAG_COLOR_ENABLE = &"plugin/syntax_plus/tags/tag_color_enable"
 const DEFINED_TAGS = &"plugin/syntax_plus/tags/defined_tags"
@@ -41,6 +43,8 @@ const DEFAULT_SETTINGS = {
 	INNER_CLASS_MEMBER_COLOR: Color(0.7373, 0.8784, 1.0, 1.0),
 	MEMBER_ACCESS_ENABLE: false,
 	MEMBER_ACCESS_COLOR: Color(0.5686, 0.7216, 0.7686, 1.0),
+	ARGUMENT_ENABLE: false,
+	ARGUMENT_COLOR: Color(0.733, 0.47, 0.279, 1.0),
 	TAG_COLOR: Color(0.3725, 0.6157, 0.6235, 1.0),
 	TAG_COLOR_ENABLE: true
 }

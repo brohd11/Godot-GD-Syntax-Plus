@@ -7,6 +7,7 @@ const UtilsRemote = SPClasses.UtilsRemote
 const EditorGDScriptParser = UtilsRemote.EditorGDScriptParser
 
 const EditorConfig = SPClasses.EditorConfig
+#const Settings = EditorConfig.Settings
 const HighlightLogic = SPClasses.HighlightLogic
 
 const CACHE_SIZE = 20
@@ -143,7 +144,11 @@ static func set_hl_logic_settings():
 	HighlightLogic.base_type_member_color = EditorConfig.get_setting(EditorConfig.Settings.BASE_TYPE_MEMBER_COLOR)
 	HighlightLogic.inner_class_member_enable = EditorConfig.get_setting(EditorConfig.Settings.INNER_CLASS_MEMBER_ENABLE)
 	HighlightLogic.inner_class_member_color = EditorConfig.get_setting(EditorConfig.Settings.INNER_CLASS_MEMBER_COLOR)
+	HighlightLogic.argument_enable = EditorConfig.get_setting(EditorConfig.Settings.ARGUMENT_ENABLE)
+	HighlightLogic.argument_color = EditorConfig.get_setting(EditorConfig.Settings.ARGUMENT_COLOR)
 	
 	HighlightLogic.tag_color = EditorConfig.get_setting(EditorConfig.Settings.TAG_COLOR)
 	HighlightLogic.tag_enable = EditorConfig.get_setting(EditorConfig.Settings.TAG_COLOR_ENABLE)
 	HighlightLogic.editor_tags = EditorConfig.get_tags_data()
+	
+	HighlightLogic._empty_line_data = {0: {"color": editor_settings.get(&"text_editor/theme/highlighting/symbol_color")}}

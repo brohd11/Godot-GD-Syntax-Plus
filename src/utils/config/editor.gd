@@ -32,6 +32,8 @@ static func initial_set_editor_settings():
 		Settings.INNER_CLASS_MEMBER_ENABLE,
 		Settings.MEMBER_ACCESS_COLOR,
 		Settings.MEMBER_ACCESS_ENABLE,
+		Settings.ARGUMENT_COLOR,
+		Settings.ARGUMENT_ENABLE,
 		Settings.TAG_COLOR,
 		Settings.TAG_COLOR_ENABLE,
 	]
