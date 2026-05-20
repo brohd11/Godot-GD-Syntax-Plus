@@ -7,7 +7,7 @@ const UtilsRemote = SPClasses.UtilsRemote
 const EditorGDScriptParser = UtilsRemote.EditorGDScriptParser
 
 const EditorConfig = SPClasses.EditorConfig
-#const Settings = EditorConfig.Settings
+const Settings = EditorConfig.Settings
 const HighlightLogic = SPClasses.HighlightLogic
 
 const CACHE_SIZE = 20
@@ -23,6 +23,7 @@ func _get_name() -> String:
 func _init() -> void:
 	hl_logic = HighlightLogic.new()
 	hl_logic.scanning_tags.connect(_on_scanning_tags)
+	hl_logic.queue_invalidate.connect(_on_hl_queue_invalidate)
 	
 	ScriptEditorRef.subscribe(ScriptEditorRef.Event.EDITOR_SCRIPT_CHANGED, _on_editor_script_changed)
 	EditorGDScriptParser.get_instance().parse_completed.connect(_on_parse_completed)
@@ -46,6 +47,7 @@ func _on_editor_script_changed(new_script:Script):
 	if not is_instance_valid(new_script):
 		return
 	active_code_edit = _is_current_code_edit()
+	manage_scroll_signal(active_code_edit)
 	if not active_code_edit:
 		return
 	
@@ -75,7 +77,25 @@ func _on_parse_completed():
 	#return
 	hl_logic.update_class_members(true)
 
+func _on_hl_queue_invalidate(arg=false):
+	SyntaxPlusSingleton.get_instance().queue_invalidate(self)
 
+func _on_text_scrolled(_val:int):
+	var sp_ins = SyntaxPlusSingleton.get_instance()
+	if sp_ins.invalidate_is_queued(self):
+		sp_ins.queue_invalidate(self)
+
+func manage_scroll_signal(connect_sig:bool):
+	var text_edit = get_text_edit()
+	if not is_instance_valid(text_edit):
+		return
+	var vbar = text_edit.get_v_scroll_bar()
+	if connect_sig:
+		if not vbar.value_changed.is_connected(_on_text_scrolled):
+			vbar.value_changed.connect(_on_text_scrolled)
+	else:
+		if vbar.value_changed.is_connected(_on_text_scrolled):
+			vbar.value_changed.disconnect(_on_text_scrolled)
 
 func _get_line_syntax_highlighting(line_idx: int) -> Dictionary:
 	if not is_instance_valid(hl_logic._text_edit):
@@ -128,27 +148,30 @@ static func set_hl_logic_settings():
 	HighlightLogic.default_text_color = editor_settings.get(&"text_editor/theme/highlighting/text_color")
 	HighlightLogic.editor_member_color = editor_settings.get(&"text_editor/theme/highlighting/member_variable_color")
 	HighlightLogic.string_color = editor_settings.get(&"text_editor/theme/highlighting/string_color")
+	HighlightLogic._empty_line_data = {0: {"color": editor_settings.get(&"text_editor/theme/highlighting/symbol_color")}}
 	
-	HighlightLogic.const_enable = EditorConfig.get_setting(EditorConfig.Settings.CONST_ENABLE)
-	HighlightLogic.const_color = EditorConfig.get_setting(EditorConfig.Settings.CONST_COLOR)
-	HighlightLogic.pascal_enable = EditorConfig.get_setting(EditorConfig.Settings.PASCAL_ENABLE)
-	HighlightLogic.pascal_color = EditorConfig.get_setting(EditorConfig.Settings.PASCAL_COLOR)
-	HighlightLogic.member_enable = EditorConfig.get_setting(EditorConfig.Settings.MEMBER_ENABLE)
-	HighlightLogic.member_color = EditorConfig.get_setting(EditorConfig.Settings.MEMBER_COLOR)
-	HighlightLogic.member_access_enable = EditorConfig.get_setting(EditorConfig.Settings.MEMBER_ACCESS_ENABLE)
-	HighlightLogic.member_access_color = EditorConfig.get_setting(EditorConfig.Settings.MEMBER_ACCESS_COLOR)
-	HighlightLogic.inh_member_enable = EditorConfig.get_setting(EditorConfig.Settings.INHERITED_MEMBER_ENABLE)
-	HighlightLogic.inh_member_respect_case = EditorConfig.get_setting(EditorConfig.Settings.INHERITED_MEMBER_RESPECT_CASE)
-	HighlightLogic.inh_member_color = EditorConfig.get_setting(EditorConfig.Settings.INHERITED_MEMBER_COLOR)
-	HighlightLogic.base_type_member_enable = EditorConfig.get_setting(EditorConfig.Settings.BASE_TYPE_MEMBER_ENABLE)
-	HighlightLogic.base_type_member_color = EditorConfig.get_setting(EditorConfig.Settings.BASE_TYPE_MEMBER_COLOR)
-	HighlightLogic.inner_class_member_enable = EditorConfig.get_setting(EditorConfig.Settings.INNER_CLASS_MEMBER_ENABLE)
-	HighlightLogic.inner_class_member_color = EditorConfig.get_setting(EditorConfig.Settings.INNER_CLASS_MEMBER_COLOR)
-	HighlightLogic.argument_enable = EditorConfig.get_setting(EditorConfig.Settings.ARGUMENT_ENABLE)
-	HighlightLogic.argument_color = EditorConfig.get_setting(EditorConfig.Settings.ARGUMENT_COLOR)
+	HighlightLogic.const_enable = EditorConfig.get_setting(Settings.CONST_ENABLE)
+	HighlightLogic.const_color = EditorConfig.get_setting(Settings.CONST_COLOR)
+	HighlightLogic.pascal_enable = EditorConfig.get_setting(Settings.PASCAL_ENABLE)
+	HighlightLogic.pascal_color = EditorConfig.get_setting(Settings.PASCAL_COLOR)
+	HighlightLogic.member_enable = EditorConfig.get_setting(Settings.MEMBER_ENABLE)
+	HighlightLogic.member_color = EditorConfig.get_setting(Settings.MEMBER_COLOR)
+	HighlightLogic.member_access_enable = EditorConfig.get_setting(Settings.MEMBER_ACCESS_ENABLE)
+	HighlightLogic.member_access_color = EditorConfig.get_setting(Settings.MEMBER_ACCESS_COLOR)
+	HighlightLogic.inh_member_enable = EditorConfig.get_setting(Settings.INHERITED_MEMBER_ENABLE)
+	HighlightLogic.inh_member_respect_case = EditorConfig.get_setting(Settings.INHERITED_MEMBER_RESPECT_CASE)
+	HighlightLogic.inh_member_color = EditorConfig.get_setting(Settings.INHERITED_MEMBER_COLOR)
+	HighlightLogic.base_type_member_enable = EditorConfig.get_setting(Settings.BASE_TYPE_MEMBER_ENABLE)
+	HighlightLogic.base_type_member_color = EditorConfig.get_setting(Settings.BASE_TYPE_MEMBER_COLOR)
+	HighlightLogic.inner_class_member_enable = EditorConfig.get_setting(Settings.INNER_CLASS_MEMBER_ENABLE)
+	HighlightLogic.inner_class_member_color = EditorConfig.get_setting(Settings.INNER_CLASS_MEMBER_COLOR)
+	HighlightLogic.inner_class_color_shift = EditorConfig.get_setting(Settings.INNER_CLASS_MEMBER_COLOR_SHIFT)
+	HighlightLogic.argument_enable = EditorConfig.get_setting(Settings.ARGUMENT_ENABLE)
+	HighlightLogic.argument_color = EditorConfig.get_setting(Settings.ARGUMENT_COLOR)
 	
-	HighlightLogic.tag_color = EditorConfig.get_setting(EditorConfig.Settings.TAG_COLOR)
-	HighlightLogic.tag_enable = EditorConfig.get_setting(EditorConfig.Settings.TAG_COLOR_ENABLE)
+	HighlightLogic.tag_enable = EditorConfig.get_setting(Settings.TAG_ENABLE)
+	HighlightLogic.tag_color = EditorConfig.get_setting(Settings.TAG_COLOR)
+	HighlightLogic.tag_color_enable = EditorConfig.get_setting(Settings.TAG_COLOR_ENABLE)
 	HighlightLogic.editor_tags = EditorConfig.get_tags_data()
 	
-	HighlightLogic._empty_line_data = {0: {"color": editor_settings.get(&"text_editor/theme/highlighting/symbol_color")}}
+	

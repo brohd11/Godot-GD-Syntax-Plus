@@ -10,11 +10,7 @@
 				"files": []
 			},
 			"export_folder": "syntax-plus{{version=syntax_plus}}/syntax_plus",
-			"other_transfers": [
-				{
-					"to":"modular_browser/.gdignore"
-				}
-			],
+			"other_transfers": [],
 			"source": "res://addons/syntax_plus/",
 			"remote_dir":"res://addons/syntax_plus/src/remote/",
 		}

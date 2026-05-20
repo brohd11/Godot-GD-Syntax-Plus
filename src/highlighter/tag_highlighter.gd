@@ -9,7 +9,7 @@ var _tagged_name_regex: RegEx # Dynamically built regex for these names
 var declaration_regex: RegEx # To find "const NAME = xxx #import"
 
 var tag_colors:Dictionary = {}
-var tag_enabled:bool = true
+var tag_color_enabled:bool = true
 
 var highlight_color:Color
 
@@ -27,7 +27,7 @@ func rebuild_tagged_name_regex() -> void:
 
 
 func check_line(hl_info:Dictionary, current_line_text:String) -> Array:
-	if not tag_enabled:
+	if not tag_color_enabled:
 		return [hl_info, false]
 	if current_line_text.find(Utils.FULL_TAG_CHAR) == -1:
 		return [hl_info, false]

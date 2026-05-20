@@ -9,9 +9,13 @@ const UNCOLORED_BG = Color(0,0,0,0)
 const Test = preload(Path)
 const Path = "res://addons/syntax_plus/src/utils/utils_remote.gd" #! ensure_path
 
+const _PATH_TAIL = "addons/syntax_plus/src/extensions/ensure_path.gd"
+
 const PREFIX = "#!"
 const TAG = "ensure_path"
 const FULL_TAG = PREFIX + " " + TAG
+
+var editor_code_completion_class:GDScript
 
 var settings_helper:SettingHelperEditor
 
@@ -31,21 +35,31 @@ func _init() -> void:
 	settings_helper.subscribe_property(self, &"invalid_bg_color", Settings.INVALID_BG_COLOR, Settings.COLOR_INVALID_BG)
 	settings_helper.initialize()
 	
+	var code_complete_path = UtilsRemote.UClassDetail.get_global_class_path("EditorCodeCompletion")
+	if code_complete_path == "":
+		if FileAccess.file_exists("res://addons/editor_extensions/src/remote/".path_join(_PATH_TAIL)):
+			code_complete_path = "res://addons/editor_extensions/src/remote/".path_join(_PATH_TAIL)
+		elif FileAccess.file_exists("res://addons/script_editor_extensions/src/remote/".path_join(_PATH_TAIL)):
+			code_complete_path = "res://addons/script_editor_extensions/src/remote/".path_join(_PATH_TAIL)
+	if code_complete_path != "": # load the script if available. This is probably not gonna work well, but oh well
+		editor_code_completion_class = load(code_complete_path)
 	
 	SyntaxPlusSingleton.register_highlight_callable(PREFIX, TAG, _highlight_line, SyntaxPlusSingleton.CallableLocation.END)
 	
 	EditorInterface.get_resource_filesystem().filesystem_changed.connect(_on_filesystem_changed)
 	
 	ScriptEditorRef.subscribe(ScriptEditorRef.Event.VALIDATE_SCRIPT, _on_validate_script)
-	EditorCodeCompletion.call_on_ready(_add_tags)
+	
+	if is_instance_valid(editor_code_completion_class):
+		editor_code_completion_class.call_on_ready(_add_tags)
 
 func _add_tags():
 	_completion_tags_added = true
-	EditorCodeCompletion.register_tag_static(PREFIX, TAG, EditorCodeCompletion.TagLocation.END)
+	editor_code_completion_class.register_tag_static(PREFIX, TAG, editor_code_completion_class.TagLocation.END)
 
 func _unregister_tags():
 	if _completion_tags_added:
-		EditorCodeCompletion.unregister_tag_static(PREFIX, TAG)
+		editor_code_completion_class.unregister_tag_static(PREFIX, TAG)
 
 func syntax_plus_notification(what:SyntaxPlusSingleton.ExtensionNoti):
 	if what == SyntaxPlusSingleton.ExtensionNoti.SCRIPT_CHANGED:

@@ -39,23 +39,15 @@ static func build_name_regex(name_array:Array, tag_hl:=false):
 	else:
 		err = regex.compile("\\b(" + "|".join(pattern_parts) + ")\\b")
 	if err != OK:
-		printerr("CustomHighlighter: Regex compilation error: %s - Names:\n%s" % [err, " ".join(name_array)])
+		printerr("SyntaxPlus: Regex compilation error: %s - Names:\n%s" % [err, " ".join(name_array)])
 		regex.compile("(?!)")
 	
 	return regex
 
 
 static func get_regex_pattern(keywords:String, tag):
-	if tag == "":
+	if tag == "" or tag.begins_with("="):
 		return "(?!)"
-	if tag =="=MEMBER_HL": #^ new one accounts for exports
-		return "^(?:@onready var|@export.*?\\s*var|static var|var|const|class|enum|signal|func|static func)\\s+(\\w+)"
-	elif tag == "=CONST_HL":
-		return "(?:const)\\s+([A-Z_0-9]+)\\s*[=:]" # const
-	elif tag == "=CLASS_HL":
-		return "(?:class|const|var)\\s+(?=[A-Z_0-9]*[a-z].*?[:=])([A-Z]\\w*)" # class
-	elif tag == "=ONREADY_HL":
-		return "(?:@onready var)\\s+([a-z_].*?)\\s*[=:]"
 	
 	var regex_target = RegExTarget.CONST_VAR
 	keywords = keywords.to_lower()

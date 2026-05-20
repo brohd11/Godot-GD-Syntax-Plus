@@ -1,9 +1,5 @@
 #! remote
 
-const EditorPluginManager = preload("res://addons/addon_lib/brohd/editor_plugin_manager/editor_plugin_manager.gd")
-const PopupWrapper = preload("res://addons/addon_lib/brohd/popup_wrapper/popup_wrapper.gd")
-const DockManager = preload("res://addons/addon_lib/brohd/dock_manager/dock_manager.gd")
-
 const PopupHelper = preload("uid://bb13ihrvdkjdj") #! resolve PopupWrapper.PopupHelper
 const UFile = preload("uid://gs632l1nhxaf") #! resolve ALibRuntime.Utils.UFile
 const URegex = preload("uid://cpjnb72qn8bmh")  #! resolve ALibRuntime.Utils.URegex

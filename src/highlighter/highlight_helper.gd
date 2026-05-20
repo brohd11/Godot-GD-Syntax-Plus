@@ -29,7 +29,7 @@ func _init(color:Color, tag:="", tag_data:={}) -> void:
 		declaration_regex = RegEx.new()
 		var err = declaration_regex.compile(pattern)
 		if err != OK:
-			printerr("CustomHighlighter: Regex compilation error for declaration_regex")
+			printerr("SyntaxPlus: Regex compilation error for declaration_regex::", keywords, "::", pattern)
 			declaration_regex.compile("(?!)")
 	
 	rebuild_tagged_name_regex() # Initialize with an empty regex

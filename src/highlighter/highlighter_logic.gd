@@ -1,7 +1,9 @@
 # HL
 const PLUGIN_EXPORTED = false
+const PRINT_DEBUG = false
 const CAN_INVALIDATE = true
-const ADD_NEW_MEMBER = false
+
+const TF = preload("uid://ft7o6vspsurv") #! resolve ALibRuntime.Utils.UProfile.TimeFunction
 
 const HLInfo = SyntaxPlusSingleton.HLInfo
 
@@ -20,7 +22,7 @@ const Utils = SPClasses.Utils
 static var default_text_color:Color
 static var editor_member_color:Color
 static var string_color:Color
-static var _empty_line_data = {}
+static var _empty_line_data:Dictionary = {}
 
 static var const_color:Color
 static var pascal_color:Color
@@ -39,10 +41,13 @@ static var inh_member_enable:bool
 static var inh_member_respect_case:bool
 static var base_type_member_enable:bool
 static var inner_class_member_enable:bool
+static var inner_class_color_shift:bool
 static var argument_enable:bool
 
-static var tag_color:Color
 static var tag_enable:bool
+static var tag_color:Color
+static var tag_color_enable:bool
+
 static var editor_tags:Dictionary = {}
 
 static var _const_regex:RegEx
@@ -59,6 +64,7 @@ var dummy_helper:DummyHelper
 var highlight_helpers:Array[HighlightHelper] = []
 var script_member_highlighters:Array[HighlightHelper] = []
 var func_arg_highlighters:Dictionary[String, HighlightHelper] = {}
+var inner_class_highlighters:Dictionary[String, HighlightHelper] = {}
 
 var const_highlighter:HighlightHelper
 var pascal_highlighter:HighlightHelper
@@ -71,11 +77,8 @@ var tag_highlighter:TagHighlighter
 
 var _text_edit:CodeEdit
 var cache_dirty:= true
-var _temp_member_dict:= {}
 
 var tagged_data:Dictionary = {}
-
-var func_arg_data:Dictionary = {}
 
 var current_line_last_state = ""
 var last_line_count = 0
@@ -84,7 +87,9 @@ var init_scan_done:= false
 
 var comment_tag_prefixes:= []
 
+
 signal scanning_tags
+signal queue_invalidate
 
 
 func _init() -> void:
@@ -113,16 +118,22 @@ func create_highlight_helpers():
 	highlight_helpers.clear()
 	script_member_highlighters.clear()
 	func_arg_highlighters.clear()
+	inner_class_highlighters.clear()
 	
 	_script_extended = null
 	_members_hash = -1
 	_script_base_type = ""
 	# /clear
 	
-	for tag in editor_tags:
-		var data = editor_tags.get(tag)
-		var highlighter = HighlightHelper.new(data.get("color"), tag, data)
-		highlight_helpers.append(highlighter)
+	if tag_enable:
+		for tag in editor_tags:
+			var data = editor_tags.get(tag)
+			var highlighter = HighlightHelper.new(data.get("color"), tag, data)
+			highlight_helpers.append(highlighter)
+		
+		tag_highlighter = TagHighlighter.new(editor_tags)
+		tag_highlighter.tag_color_enabled = tag_color_enable
+		tag_highlighter.highlight_color = tag_color
 	
 	
 	if const_enable:
@@ -134,7 +145,7 @@ func create_highlight_helpers():
 		script_member_highlighters.append(pascal_highlighter)
 	
 	if member_enable:
-		member_highlighter = HighlightHelper.new(member_color, "=MEMBER_HL")
+		member_highlighter = HighlightHelper.new(member_color)
 		script_member_highlighters.append(member_highlighter)
 		
 	if inh_member_enable:
@@ -145,13 +156,9 @@ func create_highlight_helpers():
 		class_member_highlighter = HighlightHelper.new(base_type_member_color)
 		script_member_highlighters.append(class_member_highlighter)
 	
-	if inner_class_member_enable:
-		inner_class_member_highlighter = HighlightHelper.new(inner_class_member_color)
-		script_member_highlighters.append(inner_class_member_highlighter)
-	
-	tag_highlighter = TagHighlighter.new(editor_tags)
-	tag_highlighter.tag_enabled = tag_enable
-	tag_highlighter.highlight_color = tag_color
+	#if inner_class_member_enable:
+		#inner_class_member_highlighter = HighlightHelper.new(inner_class_member_color)
+		#script_member_highlighters.append(inner_class_member_highlighter)
 
 
 func _on_caret_changed():
@@ -184,9 +191,7 @@ func get_line_syntax_highlighting(line_idx: int) -> Dictionary:
 			# if not line count smaller, but it is the current line, check tags 
 		elif line_idx == text_edit.get_caret_line():
 			update_tagged_name_list()
-		
 	
-	var t2 = ALibRuntime.Utils.UProfile.TimeFunction.new("WHOLE HL")
 	
 	if current_line_text.strip_edges() == "":
 		return _empty_line_data
@@ -238,24 +243,36 @@ func get_line_syntax_highlighting(line_idx: int) -> Dictionary:
 	
 	#^ Sort keys, necessary
 	var needs_sort = false
-	for highlight_helper in highlight_helpers: 
-		var check = highlight_helper.check_line(hl_info, current_line_text)
-		hl_info = check[0]
-		if not needs_sort:
-			needs_sort = check[1]
+	if tag_enable:
+		for highlight_helper in highlight_helpers: 
+			var check = highlight_helper.check_line(hl_info, current_line_text)
+			hl_info = check[0]
+			if not needs_sort:
+				needs_sort = check[1]
 	#^
+	var valid_parser = is_instance_valid(gdscript_parser)
+	var class_at_line = "" if not valid_parser else gdscript_parser.get_class_at_line(line_idx)
 	
 	#^ Member check
 	for highlighter in script_member_highlighters:
+		if not class_at_line.is_empty() and (highlighter == member_highlighter):
+			continue # this could be a bit cleaner, perhaps having a set for every class. But for now it will work
+		
 		var member_check = highlighter.check_line(hl_info, current_line_text)
 		hl_info = member_check[0]
 		if not needs_sort:
 			needs_sort = member_check[1]
 	#^
-	var t = ALibRuntime.Utils.UProfile.TimeFunction.new("ARG CHECK")
-	if is_instance_valid(gdscript_parser) and argument_enable:
 	
-		var class_at_line = gdscript_parser.get_class_at_line(line_idx)
+	if inner_class_member_enable and not class_at_line.is_empty():
+		var ic_hl_helper = inner_class_highlighters.get(class_at_line)
+		if is_instance_valid(ic_hl_helper):
+			var ic_check = ic_hl_helper.check_line(hl_info, current_line_text)
+			hl_info = ic_check[0]
+			if not needs_sort:
+				needs_sort = ic_check[1]
+		
+	if argument_enable and valid_parser:
 		var func_at_line = gdscript_parser.get_function_at_line(line_idx)
 		var access_path = func_at_line
 		if class_at_line != "":
@@ -267,12 +284,12 @@ func get_line_syntax_highlighting(line_idx: int) -> Dictionary:
 			if not needs_sort:
 				needs_sort = arg_check[1]
 	
-	#t.stop()
 	#^ Highlight tags
-	var tag_check = tag_highlighter.check_line(hl_info, current_line_text)
-	hl_info = tag_check[0]
-	if not needs_sort:
-		needs_sort = tag_check[1]
+	if tag_enable:
+		var tag_check = tag_highlighter.check_line(hl_info, current_line_text)
+		hl_info = tag_check[0]
+		if not needs_sort:
+			needs_sort = tag_check[1]
 	#^
 	
 	if comment_tag_prefix != "":
@@ -281,13 +298,12 @@ func get_line_syntax_highlighting(line_idx: int) -> Dictionary:
 	if needs_sort:
 		hl_info = HLInfo.sort_keys(hl_info)
 	
-	#t2.stop()
 	return hl_info
 
 func update_tagged_name_list(force_build=false) -> void:
 	
 	_initialize_regexes()
-	#var t = ALibRuntime.Utils.UProfile.TimeFunction.new("UPDATE TAGGED NEW")
+	#var t = TF.new("UPDATE TAGGED NEW")
 	var text_edit_node: CodeEdit = get_text_edit()
 	if not text_edit_node.caret_changed.is_connected(_on_caret_changed):
 		text_edit_node.caret_changed.connect(_on_caret_changed)
@@ -305,49 +321,31 @@ func update_tagged_name_list(force_build=false) -> void:
 	
 	#^ if flags found, check for changes in current line
 	var check = check_line_for_rebuild(current_line_text, current_line_last_state)
-	if check and not force_build:
-		var found_name = false
+	if tag_enable and (check and not force_build):
 		for highlight_helper in highlight_helpers:
 			var declaration_regex = highlight_helper.declaration_regex
 			var _match = declaration_regex.search(current_line_text)
 			if _match:
 				var tagged_name = _match.get_string(1)
 				new_tagged_data[highlight_helper][tagged_name] = true
-				found_name = true
 				break # break? only 1 per line?
 			else:
 				var last_match = declaration_regex.search(current_line_last_state)
 				if last_match:
 					var tagged_name = last_match.get_string(1)
 					new_tagged_data[highlight_helper].erase(tagged_name)
-					found_name = true
 					break
-		
-		#^ update members found in current line
-		if ADD_NEW_MEMBER and is_instance_valid(member_highlighter) and not found_name:
-			var _match = member_highlighter.declaration_regex.search(current_line_text) #>debu
-			if _match == null:
-				_temp_member_dict.clear()
-			else:
-				_update_current_line_dec(_match.get_string(0), true)
-			
-			var last_match = member_highlighter.declaration_regex.search(current_line_last_state)
-			if last_match:
-				var _last_match_dec = last_match.get_string(0)
-				if _match != null and _match.get_string(0) != _last_match_dec:
-					_update_current_line_dec(_last_match_dec, false)
-	#^
 	
 	#prints("UPDATE FULL::", force_build, tagged_data.hash() != new_tagged_data.hash(), script_resource)
 	
 	var inval = false
 	#^ Full scan of doc for valid highlights
-	if force_build or tagged_data.hash() != new_tagged_data.hash():
+	if tag_enable and (force_build or tagged_data.hash() != new_tagged_data.hash()):
 		#^ this can be pretty slow, 2+ ms on small files. On the other hand, gdscript parser
 		#^ is about half the runtime. If that also stored comments, it could speed this up
 		#^ could store comment to idx key, then loop through them
 		#^c IF i want to retain this. at this point, I barely use the tags...
-		#var update_tags = ALibRuntime.Utils.UProfile.TimeFunction.new("UPDATE TAGS")
+		#var update_tags = TF.new("UPDATE TAGS")
 		
 		for highlight_helper in highlight_helpers:
 			new_tagged_data[highlight_helper].clear()
@@ -356,8 +354,7 @@ func update_tagged_name_list(force_build=false) -> void:
 			var line_names_found = [] # anything not in arary may be added to member regex
 			var line_text = text_edit_node.get_line(i)
 			for highlight_helper in highlight_helpers:
-				var declaration_regex = highlight_helper.declaration_regex
-				var _match = declaration_regex.search(line_text) #>debu
+				var _match = highlight_helper.declaration_regex.search(line_text) #>debu
 				if _match:
 					var tagged_name = _match.get_string(1)
 					new_tagged_data[highlight_helper][tagged_name] = true
@@ -392,28 +389,10 @@ func update_tagged_name_list(force_build=false) -> void:
 	check_newline_buffer()
 
 
-func _update_current_line_dec(current_line_dec:String, add:bool):
-	var dec_name = current_line_dec.get_slice(" ", 1).strip_edges()
-	if not add and not _temp_member_dict.has(dec_name):
-		return
-	
-	var word_dict = member_highlighter.highlight_words.duplicate()
-	if add:
-		if word_dict.has(dec_name):
-			return
-		word_dict[dec_name] = true
-		_temp_member_dict[dec_name] = true
-	else:
-		word_dict.erase(dec_name)
-		_temp_member_dict.erase(dec_name)
-	
-	member_highlighter.set_highlight_words(word_dict)
-
-
 func update_class_members(allow_invalidate:=false) -> bool:
 	if script_member_highlighters.is_empty():
 		return false
-	var t = ALibRuntime.Utils.UProfile.TimeFunction.new("UPDATE CLASS MEMBERS")
+	var t = TF.new("UPDATE CLASS MEMBERS")
 	if not is_instance_valid(gdscript_parser):
 		gdscript_parser = GDScriptParser.new()
 		gdscript_parser.set_current_script(script_resource)
@@ -446,6 +425,8 @@ func update_class_members(allow_invalidate:=false) -> bool:
 		#t.stop("UPDATE CLASS MEMBERS::EXIT")
 		return false
 	
+	if inner_class_highlighters == null:
+		inner_class_highlighters = {}
 	
 	var temp_func_arg_data:Dictionary[String, HighlightHelper] = {}
 	
@@ -486,15 +467,18 @@ func update_class_members(allow_invalidate:=false) -> bool:
 			for m:String in class_obj.members:
 				new_member_words[m] = true
 			
-		else:
+		elif inner_class_member_enable:
+			var ic_chg = get_or_create_inner_class_helper(class_obj)
+			members_changed = maxi(members_changed, ic_chg)
 			for m:String in class_obj.members:
 				inner_class_member_words[m] = true
 		
 		if argument_enable:
-			var ft = ALibRuntime.Utils.UProfile.TimeFunction.new("FUNC ARG")
+			var ft = TF.new("FUNC ARG")
 			var func_chg = get_or_create_func_arg_helpers(class_obj, temp_func_arg_data)
 			members_changed = maxi(members_changed, func_chg)
-			ft.stop( )
+			if PRINT_DEBUG:
+				ft.stop()
 			
 		
 	
@@ -510,9 +494,9 @@ func update_class_members(allow_invalidate:=false) -> bool:
 		var m_chg := member_highlighter.set_highlight_words(new_member_words)
 		members_changed = maxi(members_changed, m_chg)
 	
-	if is_instance_valid(inner_class_member_highlighter):
-		var ic_chg := inner_class_member_highlighter.set_highlight_words(inner_class_member_words)
-		members_changed = maxi(members_changed, ic_chg)
+	#if is_instance_valid(inner_class_member_highlighter):
+		#var ic_chg := inner_class_member_highlighter.set_highlight_words(inner_class_member_words)
+		#members_changed = maxi(members_changed, ic_chg)
 	
 	#print(member_highlighter.highlight_words.size())
 	#print(member_highlighter.highlight_words.keys())
@@ -521,12 +505,31 @@ func update_class_members(allow_invalidate:=false) -> bool:
 	
 	func_arg_highlighters = temp_func_arg_data
 	
-	print("CLASS::","CAN INVAL::%s::" % allow_invalidate, "CHANGED::",members_changed)
+	#print("CLASS::","CAN INVAL::%s::" % allow_invalidate, "CHANGED::",members_changed)
 	if allow_invalidate and members_changed:
-		invalidate_all()
+		queue_invalidate.emit()
 	
-	#t.stop()
+	if PRINT_DEBUG:
+		t.stop()
 	return members_changed
+
+func get_or_create_inner_class_helper(class_obj:GDScriptParser.ParserClass):
+	var highlight_helper = inner_class_highlighters.get(class_obj.access_path)
+	if not is_instance_valid(highlight_helper):
+		var depth = class_obj.access_path.count(".")
+		var new_color = inner_class_member_color
+		if depth > 0 and inner_class_color_shift:
+			new_color.h = wrapf(new_color.h + (new_color.h * depth * 0.3), 0, 1)
+			new_color.v = minf(new_color.v, 0.8)
+		
+		highlight_helper = HighlightHelper.new(new_color)
+		inner_class_highlighters[class_obj.access_path] = highlight_helper
+	
+	var new_words = {}
+	for m:String in class_obj.members:
+		new_words[m] = true
+	var chg = highlight_helper.set_highlight_words(new_words)
+	return chg
 
 func get_or_create_func_arg_helpers(class_obj:GDScriptParser.ParserClass, temp_data:Dictionary):
 	var changed = false
@@ -579,9 +582,13 @@ func _check_word(word:String, const_dict:Dictionary, pasc_dict:Dictionary, membe
 		member_dict[word] = true
 
 func _is_const(text:String):
+	if not const_enable:
+		return false
 	return _const_regex.search(text) != null
 
 func _is_pascal(text:String):
+	if not pascal_enable:
+		return false
 	return _pascal_regex.search(text) != null
 
 func _initialize_regexes():
@@ -599,11 +606,6 @@ static func check_line_for_rebuild(line_text:String, line_text_last_state:String
 		return true
 	if line_text_last_state.find(Utils.FULL_TAG_CHAR) > -1:
 		return true
-	if ADD_NEW_MEMBER:
-		var check_triggers = ["const ", "var ", "class ", "enum ", "func ", "signal ", "static "]
-		for trigger in check_triggers: ## Space at end for declaration
-			if trigger in line_text:
-				return true
 	
 	return false
 
@@ -613,19 +615,23 @@ func set_inactive():
 	for hl in script_member_highlighters:
 		hl.set_highlight_words({})
 
+
 func invalidate_all():
 	_invalidate_all.call_deferred()
+
+
 
 func _invalidate_all():
 	if not CAN_INVALIDATE:
 		return
+	if PRINT_DEBUG:
+		print("INVALIDATING::", script_resource)
 	
-	print("INVALIDATING::", script_resource)
 	var text_edit = get_text_edit()
 	var text_changed_signal_list = UObject.disconnect_signals_of_name(text_edit, "text_changed")
 	DummyHelper.instance_highlighter()
 	
-	var scroll_pos = text_edit.get_v_scroll_bar().value # get current pos and reset after, changing text causes a scroll action
+	var top_line = text_edit.get_first_visible_line()
 	var current_line = text_edit.get_caret_line()
 	for i in range(text_edit.get_line_count()):
 		if i == current_line:
@@ -635,11 +641,12 @@ func _invalidate_all():
 		text_edit.set_line(i, text)
 		text_edit.undo()
 	
-	text_edit.get_v_scroll_bar().set_value_no_signal(scroll_pos)
-	text_edit.queue_redraw()
-	
+	text_edit.scroll_vertical = top_line # more reliable than scroll bar it seems
 	await text_edit.get_tree().process_frame
+	
 	UObject.connect_signals_from_list(text_edit, text_changed_signal_list)
+
+
 
 func invalidate(line:=-1):
 	if not CAN_INVALIDATE:

@@ -14,7 +14,7 @@ static func instance_highlighter():
 	if _instance_highlight_debounce:
 		return
 	_instance_highlight_debounce = true
-	print("STRING::INS HL")
+	#print("STRING::INS HL")
 	base_gdscript_highlighter = GDScriptSyntaxHighlighter.new()
 	if is_instance_valid(dummy_code_edit):
 		dummy_code_edit.syntax_highlighter = base_gdscript_highlighter

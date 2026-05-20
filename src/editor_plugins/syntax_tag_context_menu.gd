@@ -4,7 +4,6 @@ const SLOT = EditorContextMenuPlugin.CONTEXT_SLOT_SCRIPT_EDITOR_CODE
 
 
 const UtilsRemote = preload("res://addons/syntax_plus/src/utils/utils_remote.gd")
-const PopupWrapper = UtilsRemote.PopupWrapper
 const Params = PopupWrapper.ItemParams
 const EditorConfig = preload("uid://vpqa5bp1krif") #! resolve SyntaxPlusSingleton.EditorConfig
 const EditorHL = preload("uid://bnredxxo1jopk") #! resolve SyntaxPlusSingleton.EditorHL
@@ -33,7 +32,7 @@ func _on_context_pressed(se, popup_path):
 static func get_valid_items(script_editor) -> Dictionary:
 	var syntax = script_editor.syntax_highlighter
 	if not syntax is EditorHL:
-		print("NOPE")
+		#print("NOPE")
 		return {}
 	var current_line_text = script_editor.get_line(script_editor.get_caret_line())
 	var popup_custom_items = {}
