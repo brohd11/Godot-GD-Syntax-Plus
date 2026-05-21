@@ -310,8 +310,13 @@ func _on_editor_script_changed(script:Script) -> void:
 			set_script_highlighter()
 
 func _on_editor_settings_changed():
-	EditorConfig.load_data()
-	reset_script_highlighters()
+	var editor_settings = EditorInterface.get_editor_settings()
+	var changed = editor_settings.get_changed_settings()
+	for path in changed:
+		if EditorConfig.Settings.DEFAULT_SETTINGS.has(path):
+			EditorConfig.load_data()
+			reset_script_highlighters()
+			break
 
 
 static func set_script_highlighter(highlighter:="SyntaxPlus"):
@@ -344,7 +349,7 @@ static func reset_script_highlighters():
 	
 	var current_syntax = script_editor.get_current_editor().get_base_editor().syntax_highlighter
 	if current_syntax is EditorHL:
-		current_syntax.hl_logic._members_hash = -1
+		current_syntax.reset_class_member_hash()
 		current_syntax.invalidate_cache()
 
 func invalidate_is_queued(highlighter:EditorHL):

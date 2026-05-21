@@ -2,13 +2,15 @@ extends EditorContextMenuPlugin
 
 const SLOT = EditorContextMenuPlugin.CONTEXT_SLOT_SCRIPT_EDITOR_CODE
 
-
 const UtilsRemote = preload("res://addons/syntax_plus/src/utils/utils_remote.gd")
 const Params = PopupWrapper.ItemParams
 const EditorConfig = preload("uid://vpqa5bp1krif") #! resolve SyntaxPlusSingleton.EditorConfig
 const EditorHL = preload("uid://bnredxxo1jopk") #! resolve SyntaxPlusSingleton.EditorHL
 
 const Utils = preload("res://addons/syntax_plus/src/utils/utils.gd")
+
+const RESET_CURRENT = "Syntax Plus/Reset Current"
+const RESET_ALL = "Syntax Plus/Reset All"
 
 static var tags = []
 
@@ -19,10 +21,10 @@ func _popup_menu(paths: PackedStringArray) -> void:
 	PopupWrapper.create_context_plugin_items(self, se, popup_items, _on_context_pressed)
 
 func _on_context_pressed(se, popup_path):
-	if popup_path == "Syntax Plus/Clear Cache":
-		clear_cache()
+	if popup_path == RESET_CURRENT:
+		reset_current()
 		return
-	elif popup_path == "Syntax Plus/Reset All":
+	elif popup_path == RESET_ALL:
 		SyntaxPlusSingleton.reset_script_highlighters()
 		return
 	
@@ -90,18 +92,17 @@ static func get_valid_items(script_editor) -> Dictionary:
 	for key in submenu_tags.keys():
 		popup_custom_items[key] = submenu_tags.get(key)
 	
-	#if syntax is EditorHL: # this was gated here?
-	var tag_path = "Syntax Plus/Clear Cache"
-	popup_custom_items[tag_path] = {}
-	var reset_path = "Syntax Plus/Reset All"
-	popup_custom_items[reset_path] = {}
+	popup_custom_items[RESET_CURRENT] = {}
+	popup_custom_items[RESET_ALL] = {}
 	
 	return popup_custom_items
 
 
-static func clear_cache():
+static func reset_current():
 	var syntax = ScriptEditorRef.get_current_code_edit().syntax_highlighter
 	if syntax is EditorHL:
+		syntax.reset_class_member_hash()
+		syntax.hl_logic.update_class_members(false)
 		syntax.update_highlighter()
 		syntax.invalidate_cache()
 

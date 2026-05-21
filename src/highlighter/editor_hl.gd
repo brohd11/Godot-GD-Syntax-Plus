@@ -28,6 +28,9 @@ func _init() -> void:
 	ScriptEditorRef.subscribe(ScriptEditorRef.Event.EDITOR_SCRIPT_CHANGED, _on_editor_script_changed)
 	EditorGDScriptParser.get_instance().parse_completed.connect(_on_parse_completed)
 
+func reset_class_member_hash():
+	hl_logic._members_hash = -1
+
 func update_highlighter():
 	hl_logic.update_tagged_name_list(true)
 
