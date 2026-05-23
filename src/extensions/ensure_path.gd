@@ -50,7 +50,7 @@ func _init() -> void:
 	
 	ScriptEditorRef.subscribe(ScriptEditorRef.Event.VALIDATE_SCRIPT, _on_validate_script)
 	
-	if is_instance_valid(editor_code_completion_class):
+	if is_instance_valid(editor_code_completion_class) and editor_code_completion_class.has_method("call_on_ready"):
 		editor_code_completion_class.call_on_ready(_add_tags)
 
 func _add_tags():

@@ -12,6 +12,11 @@ const Utils = preload("res://addons/syntax_plus/src/utils/utils.gd")
 const RESET_CURRENT = "Syntax Plus/Reset Current"
 const RESET_ALL = "Syntax Plus/Reset All"
 
+const STD_META = {
+	Params.PRIORITY: 1030,
+	Params.POSITION: Params.Position.BOTTOM,
+}
+
 static var tags = []
 
 func _popup_menu(paths: PackedStringArray) -> void:
@@ -83,17 +88,19 @@ static func get_valid_items(script_editor) -> Dictionary:
 		var texture = ImageTexture.create_from_image(img)
 		if menu == "Submenu":
 			var tag_path = "Syntax Plus".path_join(tag)
-			submenu_tags[tag_path] = {Params.ICON:[texture]}
+			submenu_tags[tag_path] = STD_META.duplicate()
+			submenu_tags[tag_path][Params.ICON] = [texture]
 		elif menu == "Main Menu":
-			main_menu_tags[tag] = {Params.ICON:[texture]}
+			main_menu_tags[tag] = STD_META.duplicate()
+			main_menu_tags[tag][Params.ICON] = [texture]
 	
 	for key in main_menu_tags.keys():
 		popup_custom_items[key] = main_menu_tags.get(key)
 	for key in submenu_tags.keys():
 		popup_custom_items[key] = submenu_tags.get(key)
 	
-	popup_custom_items[RESET_CURRENT] = {}
-	popup_custom_items[RESET_ALL] = {}
+	popup_custom_items[RESET_CURRENT] = STD_META
+	popup_custom_items[RESET_ALL] = STD_META
 	
 	return popup_custom_items
 
