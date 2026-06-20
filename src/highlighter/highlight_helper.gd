@@ -6,13 +6,17 @@ const Utils = SPClasses.Utils
 const HighlightLogic = SPClasses.HighlightLogic
 
 
-var highlight_words:= {}
+
+var highlight_words = {}
 var _highlight_word_regex: RegEx # Dynamically built regex for these names
 var declaration_regex: RegEx # To find "const NAME = xxx #import"
 
 var highlight_color:Color
 var highlight_tag:String = ""
 var overwrite_color:bool = false
+
+var scope_start:int = -1
+var scope_end:int = -1
 
 func _init(color:Color, tag:="", tag_data:={}) -> void:
 	highlight_tag = tag
@@ -35,7 +39,7 @@ func _init(color:Color, tag:="", tag_data:={}) -> void:
 	rebuild_tagged_name_regex() # Initialize with an empty regex
 
 
-func check_line(hl_info, current_line_text): 
+func check_line(hl_info:Dictionary, current_line_text:String):
 	var needs_sort = false
 	if not highlight_words.is_empty() and is_instance_valid(_highlight_word_regex):
 		var _matches = _highlight_word_regex.search_all(current_line_text)
@@ -68,10 +72,11 @@ func check_line(hl_info, current_line_text):
 	return [hl_info, needs_sort]
 
 
-func set_highlight_words(new_words:Dictionary) -> bool:
+func set_highlight_words(new_words:Variant) -> bool:
 	# previously used hashes, now comparing dicts with operator, which is non order dependent
 	# If this behaviour changes, will need to change something
-	var words_changed = new_words != highlight_words
+	
+	var words_changed = new_words != highlight_words if typeof(new_words) == typeof(highlight_words) else true
 	if words_changed:
 		highlight_words = new_words
 		rebuild_tagged_name_regex()
@@ -79,4 +84,7 @@ func set_highlight_words(new_words:Dictionary) -> bool:
 	return words_changed 
 
 func rebuild_tagged_name_regex() -> void:
-	_highlight_word_regex = Utils.build_name_regex(highlight_words.keys())
+	var words = highlight_words
+	if highlight_words is Dictionary:
+		words = highlight_words.keys()
+	_highlight_word_regex = Utils.build_name_regex(words)

@@ -77,7 +77,10 @@ func _hl_logic_setup():
 func _on_parse_completed():
 	if not active_code_edit:
 		return
+		
 	#return
+	if hl_logic.use_tree_sitter:
+		return # think this is irrelavent with tree sitter
 	hl_logic.update_class_members(true)
 
 func _on_hl_queue_invalidate(arg=false):
