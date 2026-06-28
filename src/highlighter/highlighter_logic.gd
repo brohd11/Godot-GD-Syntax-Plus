@@ -108,7 +108,7 @@ func get_text_edit():
 
 
 func get_gdscript_parser() -> GDScriptParser:
-	return gdscript_parser
+	return _get_gdscript_parser()
 
 
 func create_highlight_helpers():
