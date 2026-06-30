@@ -258,6 +258,8 @@ func get_line_syntax_highlighting(line_idx: int) -> Dictionary:
 	
 	var class_at_line = ""
 	for cls in inner_class_highlighters.keys():
+		#if cls == "": # this should be irrelavent now that main class is removed.
+			#continue
 		var d = inner_class_highlighters[cls]
 		if (d.line_index <= line_idx and d.end_line >= line_idx):
 			class_at_line = cls
@@ -275,7 +277,7 @@ func get_line_syntax_highlighting(line_idx: int) -> Dictionary:
 	#^
 	
 	if inner_class_member_enable and not class_at_line.is_empty():
-		var ic_hl_helper = inner_class_highlighters[class_at_line].get(&"helper")
+		var ic_hl_helper = inner_class_highlighters[class_at_line].get(Keys.HELPER)
 		if is_instance_valid(ic_hl_helper):
 			var ic_check = ic_hl_helper.check_line(hl_info, current_line_text)
 			hl_info = ic_check[0]
@@ -288,7 +290,7 @@ func get_line_syntax_highlighting(line_idx: int) -> Dictionary:
 		for d:Dictionary in funcs.values():
 			if not (d.line_index <= line_idx and d.end_line >= line_idx):
 				continue
-			var hl_helper = d[&"helper"]
+			var hl_helper = d[Keys.HELPER]
 			if hl_helper:
 				var arg_check = hl_helper.check_line(hl_info, current_line_text)
 				hl_info = arg_check[0]
@@ -427,24 +429,33 @@ func update_class_members(allow_invalidate:=false) -> bool:
 		return update_class_members_ts()
 	
 	var t = TF.new("UPDATE CLASS MEMBERS")
-	#if not is_instance_valid(gdscript_parser):
-		#gdscript_parser = GDScriptParser.new()
-		#gdscript_parser.set_current_script(script_resource)
-		#gdscript_parser.set_code_edit(get_text_edit())
-		#gdscript_parser.set_parser_cache_size(0)
 	
 	var parser = _get_gdscript_parser()
 	parser.parse()
 	
 	var main_class_obj = parser.get_class_object() as ParserClass
+	var class_names = parser.get_classes()
 	var parser_script_res = main_class_obj.script_resource
 	 
 	var cache_ok = _parser_cache_valid(parser_script_res)
 	var member_hash = parser.get_members_hash()
 	var member_hash_ok = member_hash == _members_hash
 	_members_hash = member_hash
+	
 	if cache_ok and member_hash_ok:
-		t.stop("UPDATE CLASS MEMBERS::EXIT")
+		for access_name in class_names:
+			var class_obj = parser.get_class_object(access_name) as ParserClass
+			if not access_name.is_empty():
+				var start_idx = class_obj.line_indexes[0]
+				var end_idx = class_obj.line_indexes[class_obj.line_indexes.size() - 1]
+				update_inner_class_helper_lines(access_name, start_idx, end_idx)
+			
+			if argument_enable:
+				for f in class_obj.functions.keys():
+					var func_obj = class_obj.functions[f] as GDScriptParser.ParserFunc
+					update_func_helper_lines(access_name, f, func_obj.declaration_line, func_obj.end_line)
+		if PRINT_DEBUG:
+			t.stop("UPDATE CLASS MEMBERS::EXIT")
 		return false
 	
 	_initialize_regexes()
@@ -463,27 +474,18 @@ func update_class_members(allow_invalidate:=false) -> bool:
 		new_inh_member_words
 		)
 	
-	var class_names = parser.get_classes()
+	
 	for access_name in class_names:
 		var class_obj = parser.get_class_object(access_name) as ParserClass
 		
 		_add_members(access_name, class_obj.members.keys(), class_obj.constants.keys(), 
 			new_const_words, new_pasc_words, new_member_words)
 		
-		#if access_name.is_empty():
-			#for m:String in class_obj.members:
-				#new_member_words[m] = true
-		#else:
-			#_check_word(access_name.get_file(), new_const_words, new_pasc_words, new_member_words)
-		#
-		#for c:String in class_obj.constants:
-			#_check_word(c, new_const_words, new_pasc_words, new_member_words)
-		
-		
-		var start_idx = class_obj.line_indexes[0]
-		var end_idx = class_obj.line_indexes[class_obj.line_indexes.size() - 1]
-		var ic_chg = get_or_create_inner_class_helper(class_obj.members, access_name, start_idx, end_idx)
-		members_changed = maxi(members_changed, ic_chg)
+		if not access_name.is_empty():
+			var start_idx = class_obj.line_indexes[0]
+			var end_idx = class_obj.line_indexes[class_obj.line_indexes.size() - 1]
+			var ic_chg = get_or_create_inner_class_helper(class_obj.members, access_name, start_idx, end_idx)
+			members_changed = maxi(members_changed, ic_chg)
 		
 		if argument_enable:
 			var ft = TF.new("FUNC ARG")
@@ -491,9 +493,7 @@ func update_class_members(allow_invalidate:=false) -> bool:
 			for f in class_obj.functions.keys():
 				var func_obj = class_obj.functions[f] as GDScriptParser.ParserFunc
 				var args = func_obj.get_arguments_raw().keys()
-				var start_i = func_obj.declaration_line
-				var end_i = func_obj.func_lines[func_obj.func_lines.size() - 1]
-				var chg = get_or_create_func_arg_helpers_unified(access_name, f, start_i, end_i, args, temp_func_arg_data)
+				var chg = get_or_create_func_arg_helpers_unified(access_name, f, func_obj.declaration_line, func_obj.end_line, args, temp_func_arg_data)
 				members_changed = maxi(members_changed, chg)
 			
 			if PRINT_DEBUG:
@@ -529,9 +529,12 @@ func update_class_members_ts() -> bool:
 			ts.stop("Eearly Sparse exit")
 		return false
 	var sparse:Dictionary = ts_man.parser.sparse_parse()
+	
+	
 	if PRINT_DEBUG:
 		ts.stop()
 	var member_data:Dictionary = sparse["members"]
+	var class_names = member_data.keys()
 	var line_data:Dictionary = sparse["lines"]
 	
 	var cache_ok:bool = _parser_cache_valid(parser_script_res)
@@ -539,6 +542,22 @@ func update_class_members_ts() -> bool:
 	var member_hash_ok:bool = member_hash == _members_hash
 	_members_hash = member_hash
 	if cache_ok and member_hash_ok and init_scan_done:
+		# update lines since we are here
+		for access_path in class_names:
+			var class_line_data = line_data[access_path]
+			if not access_path.is_empty():
+				var cls_start_i = class_line_data[Keys.LINE_INDEX]
+				var cls_end_i = class_line_data.get(Keys.END_LINE, cls_start_i)
+				update_inner_class_helper_lines(access_path, cls_start_i, cls_end_i)
+			
+			if argument_enable:
+				var functions = class_line_data["functions"]
+				for f in functions.keys():
+					var func_line_data = functions.get(f)
+					var start_i = func_line_data.get(Keys.LINE_INDEX)
+					var end_i = func_line_data.get(Keys.END_LINE, start_i)# + 1\
+					update_func_helper_lines(access_path, f, start_i, end_i)
+		
 		if PRINT_DEBUG:
 			t.stop("UPDATE CLASS MEMBERS TS::EXIT")
 		return false
@@ -559,8 +578,7 @@ func update_class_members_ts() -> bool:
 		new_pasc_words,
 		new_inh_member_words
 		)
-	 
-	var class_names = member_data.keys()
+	
 	#print(sparse)
 	for access_name in class_names:
 		var class_data = member_data[access_name]
@@ -573,10 +591,11 @@ func update_class_members_ts() -> bool:
 		
 		_add_members(access_name, members, constants, new_const_words, new_pasc_words, new_member_words)
 		
-		var cls_start_i = class_line_data[&"line_index"]
-		var cls_end_i = class_line_data.get(&"end_line", cls_start_i)
-		var ic_chg = get_or_create_inner_class_helper(members, access_name, cls_start_i, cls_end_i)
-		members_changed = maxi(members_changed, ic_chg)
+		if not access_name.is_empty():
+			var cls_start_i = class_line_data[Keys.LINE_INDEX]
+			var cls_end_i = class_line_data.get(Keys.END_LINE, cls_start_i)
+			var ic_chg = get_or_create_inner_class_helper(members, access_name, cls_start_i, cls_end_i)
+			members_changed = maxi(members_changed, ic_chg)
 		
 		if argument_enable:
 			var ft = TF.new("FUNC ARG")
@@ -584,8 +603,8 @@ func update_class_members_ts() -> bool:
 			for f in functions.keys():
 				var data = functions[f]
 				var func_line_data = class_line_data["functions"].get(f)
-				var start_i = func_line_data.get(&"line_index")
-				var end_i = func_line_data.get(&"end_line", start_i)# + 1
+				var start_i = func_line_data.get(Keys.LINE_INDEX)
+				var end_i = func_line_data.get(Keys.END_LINE, start_i)# + 1
 				var chg = get_or_create_func_arg_helpers_unified(access_name, f, start_i, end_i, data.get(&"args"), temp_func_arg_data)
 				members_changed = maxi(members_changed, chg)
 			
@@ -653,15 +672,27 @@ func _set_hl_words(new_c_w:Dictionary, new_p_w:Dictionary, new_mem_w:Dictionary)
 		members_changed = maxi(members_changed, m_chg)
 	return members_changed
 
+func update_inner_class_helper_lines(class_path:String, start_line:int, end_line:int):
+	var highlight_helper_data = inner_class_highlighters.get_or_add(class_path, {})
+	highlight_helper_data[Keys.LINE_INDEX] = start_line
+	highlight_helper_data[Keys.END_LINE] = end_line
+
+func update_func_helper_lines(access_name:String, func_name:String, start_idx:int, end_idx:int):
+	var data = func_arg_highlighters.get(access_name, {}).get(func_name)
+	if data == null:
+		return
+	data[Keys.LINE_INDEX] = start_idx
+	data[Keys.END_LINE] = end_idx
+
 func get_or_create_inner_class_helper(members:Variant, class_path:String, start_line:int, end_line:int):
 	var highlight_helper_data = inner_class_highlighters.get_or_add(class_path, {})
-	highlight_helper_data[&"line_index"] = start_line
-	highlight_helper_data[&"end_line"] = end_line
+	highlight_helper_data[Keys.LINE_INDEX] = start_line
+	highlight_helper_data[Keys.END_LINE] = end_line
 	
 	if not inner_class_member_enable:
 		return false
 	
-	var highlight_helper = highlight_helper_data.get(&"helper")
+	var highlight_helper = highlight_helper_data.get(Keys.HELPER)
 	if not is_instance_valid(highlight_helper):
 		var depth = class_path.count(".")
 		var new_color = inner_class_member_color
@@ -670,7 +701,7 @@ func get_or_create_inner_class_helper(members:Variant, class_path:String, start_
 			new_color.v = minf(new_color.v, 0.8)
 		
 		highlight_helper = HighlightHelper.new(new_color)
-		highlight_helper_data[&"helper"] = highlight_helper
+		highlight_helper_data[Keys.HELPER] = highlight_helper
 	
 	var new_words = {}
 	for m:String in members:
@@ -692,17 +723,17 @@ func get_or_create_func_arg_helpers_unified(access_name:String, func_name:String
 		if not changed:
 			changed = f_chg
 		temp_data[access_name][func_name] = {
-				&"helper":highlight_helper,
-				&"line_index": start_idx,
-				&"end_line": end_idx
+				Keys.HELPER:highlight_helper,
+				Keys.LINE_INDEX: start_idx,
+				Keys.END_LINE: end_idx
 			}
 	return changed
 
 
-
+# unused
 func _get_line_range(data:Dictionary):
-	var start = data.get(&"line_index")
-	var end = data.get(&"end_line", start) + 1
+	var start = data.get(Keys.LINE_INDEX)
+	var end = data.get(Keys.END_LINE, start) + 1
 	return range(start, end)
 
 func _parser_cache_valid(script):
@@ -839,3 +870,6 @@ func invalidate(line:=-1):
 	text_edit.undo()
 	
 	UObject.connect_signals_from_list(text_edit, text_changed_signal_list)
+
+class Keys extends GDScriptParser.Keys:
+	const HELPER = &"helper"
