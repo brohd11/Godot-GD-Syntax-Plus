@@ -653,6 +653,7 @@ func _add_members(access:String, mem:Array, con:Array, new_con_w, new_pas_w, new
 		_check_word(c, new_con_w, new_pas_w, new_mem_w)
 
 func _clean_up_inner_class_highlighters(current_classes:Array):
+	inner_class_highlighters.erase("")
 	for path in inner_class_highlighters.keys():
 		if not path in current_classes:
 			inner_class_highlighters.erase(path)
