@@ -11,6 +11,7 @@ const SPClasses = preload("res://addons/syntax_plus/src/utils/classes.gd")
 
 const UtilsRemote = SPClasses.UtilsRemote
 const GDScriptParser = UtilsRemote.GDScriptParser
+const EditorGDScriptParser = UtilsRemote.EditorGDScriptParser
 const ParserClass = GDScriptParser.ParserClass
 const ParserFunc = GDScriptParser.ParserFunc
 const UClassDetail = UtilsRemote.UClassDetail
@@ -406,16 +407,17 @@ func update_tagged_name_list(force_build=false) -> void:
 
 
 func _get_gdscript_parser():
-	var editor_parser = ALibEditor.Singleton.EditorGDScriptParser.get_parser()
-	if is_instance_valid(editor_parser) and editor_parser.get_current_script() == script_resource:
+	var editor_parser = EditorGDScriptParser.get_parser(script_resource.resource_path)
+	# Adopt the editor parser only when it is LIVE and already on this script. state is checked first so
+	# the short-circuit never calls get_current_script() on a CACHED_RESOLVED parser (would lazy-load).
+	if is_instance_valid(editor_parser) and editor_parser.state == GDScriptParser.STATE_LIVE:
 		return editor_parser
 	if not is_instance_valid(gdscript_parser):
-		gdscript_parser = GDScriptParser.new()
-		gdscript_parser.set_current_script(script_resource)
-		gdscript_parser.set_code_edit(get_text_edit())
+		# Own LIVE parser bound to the live editor buffer; cache-aware so cross-script lookups hit disk.
+		gdscript_parser = GDScriptParser.from_cache(script_resource.resource_path, "", get_text_edit())
 		gdscript_parser.set_parser_cache_size(0)
-	
-	
+
+
 	if gdscript_parser._class_access.is_empty():
 		gdscript_parser.parse()
 	return gdscript_parser
