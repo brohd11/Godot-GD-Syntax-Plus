@@ -26,6 +26,8 @@ func _init() -> void:
 	hl_logic.queue_invalidate.connect(_on_hl_queue_invalidate)
 	
 	ScriptEditorRef.subscribe(ScriptEditorRef.Event.EDITOR_SCRIPT_CHANGED, _on_editor_script_changed)
+	if not is_instance_valid(EditorGDScriptParser.get_instance()):
+		print("NOT VALID HERER")
 	EditorGDScriptParser.get_instance().parse_completed.connect(_on_parse_completed)
 
 func reset_class_member_hash():

@@ -258,17 +258,19 @@ func get_line_syntax_highlighting(line_idx: int) -> Dictionary:
 	#^
 	
 	var class_at_line = ""
+	var class_start_line = 0
 	for cls in inner_class_highlighters.keys():
 		#if cls == "": # this should be irrelavent now that main class is removed.
 			#continue
 		var d = inner_class_highlighters[cls]
 		if (d.line_index <= line_idx and d.end_line >= line_idx):
 			class_at_line = cls
+			class_start_line = d.line_index
 			break
 	
 	#^ Member check
-	for highlighter in script_member_highlighters:
-		if not class_at_line.is_empty() and (highlighter == member_highlighter):
+	for highlighter in script_member_highlighters: # the only thing class start line is for is non valid name classes to show as members
+		if not class_at_line.is_empty() and (highlighter == member_highlighter) and class_start_line < line_idx:
 			continue # this could be a bit cleaner, perhaps having a set for every class. But for now it will work
 		
 		var member_check = highlighter.check_line(hl_info, current_line_text)
@@ -644,7 +646,7 @@ func _add_class_and_inherited_members(main_class_obj:ParserClass,
 		members_changed = maxi(members_changed, i_chg)
 	return members_changed
 
-func _add_members(access:String, mem:Array, con:Array, new_con_w, new_pas_w, new_mem_w):
+func _add_members(access:String, mem:Array, con:Array, new_con_w:Dictionary, new_pas_w:Dictionary, new_mem_w:Dictionary):
 	if access.is_empty():
 		for m:String in mem:
 			new_mem_w[m] = true
