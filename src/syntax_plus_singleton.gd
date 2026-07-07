@@ -347,6 +347,9 @@ static func reset_script_highlighters():
 		if syntax is EditorHL:
 			syntax.reset_highlighter()
 	
+	if not is_instance_valid(script_editor.get_current_editor()):
+		return
+	
 	var current_syntax = script_editor.get_current_editor().get_base_editor().syntax_highlighter
 	if current_syntax is EditorHL:
 		current_syntax.reset_class_member_hash()
