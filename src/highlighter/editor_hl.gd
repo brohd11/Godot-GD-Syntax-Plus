@@ -90,6 +90,8 @@ func _on_hl_queue_invalidate(arg=false):
 
 func _on_text_scrolled(_val:int):
 	var sp_ins = SyntaxPlusSingleton.get_instance()
+	if not is_instance_valid(sp_ins):
+		return
 	if sp_ins.invalidate_is_queued(self):
 		sp_ins.queue_invalidate(self)
 

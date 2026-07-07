@@ -520,7 +520,7 @@ func update_class_members(allow_invalidate:=false) -> bool:
 
 func update_class_members_ts() -> bool:
 	var t = TF.new("UPDATE CLASS MEMBERS TS")
-	var ts = ALibRuntime.Utils.UProfile.TimeFunction.new("Sparse", TF.TimeScale.USEC)
+	var ts = TF.new("Sparse", TF.TimeScale.USEC)
 	
 	var parser = _get_gdscript_parser()
 	var main_class_obj = parser.get_class_object() as ParserClass
