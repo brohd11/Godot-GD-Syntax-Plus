@@ -1,10 +1,13 @@
-### Version 1.0.0
-Compatible with Godot 4.6+
+## SyntaxPlus 1.0.1
 
-I've written a GDScript parser that I am using for a code completion plugin, so I've updated this plugin to use some of the extended features that can provide.
+### New in v1.0.1
+ - Compatibility lowered to 4.4+
+ - optional [Tree-sitter library](https://github.com/brohd11/Godot-TreeSitter-Wrapper) for better performance. Will auto detect if Tree-sitter is present.
+
+---
 
 Almost all of the following can be enabled/disabled in EditorSettings and all colors are adjustable.
-#### Features
+### Features
  - Highlighting const members when declared in either PascalCase or CONSTANT_CASE
  - Function argument highlighting, arguments of functions will be highlighted within their functions
  - Inner class member highlighting, all can be the same, or nested classes can have their hue changed based on nest depth
@@ -12,8 +15,8 @@ Almost all of the following can be enabled/disabled in EditorSettings and all co
  - Tags can be defined to highlight a specific word
  - Comments can be highlighted different colors by using "#^", this can also be used to change the background of the script editor to a different color in a range of lines
 
-#### Setup
-Download the zip in "releases" and extract the contents into addons.
+### Setup
+Download the zip in "releases" and extract the contents into addons. Alternatively, use [gdaddon](https://github.com/brohd11/gdaddon) which can also manage the Tree-sitter package for you.
 
 When a syntax highlighter is added to the script editor, it isn't added to already open scripts. The easiest thing to do is just restart the editor so it can be added to the open scripts.
 
