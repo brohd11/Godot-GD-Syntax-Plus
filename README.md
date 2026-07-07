@@ -2,7 +2,7 @@
 
 ### New in v1.0.1
  - Compatibility lowered to 4.4+
- - optional [Tree-sitter library](https://github.com/brohd11/Godot-TreeSitter-Wrapper) for better performance. Will auto detect if Tree-sitter is present.
+ - optional (Godot 4.5+) [Tree-sitter library](https://github.com/brohd11/Godot-TreeSitter-Wrapper) for better performance. Will auto detect if Tree-sitter is present.
 
 ---
 
