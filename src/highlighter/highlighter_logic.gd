@@ -428,7 +428,6 @@ func _get_gdscript_parser():
 func update_class_members(allow_invalidate:=false) -> bool:
 	if script_member_highlighters.is_empty():
 		return false
-		
 	if use_tree_sitter:
 		return update_class_members_ts()
 	
@@ -525,7 +524,7 @@ func update_class_members_ts() -> bool:
 	var parser = _get_gdscript_parser()
 	var main_class_obj = parser.get_class_object() as ParserClass
 	var parser_script_res = main_class_obj.script_resource
-	 
+	
 	var ts_man = parser.get_code_edit_parser().tree_sitter_manager
 	var parsed = ts_man.parse_text()
 	if not parsed and not member_highlighter.highlight_words.is_empty():
@@ -533,7 +532,6 @@ func update_class_members_ts() -> bool:
 			ts.stop("Eearly Sparse exit")
 		return false
 	var sparse:Dictionary = ts_man.parser.sparse_parse()
-	
 	
 	if PRINT_DEBUG:
 		ts.stop()
@@ -819,8 +817,12 @@ static func check_line_for_rebuild(line_text:String, line_text_last_state:String
 
 func set_inactive():
 	gdscript_parser = null
-	for hl in script_member_highlighters:
-		hl.set_highlight_words({})
+	
+	init_scan_done = false
+	#^ if setting highlight words to nothing, needs to trigger on making active somehow..
+	#^ maybe init scan done can trigger the rebuild if needed.
+	#for hl in script_member_highlighters:
+		#hl.set_highlight_words({})
 
 
 func invalidate_all():
