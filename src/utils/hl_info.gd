@@ -95,6 +95,9 @@ static func check_const_path(class_chain:String, current_class_path:String, star
 	if class_chain.contains("."):
 		type_array = class_chain.split(".", false)
 	
+	if type_array.is_empty():
+		return {}
+	
 	var script_data = UString.get_script_path_and_suffix(current_class_path)
 	var main_script_path = script_data[0]
 	var class_access_path = script_data[1] as String

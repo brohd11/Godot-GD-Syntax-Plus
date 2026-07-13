@@ -16,6 +16,7 @@ const ParserClass = GDScriptParser.ParserClass
 const ParserFunc = GDScriptParser.ParserFunc
 const UClassDetail = UtilsRemote.UClassDetail
 const UObject = UtilsRemote.UObject
+const UString = UtilsRemote.UString
 
 const DummyHelper = SPClasses.DummyHelper
 const HighlightHelper = SPClasses.HighlightHelper
@@ -260,13 +261,11 @@ func get_line_syntax_highlighting(line_idx: int) -> Dictionary:
 	var class_at_line = ""
 	var class_start_line = 0
 	for cls in inner_class_highlighters.keys():
-		#if cls == "": # this should be irrelavent now that main class is removed.
-			#continue
 		var d = inner_class_highlighters[cls]
-		if (d.line_index <= line_idx and d.end_line >= line_idx):
+		# find the tightest match, just check them all
+		if d.line_index > class_start_line and (d.line_index <= line_idx and d.end_line >= line_idx):
 			class_at_line = cls
 			class_start_line = d.line_index
-			break
 	
 	#^ Member check
 	for highlighter in script_member_highlighters: # the only thing class start line is for is non valid name classes to show as members
@@ -649,7 +648,7 @@ func _add_members(access:String, mem:Array, con:Array, new_con_w:Dictionary, new
 		for m:String in mem:
 			new_mem_w[m] = true
 	else:
-		_check_word(access.get_file(), new_con_w, new_pas_w, new_mem_w)
+		_check_word(UString.get_member_access_back(access), new_con_w, new_pas_w, new_mem_w)
 	
 	for c:String in con:
 		_check_word(c, new_con_w, new_pas_w, new_mem_w)
