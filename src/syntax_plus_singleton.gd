@@ -210,7 +210,9 @@ static func unregister_highlight_callable(prefix:String, tag:String):
 	print("Highlight callable not registered: %s" % tag)
 
 static func get_highlight_callables():
-	var instance = get_instance()
+	var instance = _get_instance(SCRIPT, false)
+	if not is_instance_valid(instance):
+		return {}
 	return instance.highlight_callable_data
 
 static func get_prefixes():

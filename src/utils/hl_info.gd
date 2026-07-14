@@ -168,6 +168,8 @@ static func check_const_path(class_chain:String, current_class_path:String, star
 
 static func get_comment_tag_info(script_editor:CodeEdit, current_line_text:String, line:int, prefix:String, comment_tag_idx:int, existing_hl_info=null):
 	var sp_instance = SyntaxPlusSingleton.get_instance()
+	if not is_instance_valid(sp_instance):
+		return
 	var tag = current_line_text.get_slice(prefix, 1).strip_edges().get_slice(" ", 0).strip_edges()
 	var callable_data = SyntaxPlusSingleton.get_highlight_callables()
 	if callable_data == null:
