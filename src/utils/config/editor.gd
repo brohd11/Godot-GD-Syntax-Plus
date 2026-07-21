@@ -36,6 +36,9 @@ static func initial_set_editor_settings():
 		Settings.TAG_ENABLE,
 		Settings.TAG_COLOR,
 		Settings.TAG_COLOR_ENABLE,
+		
+		Settings.BRACKET_ENABLE,
+		Settings.BRACKET_COLORS,
 	]
 	var ed_settings = EditorInterface.get_editor_settings()
 	for setting in settings_array:

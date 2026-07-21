@@ -1,9 +1,12 @@
 # HL
 const PLUGIN_EXPORTED = false
-const PRINT_DEBUG = false
-const CAN_INVALIDATE = true
+const CAN_INVALIDATE = false
 
+# debug
+const PRINT_DEBUG = false
 const TF = preload("uid://ft7o6vspsurv") #! resolve ALibRuntime.Utils.UProfile.TimeFunction
+var sparse_t:TF
+# end debug
 
 const HLInfo = SyntaxPlusSingleton.HLInfo
 
@@ -51,6 +54,8 @@ static var argument_enable:bool
 static var tag_enable:bool
 static var tag_color:Color
 static var tag_color_enable:bool
+static var bracket_enable:bool
+static var bracket_colors:Dictionary = {}
 
 static var editor_tags:Dictionary = {}
 
@@ -92,11 +97,10 @@ var last_line_count = 0
 var init_scan_done:= false
 
 var comment_tag_prefixes:= []
-
+var bracket_map := {}
 
 signal scanning_tags
 signal queue_invalidate
-
 
 func _init() -> void:
 	dummy_helper = DummyHelper.new()
@@ -300,6 +304,21 @@ func get_line_syntax_highlighting(line_idx: int) -> Dictionary:
 					needs_sort = arg_check[1]
 			break
 	
+	#^ brackets
+	if  use_tree_sitter and bracket_enable and bracket_map.has(line_idx): # enable brackets
+		var wrap_max = bracket_colors.size() + 1
+		var line_data = bracket_map[line_idx]
+		needs_sort = true
+		# can cache this instance ref, small savings, but hard relies on SyntaxPlus/Editor right now
+		var symb_color = SyntaxPlusSingleton.get_instance().symbol_color
+		for column in line_data.keys():
+			var depth = line_data[column]
+			var color = symb_color
+			if depth > 0:
+				color = bracket_colors.get(wrapi(depth, 1, wrap_max))
+			hl_info[column] = HLInfo.get_color_dict(color)
+			if not hl_info.has(column + 1):
+				hl_info[column + 1] = HLInfo.get_color_dict(symb_color)
 	
 	#^ Highlight tags
 	if tag_enable:
@@ -406,7 +425,6 @@ func update_tagged_name_list(force_build=false) -> void:
 	check_newline_buffer()
 
 
-
 func _get_gdscript_parser():
 	var editor_parser = EditorGDScriptParser.get_parser(script_resource.resource_path)
 	# Adopt the editor parser only when it is LIVE and already on this script. state is checked first so
@@ -417,16 +435,14 @@ func _get_gdscript_parser():
 		# Own LIVE parser bound to the live editor buffer; cache-aware so cross-script lookups hit disk.
 		gdscript_parser = GDScriptParser.from_cache(script_resource.resource_path, "", get_text_edit())
 		gdscript_parser.set_parser_cache_size(0)
-
-
+	
+	
 	if gdscript_parser._class_access.is_empty():
 		gdscript_parser.parse()
 	return gdscript_parser
 
 
 func update_class_members(allow_invalidate:=false) -> bool:
-	if script_member_highlighters.is_empty():
-		return false
 	if use_tree_sitter:
 		return update_class_members_ts()
 	
@@ -520,20 +536,37 @@ func update_class_members_ts() -> bool:
 	var t = TF.new("UPDATE CLASS MEMBERS TS")
 	var ts = TF.new("Sparse", TF.TimeScale.USEC)
 	
+	if PRINT_DEBUG and not is_instance_valid(sparse_t):
+		sparse_t = TF.new("Sparse",TF.TimeScale.USEC, false)
+		sparse_t.iterations = 100
+	
 	var parser = _get_gdscript_parser()
 	var main_class_obj = parser.get_class_object() as ParserClass
 	var parser_script_res = main_class_obj.script_resource
 	
 	var ts_man = parser.get_code_edit_parser().tree_sitter_manager
-	var parsed = ts_man.parse_text()
-	if not parsed and not member_highlighter.highlight_words.is_empty():
-		if PRINT_DEBUG:
-			ts.stop("Eearly Sparse exit")
-		return false
-	var sparse:Dictionary = ts_man.parser.sparse_parse()
+	var cpp_parser = ts_man.parser
+	cpp_parser.set_bracket_mode(bracket_enable)
+	if bracket_enable:
+		bracket_map = cpp_parser.get_brackets()
+	else:
+		bracket_map = {}
 	
 	if PRINT_DEBUG:
+		sparse_t.start()
+	
+	var parsed = ts_man.parse_text()
+	if not parsed and is_instance_valid(member_highlighter) and not member_highlighter.highlight_words.is_empty():
+		if PRINT_DEBUG:
+			ts.stop("Eearly Sparse exit")
+			sparse_t.stop()
+		return false
+	
+	var sparse:Dictionary = cpp_parser.sparse_parse()
+	if PRINT_DEBUG:
+		sparse_t.stop()
 		ts.stop()
+	
 	var member_data:Dictionary = sparse["members"]
 	var class_names = member_data.keys()
 	var line_data:Dictionary = sparse["lines"]
@@ -580,7 +613,6 @@ func update_class_members_ts() -> bool:
 		new_inh_member_words
 		)
 	
-	#print(sparse)
 	for access_name in class_names:
 		var class_data = member_data[access_name]
 		var class_line_data = line_data[access_name]
@@ -619,9 +651,8 @@ func update_class_members_ts() -> bool:
 	func_arg_highlighters = temp_func_arg_data
 	_clean_up_inner_class_highlighters(class_names)
 	
-	#if allow_invalidate and members_changed: queue_invalidate.emit() #^r i think tree sitter can just not do this
 	if PRINT_DEBUG:
-		t.stop()
+		t.stop("UPDATE CLASS MEMBERS TS::FULL")
 	return members_changed
 
 func _add_class_and_inherited_members(main_class_obj:ParserClass,
@@ -824,6 +855,7 @@ func set_inactive():
 		#hl.set_highlight_words({})
 
 
+#^{[/r] probably get rid of all this...
 func invalidate_all():
 	if use_tree_sitter:
 		return
@@ -876,6 +908,8 @@ func invalidate(line:=-1):
 	text_edit.undo()
 	
 	UObject.connect_signals_from_list(text_edit, text_changed_signal_list)
+
+#^}
 
 class Keys extends GDScriptParser.Keys:
 	const HELPER = &"helper"

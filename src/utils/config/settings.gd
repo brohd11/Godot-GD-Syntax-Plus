@@ -23,6 +23,9 @@ const TAG_COLOR = &"plugin/syntax_plus/tags/tag_color"
 const TAG_COLOR_ENABLE = &"plugin/syntax_plus/tags/tag_color_enable"
 const DEFINED_TAGS = &"plugin/syntax_plus/tags/defined_tags"
 
+const BRACKET_ENABLE = &"plugin/syntax_plus/brackets/rainbow_enable"
+const BRACKET_COLORS = &"plugin/syntax_plus/brackets/colors"
+
 
 const DEFAULT_SETTINGS = {
 	SET_AS_DEFAULT_HIGHLIGHTER: false,
@@ -46,7 +49,14 @@ const DEFAULT_SETTINGS = {
 	ARGUMENT_COLOR: Color(0.733, 0.47, 0.279, 1.0),
 	TAG_ENABLE: false,
 	TAG_COLOR: Color(0.3725, 0.6157, 0.6235, 1.0),
-	TAG_COLOR_ENABLE: true
+	TAG_COLOR_ENABLE: true,
+	
+	BRACKET_ENABLE: true,
+	BRACKET_COLORS: {
+		1 : Color(1.0, 1.0, 0.0, 1.0),
+		2 : Color(0.815, 0.637, 0.995, 1.0),
+		3 : Color(0.392, 0.583, 1.0, 1.0)
+	},
 }
 
 const DEFAULT_TAGS = {

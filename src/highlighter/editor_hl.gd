@@ -182,6 +182,10 @@ static func set_hl_logic_settings():
 	HighlightLogic.tag_enable = EditorConfig.get_setting(Settings.TAG_ENABLE)
 	HighlightLogic.tag_color = EditorConfig.get_setting(Settings.TAG_COLOR)
 	HighlightLogic.tag_color_enable = EditorConfig.get_setting(Settings.TAG_COLOR_ENABLE)
+	
+	HighlightLogic.bracket_enable = EditorConfig.get_setting(Settings.BRACKET_ENABLE)
+	HighlightLogic.bracket_colors = EditorConfig.get_setting(Settings.BRACKET_COLORS)
+	
 	HighlightLogic.editor_tags = EditorConfig.get_tags_data()
 	
 	
