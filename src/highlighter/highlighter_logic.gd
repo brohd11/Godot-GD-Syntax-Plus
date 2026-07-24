@@ -98,6 +98,8 @@ var init_scan_done:= false
 
 var comment_tag_prefixes:= []
 var bracket_map := {}
+# ensures a parse is called on script change to update brackets.
+var script_changed_flag:bool=true
 
 signal scanning_tags
 signal queue_invalidate
@@ -184,7 +186,8 @@ func get_line_syntax_highlighting(line_idx: int) -> Dictionary:
 	
 	var parser = _get_gdscript_parser()
 	var valid_parser = is_instance_valid(parser)
-	if not valid_parser or not parser.cache_valid():
+	if not valid_parser or not parser.cache_valid() or script_changed_flag:
+		script_changed_flag = true
 		update_class_members()
 	
 	if DummyHelper.dummy_code_edit.get_line(line_idx) != current_line_text:
@@ -305,7 +308,7 @@ func get_line_syntax_highlighting(line_idx: int) -> Dictionary:
 			break
 	
 	#^ brackets
-	if  use_tree_sitter and bracket_enable and bracket_map.has(line_idx): # enable brackets
+	if use_tree_sitter and bracket_enable and bracket_map.has(line_idx): # enable brackets
 		var wrap_max = bracket_colors.size() + 1
 		var line_data = bracket_map[line_idx]
 		needs_sort = true
@@ -543,6 +546,8 @@ func update_class_members_ts() -> bool:
 	var parser = _get_gdscript_parser()
 	var main_class_obj = parser.get_class_object() as ParserClass
 	var parser_script_res = main_class_obj.script_resource
+	if not is_instance_valid(parser_script_res):
+		return false # this fires on scene built in scripts
 	
 	var ts_man = parser.get_code_edit_parser().tree_sitter_manager
 	var cpp_parser = ts_man.parser

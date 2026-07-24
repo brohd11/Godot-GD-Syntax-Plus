@@ -73,6 +73,7 @@ func _hl_logic_setup():
 	hl_logic.script_resource = _get_current_script()
 	hl_logic.comment_tag_prefixes = SyntaxPlusSingleton.get_prefixes()
 	
+	hl_logic.script_changed_flag = true
 	#hl_logic.init_scan_done = false # doesn't seem to be necessary
 
 
