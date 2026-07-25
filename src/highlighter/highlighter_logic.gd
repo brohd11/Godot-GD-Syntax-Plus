@@ -544,11 +544,6 @@ func update_class_members_ts() -> bool:
 		sparse_t.iterations = 100
 	
 	var parser = _get_gdscript_parser()
-	var main_class_obj = parser.get_class_object() as ParserClass
-	var parser_script_res = main_class_obj.script_resource
-	if not is_instance_valid(parser_script_res):
-		return false # this fires on scene built in scripts
-	
 	var ts_man = parser.get_code_edit_parser().tree_sitter_manager
 	var cpp_parser = ts_man.parser
 	cpp_parser.set_bracket_mode(bracket_enable)
@@ -559,6 +554,14 @@ func update_class_members_ts() -> bool:
 	
 	if PRINT_DEBUG:
 		sparse_t.start()
+	
+	# move after bracket map, so that will parse regardless
+	var main_class_obj = parser.get_class_object() as ParserClass
+	if not is_instance_valid(main_class_obj):
+		return false
+	var parser_script_res = main_class_obj.script_resource
+	if not is_instance_valid(parser_script_res):
+		return false # this fires on scene built in scripts
 	
 	var parsed = ts_man.parse_text()
 	if not parsed and is_instance_valid(member_highlighter) and not member_highlighter.highlight_words.is_empty():
