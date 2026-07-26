@@ -29,6 +29,7 @@ const Utils = SPClasses.Utils
 static var default_text_color:Color
 static var editor_member_color:Color
 static var string_color:Color
+static var symbol_color:Color
 static var _empty_line_data:Dictionary = {}
 
 static var const_color:Color
@@ -313,15 +314,14 @@ func get_line_syntax_highlighting(line_idx: int) -> Dictionary:
 		var line_data = bracket_map[line_idx]
 		needs_sort = true
 		# can cache this instance ref, small savings, but hard relies on SyntaxPlus/Editor right now
-		var symb_color = SyntaxPlusSingleton.get_instance().symbol_color
 		for column in line_data.keys():
 			var depth = line_data[column]
-			var color = symb_color
+			var color = symbol_color
 			if depth > 0:
 				color = bracket_colors.get(wrapi(depth, 1, wrap_max))
 			hl_info[column] = HLInfo.get_color_dict(color)
 			if not hl_info.has(column + 1):
-				hl_info[column + 1] = HLInfo.get_color_dict(symb_color)
+				hl_info[column + 1] = HLInfo.get_color_dict(symbol_color)
 	
 	#^ Highlight tags
 	if tag_enable:

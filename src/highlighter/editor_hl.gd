@@ -159,6 +159,7 @@ static func set_hl_logic_settings():
 	HighlightLogic.default_text_color = editor_settings.get(&"text_editor/theme/highlighting/text_color")
 	HighlightLogic.editor_member_color = editor_settings.get(&"text_editor/theme/highlighting/member_variable_color")
 	HighlightLogic.string_color = editor_settings.get(&"text_editor/theme/highlighting/string_color")
+	HighlightLogic.symbol_color = editor_settings.get(&"text_editor/theme/highlighting/symbol_color")
 	HighlightLogic._empty_line_data = {0: {"color": editor_settings.get(&"text_editor/theme/highlighting/symbol_color")}}
 	
 	HighlightLogic.const_enable = EditorConfig.get_setting(Settings.CONST_ENABLE)
