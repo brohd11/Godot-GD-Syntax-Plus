@@ -1,5 +1,6 @@
 
 const SET_AS_DEFAULT_HIGHLIGHTER = &"plugin/syntax_plus/set_as_default_highlighter"
+const SET_AS_DEFAULT_TEXT_HIGHLIGHTER = &"plugin/syntax_plus/set_as_default_text_highlighter"
 const PASCAL_ENABLE = &"plugin/syntax_plus/pascal/pascal_enable"
 const PASCAL_COLOR = &"plugin/syntax_plus/pascal/pascal_color"
 const CONST_ENABLE = &"plugin/syntax_plus/constant/constant_enable"
@@ -29,6 +30,7 @@ const BRACKET_COLORS = &"plugin/syntax_plus/brackets/colors"
 
 const DEFAULT_SETTINGS = {
 	SET_AS_DEFAULT_HIGHLIGHTER: false,
+	SET_AS_DEFAULT_TEXT_HIGHLIGHTER: false,
 	PASCAL_ENABLE: true,
 	PASCAL_COLOR: Color(0.1569, 0.8784, 0.7922, 1.0),
 	CONST_ENABLE: true,

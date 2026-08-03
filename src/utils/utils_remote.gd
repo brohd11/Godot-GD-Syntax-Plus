@@ -12,3 +12,4 @@ const GDScriptParser = UGDScript.Parser
 const SettingHelperEditor = preload("uid://c4l4v4eufkmtx") #! resolve ALibEditor.Settings.SettingHelperEditor
 
 const EditorGDScriptParser = preload("uid://t2dewmuth0sy") #! resolve ALibEditor.Singleton.EditorGDScriptParser
+const ScriptListManager = ALibEditor.Singleton.ScriptListManager

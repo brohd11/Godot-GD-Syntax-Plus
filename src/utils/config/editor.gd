@@ -15,6 +15,7 @@ static func initialize():
 static func initial_set_editor_settings():
 	var settings_array = [
 		Settings.SET_AS_DEFAULT_HIGHLIGHTER,
+		Settings.SET_AS_DEFAULT_TEXT_HIGHLIGHTER,
 		Settings.CONST_COLOR,
 		Settings.CONST_ENABLE,
 		Settings.PASCAL_COLOR,

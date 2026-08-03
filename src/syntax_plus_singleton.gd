@@ -8,18 +8,21 @@ const SPClasses = preload("res://addons/syntax_plus/src/utils/classes.gd")
 
 const Utils = SPClasses.Utils
 const EditorHL = SPClasses.EditorHL
+const TextEditorHL = SPClasses.TextEditorHL
 const HLInfo = SPClasses.HLInfo
 const EditorConfig = SPClasses.EditorConfig
 
 const UtilsRemote = SPClasses.UtilsRemote
 const UClassDetail = UtilsRemote.UClassDetail
+const ScriptListManager = UtilsRemote.ScriptListManager
 
 # deps
 const CONTEXT_PLUGINS = [
 	preload("res://addons/syntax_plus/src/editor_plugins/syntax_tag_context_menu.gd")
 ]
 const SYNTAX_HIGHLIGHTERS = [
-	EditorHL
+	EditorHL,
+	TextEditorHL
 ]
 
 const CommentHighlightExt = preload("res://addons/syntax_plus/src/extensions/comment_highlight.gd")
@@ -78,6 +81,8 @@ var node_reference_color:Color
 
 var single_line_code_edit:CodeEdit
 var single_line_gdscript_highlighter: GDScriptSyntaxHighlighter
+
+var script_list_manager = ALibEditor.Singleton.ScriptListManager.get_instance()
 
 var _invalidate_debounce_data:={}
 
@@ -280,11 +285,12 @@ func _init(node) -> void:
 
 func _ready() -> void:
 	EditorHL.set_hl_logic_settings()
+	script_list_manager = ScriptListManager.get_instance()
 	EditorNodeRef.call_on_ready(_connect_on_editor_node_ref_ready)
 	EditorInterface.get_editor_settings().settings_changed.connect(_on_editor_settings_changed, 1)
 
 func _connect_on_editor_node_ref_ready():
-	ScriptEditorRef.get_instance().editor_script_changed.connect(_on_editor_script_changed, 1)
+	ScriptEditorRef.get_instance().subscribe(ScriptEditorRef.Event.TAB_CHANGED, _on_script_editor_tab_changed, 1)
 	_set_default_text_colors()
 	_add_plugins()
 	_add_extensions.call_deferred()
@@ -297,18 +303,24 @@ func _add_plugins():
 	editor_plugin_manager.syntax_highlighter_paths = SYNTAX_HIGHLIGHTERS
 	editor_plugin_manager.add_plugins.call_deferred()
 
-
-
-func _on_editor_script_changed(script:Script) -> void:
-	if script == null:
-		return
-	if script.resource_path.get_extension() != "gd":
-		return
+func _on_script_editor_tab_changed():
+	
 	if EditorInterface.get_script_editor().get_current_editor() == null:
 		return
-	if EditorConfig.get_setting(EditorConfig.Settings.SET_AS_DEFAULT_HIGHLIGHTER):
-		var code_edit = ScriptEditorRef.get_current_code_edit()
-		if code_edit.syntax_highlighter is not EditorHL:
+	var current_data = script_list_manager.get_current_item_data()
+	if not current_data:
+		return # in case of no scripts
+	var current_path = current_data.get(script_list_manager.Keys.TOOLTIP)
+	var code_edit = EditorInterface.get_script_editor().get_current_editor().get_base_editor()
+	if current_path.get_extension() in TextEditorHL.Dispatcher.get_supported_extensions():
+		if not EditorConfig.get_setting(EditorConfig.Settings.SET_AS_DEFAULT_TEXT_HIGHLIGHTER):
+			return
+		if not code_edit.syntax_highlighter is TextEditorHL:
+			set_script_highlighter("SyntaxPlusText")
+	else:
+		if not EditorConfig.get_setting(EditorConfig.Settings.SET_AS_DEFAULT_HIGHLIGHTER):
+			return
+		if not code_edit.syntax_highlighter is EditorHL:
 			set_script_highlighter()
 
 func _on_editor_settings_changed():
@@ -331,6 +343,7 @@ static func set_script_highlighter(highlighter:="SyntaxPlus"):
 		if text != highlighter:
 			pop.set_item_checked(i, false)
 		else:
+			print("GOT:", pop.get_item_text(i))
 			id = pop.get_item_id(i)
 			pop.set_item_checked(i, true)
 	if id == -1:

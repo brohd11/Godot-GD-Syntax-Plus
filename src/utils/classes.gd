@@ -7,6 +7,7 @@ const Settings = preload("res://addons/syntax_plus/src/utils/config/settings.gd"
 const HLInfo = preload("res://addons/syntax_plus/src/utils/hl_info.gd")
 
 const EditorHL = preload("res://addons/syntax_plus/src/highlighter/editor_hl.gd")
+const TextEditorHL = preload("res://addons/syntax_plus/src/text_highlighter/text_editor_hl.gd")
 
 const DummyHelper = preload("res://addons/syntax_plus/src/highlighter/dummy_helper.gd")
 const HighlightLogic = preload("res://addons/syntax_plus/src/highlighter/highlighter_logic.gd")
