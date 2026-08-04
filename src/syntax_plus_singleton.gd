@@ -82,7 +82,7 @@ var node_reference_color:Color
 var single_line_code_edit:CodeEdit
 var single_line_gdscript_highlighter: GDScriptSyntaxHighlighter
 
-var script_list_manager = ALibEditor.Singleton.ScriptListManager.get_instance()
+var script_list_manager:ScriptListManager = ScriptListManager.get_instance()
 
 var _invalidate_debounce_data:={}
 
@@ -304,20 +304,20 @@ func _add_plugins():
 	editor_plugin_manager.add_plugins.call_deferred()
 
 func _on_script_editor_tab_changed():
-	
-	if EditorInterface.get_script_editor().get_current_editor() == null:
+	var current_ed:ScriptEditorBase = EditorInterface.get_script_editor().get_current_editor()
+	if current_ed == null:
 		return
 	var current_data = script_list_manager.get_current_item_data()
 	if not current_data:
 		return # in case of no scripts
 	var current_path = current_data.get(script_list_manager.Keys.TOOLTIP)
-	var code_edit = EditorInterface.get_script_editor().get_current_editor().get_base_editor()
+	var code_edit = current_ed.get_base_editor()
 	if current_path.get_extension() in TextEditorHL.Dispatcher.get_supported_extensions():
 		if not EditorConfig.get_setting(EditorConfig.Settings.SET_AS_DEFAULT_TEXT_HIGHLIGHTER):
 			return
 		if not code_edit.syntax_highlighter is TextEditorHL:
 			set_script_highlighter("SyntaxPlusText")
-	else:
+	elif current_path.get_extension() == "gd":
 		if not EditorConfig.get_setting(EditorConfig.Settings.SET_AS_DEFAULT_HIGHLIGHTER):
 			return
 		if not code_edit.syntax_highlighter is EditorHL:
@@ -343,7 +343,6 @@ static func set_script_highlighter(highlighter:="SyntaxPlus"):
 		if text != highlighter:
 			pop.set_item_checked(i, false)
 		else:
-			print("GOT:", pop.get_item_text(i))
 			id = pop.get_item_id(i)
 			pop.set_item_checked(i, true)
 	if id == -1:

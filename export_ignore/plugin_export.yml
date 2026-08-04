@@ -12,7 +12,7 @@ exports:
     remote_dir: "res://addons/syntax_plus/src/remote/"
 options:
   use_tag_in_cfg: true
-  remove_cfg_deps: false
+  exported_deps: ["brohd11/godot-tree-sitter-gd@v1.0.3"]
   include_min_version: true
   include_import: true
   include_uid: true
