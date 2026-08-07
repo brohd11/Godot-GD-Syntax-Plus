@@ -20,7 +20,8 @@ options:
   parser_settings:
     parse_cs:
       namespace_rename: {}
-    parse_gd: {}
+    parse_gd:
+      reduce_access_paths: true
     parse_tscn: {}
 plugin_folder: "SyntaxPlus{{version=syntax_plus}}"
 post_script: "res://addons/syntax_plus/export_ignore/pre_post_export.gd"

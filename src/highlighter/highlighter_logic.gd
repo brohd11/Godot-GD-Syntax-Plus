@@ -2,6 +2,8 @@
 const PLUGIN_EXPORTED = false
 const CAN_INVALIDATE = false
 
+#! strip-cast ParserClass, ParserFunc, GDScriptParser
+
 # debug
 const PRINT_DEBUG = false
 const TF = preload("uid://ft7o6vspsurv") #! resolve ALibRuntime.Utils.UProfile.TimeFunction
