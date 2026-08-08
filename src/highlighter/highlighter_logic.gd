@@ -572,7 +572,9 @@ func update_class_members_ts() -> bool:
 			sparse_t.stop()
 		return false
 	
-	var sparse:Dictionary = cpp_parser.sparse_parse()
+	# through the manager, not cpp_parser - the manager caches per tree revision, so the other
+	# consumers of this tree (GDScriptParser.sync_line_ranges) share the one walk. Read-only.
+	var sparse:Dictionary = ts_man.sparse_parse()
 	if PRINT_DEBUG:
 		sparse_t.stop()
 		ts.stop()
@@ -627,7 +629,9 @@ func update_class_members_ts() -> bool:
 		var class_data = member_data[access_name]
 		var class_line_data = line_data[access_name]
 		
-		var members = class_data["members"]
+		# duplicate first - sparse_parse() hands back a cached, shared dict, and appending into it
+		# would break the member_hash comparison above on every later call
+		var members = class_data["members"].duplicate()
 		var constants = class_data["constants"]
 		var functions = class_data["functions"]
 		members.append_array(functions.keys()) # functions are separate from members, join them in
