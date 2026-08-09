@@ -466,17 +466,7 @@ func update_class_members(allow_invalidate:=false) -> bool:
 	_members_hash = member_hash
 	
 	if cache_ok and member_hash_ok:
-		for access_name in class_names:
-			var class_obj = parser.get_class_object(access_name) as ParserClass
-			if not access_name.is_empty():
-				var start_idx = class_obj.line_indexes[0]
-				var end_idx = class_obj.line_indexes[class_obj.line_indexes.size() - 1]
-				update_inner_class_helper_lines(access_name, start_idx, end_idx)
-			
-			if argument_enable:
-				for f in class_obj.functions.keys():
-					var func_obj = class_obj.functions[f] as GDScriptParser.ParserFunc
-					update_func_helper_lines(access_name, f, func_obj.declaration_line, func_obj.end_line)
+		_refresh_helper_lines(class_names, _line_data_from_parser(parser, class_names))
 		if PRINT_DEBUG:
 			t.stop("UPDATE CLASS MEMBERS::EXIT")
 		return false
@@ -588,22 +578,7 @@ func update_class_members_ts() -> bool:
 	var member_hash_ok:bool = member_hash == _members_hash
 	_members_hash = member_hash
 	if cache_ok and member_hash_ok and init_scan_done:
-		# update lines since we are here
-		for access_path in class_names:
-			var class_line_data = line_data[access_path]
-			if not access_path.is_empty():
-				var cls_start_i = class_line_data[Keys.LINE_INDEX]
-				var cls_end_i = class_line_data.get(Keys.END_LINE, cls_start_i)
-				update_inner_class_helper_lines(access_path, cls_start_i, cls_end_i)
-			
-			if argument_enable:
-				var functions = class_line_data["functions"]
-				for f in functions.keys():
-					var func_line_data = functions.get(f)
-					var start_i = func_line_data.get(Keys.LINE_INDEX)
-					var end_i = func_line_data.get(Keys.END_LINE, start_i)# + 1\
-					update_func_helper_lines(access_path, f, start_i, end_i)
-		
+		_refresh_helper_lines(class_names, line_data) # update lines since we are here
 		if PRINT_DEBUG:
 			t.stop("UPDATE CLASS MEMBERS TS::EXIT")
 		return false
@@ -719,6 +694,59 @@ func _set_hl_words(new_c_w:Dictionary, new_p_w:Dictionary, new_mem_w:Dictionary)
 		members_changed = maxi(members_changed, m_chg)
 	return members_changed
 
+## Project ParserClass / ParserFunc into the shape the C++ emits for sparse_parse()["lines"], so both
+## parse paths feed the one traversal below. "functions" is a plain String key in that payload, not a
+## Keys const - mirrored exactly. Static: no instance state, so tests can call it without an editor.
+static func _line_data_from_parser(parser, class_names:Array) -> Dictionary:
+	var line_data := {}
+	for access_name:String in class_names:
+		var class_obj = parser.get_class_object(access_name) as ParserClass
+		if not is_instance_valid(class_obj):
+			continue
+		var lines:PackedInt32Array = class_obj.line_indexes
+		var cls_start:int = lines[0] if not lines.is_empty() else 0
+		var cls_end:int = lines[lines.size() - 1] if not lines.is_empty() else cls_start
+
+		var funcs := {}
+		for func_name in class_obj.functions.keys():
+			var func_obj = class_obj.functions[func_name] as ParserFunc
+			# func_lines wins: _create_function_ts never assigns end_line, so that field is stale on a
+			# tree-sitter parser until something lazily recomputes it
+			var func_end:int = func_obj.end_line
+			if not func_obj.func_lines.is_empty():
+				func_end = func_obj.func_lines[func_obj.func_lines.size() - 1]
+			funcs[func_name] = {
+				Keys.LINE_INDEX: func_obj.declaration_line,
+				Keys.END_LINE: func_end,
+				}
+
+		line_data[access_name] = {
+			Keys.LINE_INDEX: cls_start,
+			Keys.END_LINE: cls_end,
+			"functions": funcs,
+			}
+	return line_data
+
+## Push class/function line spans onto the helpers that already exist - the cheap refresh both
+## update_class_members paths run when only the line numbers moved.
+func _refresh_helper_lines(class_names:Array, line_data:Dictionary) -> void:
+	for access_name:String in class_names:
+		# .get, not [] - class_names comes from the member data, which need not agree with the lines
+		var cls_data:Dictionary = line_data.get(access_name, {})
+		if cls_data.is_empty():
+			continue
+		if not access_name.is_empty():
+			update_inner_class_helper_lines(access_name,
+				cls_data[Keys.LINE_INDEX], cls_data[Keys.END_LINE])
+
+		if not argument_enable:
+			continue
+		var funcs:Dictionary = cls_data["functions"]
+		for func_name in funcs.keys():
+			var fn_data:Dictionary = funcs[func_name]
+			update_func_helper_lines(access_name, func_name,
+				fn_data[Keys.LINE_INDEX], fn_data[Keys.END_LINE])
+
 func update_inner_class_helper_lines(class_path:String, start_line:int, end_line:int):
 	var highlight_helper_data = inner_class_highlighters.get_or_add(class_path, {})
 	highlight_helper_data[Keys.LINE_INDEX] = start_line
@@ -775,13 +803,6 @@ func get_or_create_func_arg_helpers_unified(access_name:String, func_name:String
 				Keys.END_LINE: end_idx
 			}
 	return changed
-
-
-# unused
-func _get_line_range(data:Dictionary):
-	var start = data.get(Keys.LINE_INDEX)
-	var end = data.get(Keys.END_LINE, start) + 1
-	return range(start, end)
 
 func _parser_cache_valid(script):
 	var base_type = script.get_instance_base_type()
