@@ -1,6 +1,5 @@
 class_name SyntaxPlusSingleton
-extends SingletonRefCount
-const SingletonRefCount = Singletons.RefCount
+extends "res://addons/addon_lib/brohd/singleton/singleton_ref_count.gd" #! ext Singletons.RefCount
 
 const SCRIPT = preload("res://addons/syntax_plus/src/syntax_plus_singleton.gd")
 
