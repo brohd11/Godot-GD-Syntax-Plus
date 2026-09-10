@@ -1,7 +1,7 @@
 #! remote
 
 const PopupHelper = preload("uid://bb13ihrvdkjdj") #! resolve PopupWrapper.PopupHelper
-const UFile = preload("uid://gs632l1nhxaf") #! resolve ALibRuntime.Utils.UFile
+const UFile = preload("uid://bl33psa06nv1e") #! resolve ALibRuntime.Utils.UFile.Methods
 const URegex = preload("uid://cpjnb72qn8bmh")  #! resolve ALibRuntime.Utils.URegex
 const UString = preload("uid://cwootkivqiwq1") #! resolve ALibRuntime.Utils.UString
 const UObject = preload("uid://b6w3produe5fn") #! resolve ALibRuntime.Utils.UObject

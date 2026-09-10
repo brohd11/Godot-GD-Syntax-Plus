@@ -103,7 +103,6 @@ static func check_const_path(class_chain:String, current_class_path:String, star
 		return {}
 	var main_script_path = script_data[0]
 	var class_access_path = script_data[1] as String
-	print(main_script_path)
 	var main_script = load(main_script_path)
 	var valid_scripts = {main_script: ""}
 	var current_script = main_script
