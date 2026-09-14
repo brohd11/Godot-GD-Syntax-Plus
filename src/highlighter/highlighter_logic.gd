@@ -209,8 +209,9 @@ func get_line_syntax_highlighting(line_idx: int) -> Dictionary:
 		elif line_idx == text_edit.get_caret_line():
 			update_tagged_name_list()
 	
-	
-	if current_line_text.strip_edges() == "":
+	if text_edit.is_in_string(line_idx) != -1:
+		return {0: HLInfo.get_color_dict(string_color)}
+	elif current_line_text.strip_edges() == "":
 		return _empty_line_data
 	
 	#^ is comment in string
