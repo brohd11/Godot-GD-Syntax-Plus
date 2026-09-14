@@ -5,6 +5,9 @@ extends EditorSyntaxHighlighter
 const Dispatcher = preload("res://addons/addon_lib/brohd/alib_runtime/misc/syntax_highlighters/text/dispatcher.gd")
 const Palette = preload("res://addons/addon_lib/brohd/alib_runtime/misc/syntax_highlighters/text/palette.gd")
 
+const UtilsRemote = preload("res://addons/syntax_plus/src/utils/utils_remote.gd")
+const ScriptListManager = UtilsRemote.ScriptListManager
+
 ## per-type highlighter for the edited file, or null when the extension is unhandled
 var _highlighter
 var _palette
@@ -43,7 +46,7 @@ func _sync() -> void:
 		return
 	_synced = true
 	
-	var slm = ALibEditor.Singleton.ScriptListManager.get_instance()
+	var slm = ScriptListManager.get_instance()
 	var path = slm.get_current_item_data().get(slm.Keys.TOOLTIP)
 	
 	if _palette == null:
