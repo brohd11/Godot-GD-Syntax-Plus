@@ -6,7 +6,8 @@ exports:
         - "res://addons/syntax_plus/export_ignore"
       file_extensions: []
       files: []
-    export_folder: "syntax-plus{{version=syntax_plus}}/syntax_plus"
+    export_name: "syntax-plus{{version=syntax_plus}}"
+    export_folder: "addons/syntax_plus"
     other_transfers: []
     source: "res://addons/syntax_plus/"
     remote_dir: "res://addons/syntax_plus/src/remote/"
