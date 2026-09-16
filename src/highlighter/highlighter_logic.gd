@@ -87,7 +87,7 @@ var inner_class_member_highlighter:HighlightHelper
 
 var tag_highlighter:TagHighlighter
 
-var use_tree_sitter:bool = ClassDB.class_exists("GDScriptTreeSitter")
+var use_native_backend:bool = ClassDB.class_exists("GDScriptLanguageService")
 
 var _text_edit:CodeEdit
 var cache_dirty:= true
@@ -103,6 +103,8 @@ var comment_tag_prefixes:= []
 var bracket_map := {}
 # ensures a parse is called on script change to update brackets.
 var script_changed_flag:bool=true
+var _native_revision := -1
+var _native_manager_id := 0
 
 signal scanning_tags
 signal queue_invalidate
@@ -312,7 +314,7 @@ func get_line_syntax_highlighting(line_idx: int) -> Dictionary:
 			break
 	
 	#^ brackets
-	if use_tree_sitter and bracket_enable and bracket_map.has(line_idx): # enable brackets
+	if use_native_backend and bracket_enable and bracket_map.has(line_idx): # enable brackets
 		var wrap_max = bracket_colors.size() + 1
 		var line_data = bracket_map[line_idx]
 		needs_sort = true
@@ -449,8 +451,8 @@ func _get_gdscript_parser():
 
 
 func update_class_members(allow_invalidate:=false) -> bool:
-	if use_tree_sitter:
-		return update_class_members_ts()
+	if use_native_backend:
+		return update_class_members_native()
 	
 	var t = TF.new("UPDATE CLASS MEMBERS")
 	
@@ -528,7 +530,7 @@ func update_class_members(allow_invalidate:=false) -> bool:
 	return members_changed
 
 
-func update_class_members_ts() -> bool:
+func update_class_members_native() -> bool:
 	var t = TF.new("UPDATE CLASS MEMBERS TS")
 	var ts = TF.new("Sparse", TF.TimeScale.USEC)
 	
@@ -537,8 +539,13 @@ func update_class_members_ts() -> bool:
 		sparse_t.iterations = 100
 	
 	var parser = _get_gdscript_parser()
-	var ts_man = parser.get_code_edit_parser().tree_sitter_manager
+	var ts_man = parser.get_code_edit_parser().native_manager
+	if not is_instance_valid(ts_man):
+		return false
+	ts_man.parse_text()
 	var cpp_parser = ts_man.parser
+	if not is_instance_valid(cpp_parser):
+		return false
 	cpp_parser.set_bracket_mode(bracket_enable)
 	if bracket_enable:
 		bracket_map = cpp_parser.get_brackets()
@@ -556,7 +563,11 @@ func update_class_members_ts() -> bool:
 	if not is_instance_valid(parser_script_res):
 		return false # this fires on scene built in scripts
 	
-	var parsed = ts_man.parse_text()
+	var revision: int = ts_man.get_parse_revision()
+	var manager_id: int = ts_man.get_instance_id()
+	var parsed := revision != _native_revision or manager_id != _native_manager_id
+	_native_revision = revision
+	_native_manager_id = manager_id
 	if not parsed and is_instance_valid(member_highlighter) and not member_highlighter.highlight_words.is_empty():
 		if PRINT_DEBUG:
 			ts.stop("Eearly Sparse exit")
@@ -893,7 +904,7 @@ func set_inactive():
 
 #^{[/r] probably get rid of all this...
 func invalidate_all():
-	if use_tree_sitter:
+	if use_native_backend:
 		return
 	_invalidate_all.call_deferred()
 

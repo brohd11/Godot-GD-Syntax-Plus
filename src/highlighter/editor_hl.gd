@@ -82,7 +82,7 @@ func _on_parse_completed():
 		return
 		
 	#return
-	if hl_logic.use_tree_sitter:
+	if hl_logic.use_native_backend:
 		return # think this is irrelavent with tree sitter
 	hl_logic.update_class_members(true)
 
