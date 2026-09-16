@@ -434,20 +434,31 @@ func update_tagged_name_list(force_build=false) -> void:
 
 
 func _get_gdscript_parser():
-	var editor_parser = EditorGDScriptParser.get_parser(script_resource.resource_path)
-	# Adopt the editor parser only when it is LIVE and already on this script. state is checked first so
-	# the short-circuit never calls get_current_script() on a CACHED_RESOLVED parser (would lazy-load).
-	if is_instance_valid(editor_parser) and editor_parser.state == GDScriptParser.STATE_LIVE:
-		return editor_parser
-	if not is_instance_valid(gdscript_parser):
-		# Own LIVE parser bound to the live editor buffer; cache-aware so cross-script lookups hit disk.
-		gdscript_parser = GDScriptParser.from_cache(script_resource.resource_path, "", get_text_edit())
-		gdscript_parser.set_parser_cache_size(0)
-	
-	
-	if gdscript_parser._class_access.is_empty():
-		gdscript_parser.parse()
-	return gdscript_parser
+	var script_path:String = script_resource.resource_path
+	var text_edit:CodeEdit = get_text_edit()
+	var editor_parser = EditorGDScriptParser.get_parser()
+	var parser:GDScriptParser
+	# STATE_LIVE also describes read-only dependency parsers, which have no native manager.
+	if is_instance_valid(editor_parser) and editor_parser.state == GDScriptParser.STATE_LIVE \
+			and editor_parser.get_script_path() == script_path and editor_parser.code_edit == text_edit:
+		parser = editor_parser
+	else:
+		if not is_instance_valid(gdscript_parser) or gdscript_parser.state != GDScriptParser.STATE_LIVE \
+				or gdscript_parser.get_script_path() != script_path or gdscript_parser.code_edit != text_edit:
+			gdscript_parser = GDScriptParser.from_cache(script_path, "", text_edit)
+			gdscript_parser.set_parser_cache_size(0)
+		parser = gdscript_parser
+
+	var needs_parse:bool = parser._class_access.is_empty()
+	if use_native_backend and parser.use_native_backend:
+		var manager = parser.get_code_edit_parser().native_manager
+		needs_parse = needs_parse or not is_instance_valid(manager) \
+				or manager._edit != text_edit or manager._script_path != script_path
+	# A tab switch can bind the shared parser before its first parse. Initialize once here;
+	# subsequent highlight updates keep using the sparse revision cache.
+	if needs_parse:
+		parser.parse()
+	return parser
 
 
 func update_class_members(allow_invalidate:=false) -> bool:
