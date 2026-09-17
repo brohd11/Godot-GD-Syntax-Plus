@@ -23,6 +23,16 @@ options:
       namespace_rename: {}
     parse_gd:
       reduce_access_paths: true
+      optimizer:
+        enabled: true
+        structs: true
+        inline_functions: true
+        scalar_replacement: true
+        struct_read_types: typed_locals
+        scalar_replacement_allow_ref_counted: false
+        struct_read_types_allow_ref_counted: false
+        inline_functions_allow_ref_counted: false
+        inline_functions_allow_variants: false
     parse_tscn: {}
 plugin_folder: "SyntaxPlus{{version=syntax_plus}}"
 post_script: "res://addons/syntax_plus/export_ignore/pre_post_export.gd"
