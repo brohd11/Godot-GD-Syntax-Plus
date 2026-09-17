@@ -15,7 +15,6 @@ const HLInfo = SyntaxPlusSingleton.HLInfo
 const SPClasses = preload("res://addons/syntax_plus/src/utils/classes.gd")
 
 const UtilsRemote = SPClasses.UtilsRemote
-const GDScriptParser = UtilsRemote.GDScriptParser
 const EditorGDScriptParser = UtilsRemote.EditorGDScriptParser
 const ParserClass = GDScriptParser.ParserClass
 const ParserFunc = GDScriptParser.ParserFunc

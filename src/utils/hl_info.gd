@@ -4,7 +4,6 @@ const SPClasses = preload("res://addons/syntax_plus/src/utils/classes.gd")
 const UtilsRemote = SPClasses.UtilsRemote
 const UClassDetail = UtilsRemote.UClassDetail
 const UString = UtilsRemote.UString
-const GDScriptParser = UtilsRemote.GDScriptParser
 const ParserClass = GDScriptParser.ParserClass
 
 const _BAD_SYM_COLOR:Color = Color.FIREBRICK

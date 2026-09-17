@@ -8,7 +8,6 @@ const UObject = preload("uid://b6w3produe5fn") #! resolve ALibRuntime.Utils.UObj
 
 const UGDScript = preload("uid://bqwb564jwff43") #! resolve ALibRuntime.Utils.UGDScript
 const UClassDetail = UGDScript.UClassDetail
-const GDScriptParser = UGDScript.Parser
 const SettingHelperEditor = preload("uid://c4l4v4eufkmtx") #! resolve ALibEditor.Settings.SettingHelperEditor
 
 const EditorGDScriptParser = preload("uid://t2dewmuth0sy") #! resolve ALibEditor.Singleton.EditorGDScriptParser
