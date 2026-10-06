@@ -2,8 +2,8 @@
 extends EditorSyntaxHighlighter
 #! remote
 
-const Dispatcher = preload("res://addons/addon_lib/brohd/alib_runtime/misc/syntax_highlighters/text/dispatcher.gd")
-const Palette = preload("res://addons/addon_lib/brohd/alib_runtime/misc/syntax_highlighters/text/palette.gd")
+const Dispatcher = preload("res://addons/_lib/brohd/alib_runtime/misc/syntax_highlighters/text/dispatcher.gd")
+const Palette = preload("res://addons/_lib/brohd/alib_runtime/misc/syntax_highlighters/text/palette.gd")
 
 const UtilsRemote = preload("res://addons/syntax_plus/src/utils/utils_remote.gd")
 const ScriptListManager = UtilsRemote.ScriptListManager
