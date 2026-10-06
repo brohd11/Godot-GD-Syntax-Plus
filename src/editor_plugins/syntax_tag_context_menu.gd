@@ -3,7 +3,7 @@ extends EditorContextMenuPlugin
 const SLOT = EditorContextMenuPlugin.CONTEXT_SLOT_SCRIPT_EDITOR_CODE
 
 const UtilsRemote = preload("res://addons/syntax_plus/src/utils/utils_remote.gd")
-const Params = PopupWrapper.ItemParams
+const Params = PopupWrapper.ContextPlugin.ItemParams
 const EditorConfig = preload("uid://vpqa5bp1krif") #! resolve SyntaxPlusSingleton.EditorConfig
 const EditorHL = preload("uid://bnredxxo1jopk") #! resolve SyntaxPlusSingleton.EditorHL
 
@@ -23,7 +23,7 @@ func _popup_menu(paths: PackedStringArray) -> void:
 	var se:CodeEdit = Engine.get_main_loop().root.get_node(paths[0]);
 	
 	var popup_items = get_valid_items(se)
-	PopupWrapper.create_context_plugin_items(self, se, popup_items, _on_context_pressed)
+	PopupWrapper.ContextPlugin.create_items(self, se, popup_items, _on_context_pressed)
 
 func _on_context_pressed(se, popup_path):
 	if popup_path == RESET_CURRENT:
