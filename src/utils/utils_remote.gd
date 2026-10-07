@@ -1,6 +1,6 @@
 #! remote
 
-const PopupHelper = preload("uid://ba5x2r7gyvmej") #! resolve UtilR.Nodes.Popups.PathHelper
+const PopupHelper = preload("uid://ba5x2r7gyvmej") #! resolve UtilR.Nodes.PopupMenus.PathHelper
 const UFile = preload("uid://bl33psa06nv1e") #! resolve ALibRuntime.Utils.UFile.Methods
 const URegex = preload("uid://cpjnb72qn8bmh")  #! resolve ALibRuntime.Utils.URegex
 const UString = preload("uid://cwootkivqiwq1") #! resolve ALibRuntime.Utils.UString
