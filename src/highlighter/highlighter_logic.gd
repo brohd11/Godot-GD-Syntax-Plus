@@ -190,8 +190,8 @@ func get_line_syntax_highlighting(line_idx: int) -> Dictionary:
 	
 	var parser = _get_gdscript_parser()
 	var valid_parser = is_instance_valid(parser)
-	if not valid_parser or not parser.cache_valid() or script_changed_flag:
-		script_changed_flag = true
+	if not valid_parser or script_changed_flag or _members_stale(parser):
+		script_changed_flag = false
 		update_class_members()
 	
 	if DummyHelper.dummy_code_edit.get_line(line_idx) != current_line_text:
@@ -451,13 +451,24 @@ func _get_gdscript_parser():
 	var needs_parse:bool = parser._class_access.is_empty()
 	if use_native_backend and parser.use_native_backend:
 		var manager = parser.get_code_edit_parser().native_manager
-		needs_parse = needs_parse or not is_instance_valid(manager) \
+		needs_parse = needs_parse or not is_instance_valid(manager) or not manager.is_attached() \
 				or manager._edit != text_edit or manager._script_path != script_path
 	# A tab switch can bind the shared parser before its first parse. Initialize once here;
 	# subsequent highlight updates keep using the sparse revision cache.
 	if needs_parse:
 		parser.parse()
 	return parser
+
+
+## cache_valid() tracks the full-parse revision, which the sparse native path never advances,
+## so on native compare against the revision update_class_members_native last consumed.
+func _members_stale(parser:GDScriptParser) -> bool:
+	if use_native_backend and parser.use_native_backend:
+		var manager = parser.get_code_edit_parser().native_manager
+		if is_instance_valid(manager):
+			return manager.get_parse_revision() != _native_revision \
+					or manager.get_instance_id() != _native_manager_id
+	return not parser.cache_valid()
 
 
 func update_class_members(allow_invalidate:=false) -> bool:
@@ -552,10 +563,12 @@ func update_class_members_native() -> bool:
 	var ts_man = parser.get_code_edit_parser().native_manager
 	if not is_instance_valid(ts_man):
 		return false
+	
 	ts_man.parse_text()
 	var cpp_parser = ts_man.parser
 	if not is_instance_valid(cpp_parser):
 		return false
+	
 	cpp_parser.set_bracket_mode(bracket_enable)
 	if bracket_enable:
 		bracket_map = cpp_parser.get_brackets()
