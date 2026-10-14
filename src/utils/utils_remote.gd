@@ -11,4 +11,4 @@ const UClassDetail = UGDScript.UClassDetail
 const SettingHelperEditor = preload("uid://dnov6vp7pjnbb") #! resolve SettingHelper.Editor
 
 const EditorGDScriptParser = preload("uid://t2dewmuth0sy") #! resolve EditorParser.EditorGDScriptParser
-const ScriptListManager = preload("uid://d3o6grkkmk4qk") #! resolve ALibEditor.Singleton.ScriptListManager
+const ScriptListManager = preload("uid://esgr5a6b8qbw") #! resolve EditorNodes.ScriptListManager
