@@ -231,7 +231,7 @@ static func set_prefix_color(prefix:String, color:Color):
 	var instance = get_instance()
 	instance.prefix_colors[prefix] = color
 
-var editor_plugin_manager:EditorPluginManager
+var editor_plugin_manager:PluginManager.Editor
 
 var prefix_colors = {}
 var comment_tag_prefixes = []
@@ -297,7 +297,7 @@ func _connect_on_editor_node_ref_ready():
 func _add_plugins():
 	var ed_plug = EditorPlugin.new()
 	add_child(ed_plug)
-	editor_plugin_manager = EditorPluginManager.new(ed_plug)
+	editor_plugin_manager = PluginManager.Editor.new(ed_plug)
 	editor_plugin_manager.context_menu_plugin_paths = CONTEXT_PLUGINS
 	editor_plugin_manager.syntax_highlighter_paths = SYNTAX_HIGHLIGHTERS
 	editor_plugin_manager.add_plugins.call_deferred()
