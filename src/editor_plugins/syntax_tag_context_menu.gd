@@ -1,4 +1,4 @@
-extends EditorContextMenuPlugin
+extends "res://addons/_lib/popup_wrapper/src/context_menu.gd" #! ext PopupWrapper.ContextMenu
 
 const SLOT = EditorContextMenuPlugin.CONTEXT_SLOT_SCRIPT_EDITOR_CODE
 
@@ -19,13 +19,14 @@ const STD_META = {
 
 static var tags = []
 
-func _popup_menu(paths: PackedStringArray) -> void:
-	var se:CodeEdit = Engine.get_main_loop().root.get_node(paths[0]);
+func _get_menu_options(data) -> void:
+	var se:CodeEdit = PopupWrapper.Slots.code_edit(data)
 	
 	var popup_items = get_valid_items(se)
-	PopupWrapper.ContextPlugin.create_items(self, se, popup_items, _on_context_pressed)
+	PopupWrapper.ContextPlugin.create_items(self, data, popup_items, _on_context_pressed)
 
-func _on_context_pressed(se, popup_path):
+func _on_context_pressed(data, popup_path):
+	var se:CodeEdit = PopupWrapper.Slots.code_edit(data)
 	if popup_path == RESET_CURRENT:
 		reset_current()
 		return
